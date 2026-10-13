@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>JavaScript 基础语法</title>
+    <style>
+      body {
+        max-width: 860px;
+        margin: 24px auto;
+        padding: 0 16px;
+        font: 15px/1.7 'Microsoft YaHei', Arial, sans-serif;
+        color: #333;
+      }
+      h1 {
+        font-size: 26px;
+        border-bottom: 2px solid #42b883;
+        padding-bottom: 8px;
+      }
+      h2 {
+        font-size: 19px;
+        margin-top: 28px;
+      }
+      pre {
+        background: #f6f8fa;
+        border: 1px solid #e1e4e8;
+        border-radius: 4px;
+        padding: 10px 12px;
+        overflow-x: auto;
+      }
+      code {
+        font-family: Consolas, monospace;
+      }
+      .out {
+        background: #fffbe6;
+        border-left: 4px solid #f0c000;
+        padding: 6px 12px;
+        margin: 8px 0 0;
+        white-space: pre-wrap;
+        font-family: Consolas, monospace;
+        font-size: 13px;
+      }
+      details {
+        margin: 6px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>JavaScript 基础语法</h1>
+    <p>每段代码下面那个黄底框是<strong>页面运行时真实打印出来的结果</strong>，改上面的代码就能看到变化。</p>
+
+    <h2>1. 变量：let / const / var</h2>
+    <pre><code>let score = 60;        // 可重新赋值
+const MAX = 100;       // 常量，不能再赋值
+score = 90;
+console.log(score, MAX);</code></pre>
+    <div class="out" id="o1"></div>
+
+    <h2>2. 数据类型与 typeof</h2>
+    <pre><code>const vals = ['字符串', 42, 3.14, true, null, undefined, {k: 1}, [1, 2]];
+vals.forEach(v =&gt; console.log(typeof v, JSON.stringify(v)));</code></pre>
+    <div class="out" id="o2"></div>
+
+    <h2>3. 类型转换与「相等」的坑</h2>
+    <pre><code>console.log('1' + 1);          // 字符串拼接 -&gt; '11'
+console.log('1' - 1);          // 减法会转数字 -&gt; 0
+console.log(Number('abc'));    // NaN
+console.log('1' == 1, '1' === 1);   // true / false
+console.log(NaN === NaN);      // false</code></pre>
+    <div class="out" id="o3"></div>
+
+    <h2>4. 字符串模板与常用方法</h2>
+    <pre><code>const name = 'zhoumo';
+const greet = `你好，${name.length &gt; 3 ? '长名字' : '短名字'}！`;
+console.log(greet);
+console.log('  a,b,c  '.trim().split(','));
+console.log('Vue3 组件'.includes('组件'));</code></pre>
+    <div class="out" id="o4"></div>
+
+    <h2>5. 条件与三元</h2>
+    <pre><code>function level(n) {
+  if (n &gt;= 90) return 'A';
+  else if (n &gt;= 60) return 'B';
+  else return 'C';
+}
+console.log(level(95), level(72), level(30));
+console.log(true ? '真' : '假');</code></pre>
+    <div class="out" id="o5"></div>
+
+    <h2>6. 函数：声明式 / 表达式 / 箭头 / 默认参数</h2>
+    <pre><code>function add(a, b) { return a + b; }
+const sub = function (a, b) { return a - b; };
+const mul = (a, b) =&gt; a * b;
+const hello = (who = '同学') =&gt; `Hi, ${who}`;
+console.log(add(2, 3), sub(9, 4), mul(3, 4), hello());</code></pre>
+    <div class="out" id="o6"></div>
+
+    <h2>7. 对象与解构</h2>
+    <pre><code>const user = { name: '小丽', age: 20, vip: true };
+const { name, age, vip } = user;
+user.city = '长沙';                       // 动态加属性
+console.log(name, age, vip, user.city);
+console.log(Object.keys(user), Object.values(user));</code></pre>
+    <div class="out" id="o7"></div>
+
+    <h2>8. 练习</h2>
+    <details>
+      <summary>练习 1：写一个函数 bmi(体重kg, 身高m)，&lt;18.5 偏瘦、&lt;24 正常、否则偏胖</summary>
+      <pre><code>const bmi = (kg, m) =&gt; {
+  const v = kg / (m * m);
+  return v &lt; 18.5 ? '偏瘦' : v &lt; 24 ? '正常' : '偏胖';
+};
+console.log(bmi(70, 1.75));</code></pre>
+    </details>
+    <details>
+      <summary>练习 2：把 "2026-10-12" 拆成年月日三个变量</summary>
+      <pre><code>const [y, m, d] = '2026-10-12'.split('-');
+console.log(y, m, d);</code></pre>
+    </details>
+
+    <script>
+      // 把 console.log 的输出同时收集到页面上
+      function run(id, fn) {
+        const lines = [];
+        const log = (...a) =>
+          lines.push(
+            a
+              .map((x) =>
+                typeof x === 'object' && x !== null ? JSON.stringify(x) : String(x)
+              )
+              .join(' ')
+          );
+        try {
+          fn(log);
+        } catch (e) {
+          lines.push('报错：' + e.message);
+        }
+        document.getElementById(id).textContent = lines.join('\n') || '(无输出)';
+      }
+
+      run('o1', (log) => {
+        let score = 60;
+        const MAX = 100;
+        score = 90;
+        log(score, MAX);
+      });
+
+      run('o2', (log) => {
+        const vals = ['字符串', 42, 3.14, true, null, undefined, { k: 1 }, [1, 2]];
+        vals.forEach((v) => log(typeof v, JSON.stringify(v)));
+      });
+
+      run('o3', (log) => {
+        log('1' + 1);
+        log('1' - 1);
+        log(Number('abc'));
+        log('1' == 1, '1' === 1);
+        log(NaN === NaN);
+      });
+
+      run('o4', (log) => {
+        const name = 'zhoumo';
+        log(`你好，${name.length > 3 ? '长名字' : '短名字'}！`);
+        log('  a,b,c  '.trim().split(','));
+        log('Vue3 组件'.includes('组件'));
+      });
+
+      run('o5', (log) => {
+        function level(n) {
+          if (n >= 90) return 'A';
+          else if (n >= 60) return 'B';
+          else return 'C';
+        }
+        log(level(95), level(72), level(30));
+        log(true ? '真' : '假');
+      });
+
+      run('o6', (log) => {
+        function add(a, b) {
+          return a + b;
+        }
+        const sub = function (a, b) {
+          return a - b;
+        };
+        const mul = (a, b) => a * b;
+        const hello = (who = '同学') => `Hi, ${who}`;
+        log(add(2, 3), sub(9, 4), mul(3, 4), hello());
+      });
+
+      run('o7', (log) => {
+        const user = { name: '小丽', age: 20, vip: true };
+        const { name, age, vip } = user;
+        user.city = '长沙';
+        log(name, age, vip, user.city);
+        log(Object.keys(user), Object.values(user));
+      });
+    </script>
+  </body>
+</html>

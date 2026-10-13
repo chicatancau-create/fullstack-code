@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>循环与数组</title>
+    <style>
+      body {
+        max-width: 860px;
+        margin: 24px auto;
+        padding: 0 16px;
+        font: 15px/1.7 'Microsoft YaHei', Arial, sans-serif;
+        color: #333;
+      }
+      h1 {
+        font-size: 26px;
+        border-bottom: 2px solid #42b883;
+        padding-bottom: 8px;
+      }
+      h2 {
+        font-size: 19px;
+        margin-top: 28px;
+      }
+      pre {
+        background: #f6f8fa;
+        border: 1px solid #e1e4e8;
+        border-radius: 4px;
+        padding: 10px 12px;
+        overflow-x: auto;
+      }
+      code {
+        font-family: Consolas, monospace;
+      }
+      .out {
+        background: #fffbe6;
+        border-left: 4px solid #f0c000;
+        padding: 6px 12px;
+        margin: 8px 0 0;
+        white-space: pre-wrap;
+        font-family: Consolas, monospace;
+        font-size: 13px;
+      }
+      details {
+        margin: 6px 0;
+      }
+      a {
+        color: #42b883;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>循环与数组</h1>
+    <p>
+      上一篇：<a href="javaScript基础语法.html">JavaScript 基础语法</a>。黄底框是运行时真实输出。
+    </p>
+
+    <h2>1. 三种循环</h2>
+    <pre><code>for (let i = 1; i &lt;= 3; i++) console.log('for', i);
+
+let n = 0;
+while (n &lt; 3) { console.log('while', n); n++; }
+
+const arr = ['a', 'b', 'c'];
+for (const v of arr) console.log('of 值', v);      // 遍历值
+for (const k in arr) console.log('in 下标', k);    // 遍历下标(字符串)</code></pre>
+    <div class="out" id="o1"></div>
+
+    <h2>2. 数组增删改查</h2>
+    <pre><code>const list = [10, 20, 30];
+list.push(40);            // 尾部加
+list.unshift(5);          // 头部加
+list.pop();               // 尾部删
+const found = list.indexOf(20);
+list.splice(found, 1, 99);   // 原地替换 1 个
+console.log(list, list.length, list.includes(5));</code></pre>
+    <div class="out" id="o2"></div>
+
+    <h2>3. 遍历三兄弟：forEach / map / filter</h2>
+    <pre><code>const nums = [3, 1, 4, 1, 5];
+nums.forEach((v, i) =&gt; i === 0 &amp;&amp; console.log('原数组', nums));
+console.log('map  x2  -&gt;', nums.map((v) =&gt; v * 2));
+console.log('filter &gt;2 -&gt;', nums.filter((v) =&gt; v &gt; 2));
+console.log('map 不改原数组?', nums);</code></pre>
+    <div class="out" id="o3"></div>
+
+    <h2>4. 汇总：reduce / find / some / every / sort</h2>
+    <pre><code>const nums = [3, 1, 4, 1, 5];
+console.log('求和', nums.reduce((a, b) =&gt; a + b, 0));
+console.log('最大值', nums.reduce((a, b) =&gt; (a &gt; b ? a : b)));
+console.log('find 第一个&gt;2', nums.find((v) =&gt; v &gt; 2));
+console.log('some 有&gt;4?', nums.some((v) =&gt; v &gt; 4), 'every 都&gt;0?', nums.every((v) =&gt; v &gt; 0));
+console.log('sort 数字要传比较函数', [10, 9, 100].sort((a, b) =&gt; a - b));</code></pre>
+    <div class="out" id="o4"></div>
+
+    <h2>5. 对象数组（表格数据的来源）</h2>
+    <pre><code>const goods = [
+  { name: '女鞋', price: 298, tags: ['舒适', '透气'] },
+  { name: '雪地靴', price: 89, tags: ['保暖', '防滑'] },
+  { name: '毛衣', price: 199, tags: ['秋冬'] },
+];
+console.log(goods.map((g) =&gt; g.name));
+console.log('总价', goods.reduce((s, g) =&gt; s + g.price, 0));
+console.log('500 以下', goods.filter((g) =&gt; g.price &lt; 500).length, '件');
+console.log('所有标签', goods.flatMap((g) =&gt; g.tags));</code></pre>
+    <div class="out" id="o5"></div>
+
+    <h2>6. 练习</h2>
+    <details>
+      <summary>练习 1：1~100 里所有 3 的倍数之和</summary>
+      <pre><code>let sum = 0;
+for (let i = 3; i &lt;= 100; i += 3) sum += i;
+console.log(sum);   // 1683</code></pre>
+    </details>
+    <details>
+      <summary>练习 2：去掉数组里的重复项</summary>
+      <pre><code>const a = [1, 2, 2, 3, 3, 3];
+console.log([...new Set(a)]);
+console.log(a.filter((v, i) =&gt; a.indexOf(v) === i));</code></pre>
+    </details>
+    <details>
+      <summary>练习 3：把成绩数组按 &gt;=60 分成及格/不及格两组</summary>
+      <pre><code>const scores = [55, 88, 30, 92, 61];
+console.log('及格', scores.filter((s) =&gt; s &gt;= 60));
+console.log('不及格', scores.filter((s) =&gt; s &lt; 60));</code></pre>
+    </details>
+
+    <script>
+      function run(id, fn) {
+        const lines = [];
+        const log = (...a) =>
+          lines.push(
+            a
+              .map((x) =>
+                typeof x === 'object' && x !== null ? JSON.stringify(x) : String(x)
+              )
+              .join(' ')
+          );
+        try {
+          fn(log);
+        } catch (e) {
+          lines.push('报错：' + e.message);
+        }
+        document.getElementById(id).textContent = lines.join('\n') || '(无输出)';
+      }
+
+      run('o1', (log) => {
+        for (let i = 1; i <= 3; i++) log('for', i);
+        let n = 0;
+        while (n < 3) {
+          log('while', n);
+          n++;
+        }
+        const arr = ['a', 'b', 'c'];
+        for (const v of arr) log('of 值', v);
+        for (const k in arr) log('in 下标', k);
+      });
+
+      run('o2', (log) => {
+        const list = [10, 20, 30];
+        list.push(40);
+        list.unshift(5);
+        list.pop();
+        const found = list.indexOf(20);
+        list.splice(found, 1, 99);
+        log(list, list.length, list.includes(5));
+      });
+
+      run('o3', (log) => {
+        const nums = [3, 1, 4, 1, 5];
+        nums.forEach((v, i) => i === 0 && log('原数组', nums));
+        log('map  x2  ->', nums.map((v) => v * 2));
+        log('filter >2 ->', nums.filter((v) => v > 2));
+        log('map 不改原数组?', nums);
+      });
+
+      run('o4', (log) => {
+        const nums = [3, 1, 4, 1, 5];
+        log('求和', nums.reduce((a, b) => a + b, 0));
+        log('最大值', nums.reduce((a, b) => (a > b ? a : b)));
+        log('find 第一个>2', nums.find((v) => v > 2));
+        log('some 有>4?', nums.some((v) => v > 4), 'every 都>0?', nums.every((v) => v > 0));
+        log('sort 数字要传比较函数', [10, 9, 100].sort((a, b) => a - b));
+      });
+
+      run('o5', (log) => {
+        const goods = [
+          { name: '女鞋', price: 298, tags: ['舒适', '透气'] },
+          { name: '雪地靴', price: 89, tags: ['保暖', '防滑'] },
+          { name: '毛衣', price: 199, tags: ['秋冬'] },
+        ];
+        log(goods.map((g) => g.name));
+        log('总价', goods.reduce((s, g) => s + g.price, 0));
+        log('500 以下', goods.filter((g) => g.price < 500).length, '件');
+        log('所有标签', goods.flatMap((g) => g.tags));
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,35 @@
+# ---- 构建产物 ----
+out/
+dist/
+build/
+target/
+bin/
+obj/
+
+# ---- 依赖与虚拟环境 ----
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# ---- IDE 工程状态（各地 .vscode/ 构建任务保留，不忽略）----
+.idea/
+*.iml
+
+# ---- 编译中间产物与可执行文件 ----
+*.exe
+*.class
+*.o
+*.obj
+*.pdb
+*.dll
+*.lib
+
+# ---- 系统文件 ----
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# ---- 助手工作数据（报告 / 记忆 / 备份，非项目内容）----
+.workbuddy-ai/
