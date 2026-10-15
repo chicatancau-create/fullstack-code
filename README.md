@@ -66,3 +66,5 @@ python EnvironmentTest.py
 
 - 本仓库为个人学习用途。
 - `.gitignore` 已忽略依赖与构建产物（`node_modules/`、`.venv/`、`*.exe`、`oh_modules/` 等），克隆后各模块需按上文自行安装依赖。
+
+<!-- 双端同步测试 2026-10-15 -->
