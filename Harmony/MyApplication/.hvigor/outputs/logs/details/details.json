@@ -1,0 +1,96 @@
+{
+  "HVIGOR": {
+    "IS_INCREMENTAL": true,
+    "IS_DAEMON": true,
+    "IS_PARALLEL": true,
+    "IS_HVIGORFILE_TYPE_CHECK": false,
+    "IS_EXECUTION_OHPM_BY_HVIGOR": false,
+    "IS_SYNCNATIVE_COMPILATION": false,
+    "BUILD_ANALYSIS_MODE": "normal",
+    "OPTIMIZATION_STRATEGY": "memory",
+    "TASK_TIME": {},
+    "CUSTOM_TASK_TIME": {},
+    "CUSTOM_PLUGIN_TIME": {},
+    "APIS": [],
+    "CONFIG_EXPERIMENT": {
+      "ENABLE_MODULE_SKIP": false,
+      "ENABLE_CPP_FUNCTION_LEVEL_INCREMENTAL": false
+    },
+    "CONFIG_PROPERTIES": {},
+    "BUILD_ID": "202610151151541670",
+    "PID": 33536,
+    "ERROR_MESSAGE": [
+      {
+        "CODE": "00303010",
+        "MESSAGE": "The property of module should be an array in root project %s. At file: %s",
+        "SOLUTIONS": [
+          "Check the project-level build-profile.json5 file and ensure that the module's option is an array."
+        ],
+        "TIMESTAMP": "1792036314171"
+      },
+      {
+        "CODE": "00303010",
+        "STACK": "00303010 Configuration Error\n...\n    at HvigorLogger.printErrorExit (***\\tools\\hvigor\\hvigor\\src\\base\\log\\hv***g.js:1:6525)\n    at checkProjectConfigFile (***\\tools\\hvigor\\hvigor\\src\\base\\external\\core\\hv***g.js:1:3667)\n    at new HvigorConfig (***\\tools\\hvigor\\hvigor\\src\\base\\external\\core\\hv***g.js:1:1421)\n    at hvigorConfigInit (***\\tools\\hvigor\\hvigor\\src\\base\\external\\core\\hv***g.js:1:4092)\n    at init (***\\tools\\hvigor\\hvigor\\src\\base\\internal\\lifecycle\\in***t.js:1:3180)\n    at start (***\\tools\\hvigor\\hvigor\\src\\base\\boot\\in***x.js:1:2744)\n    at boot (***\\tools\\hvigor\\hvigor\\src\\base\\boot\\in***x.js:1:2044)\n    at handleBuildMessage (***\\tools\\hvigor\\hvigor\\src\\base\\daemon\\cluster\\wo***e.js:1:4334)\n    at Worker.<anonymous> (***\\tools\\hvigor\\hvigor\\src\\base\\daemon\\cluster\\wo***e.js:1:4965)\n...",
+        "PROJECT_CONFIG": {
+          "buildMode": "Debug",
+          "compileMode": "esmodule",
+          "moduleType": "entry",
+          "targetName": ".default",
+          "packageManagerType": "ohpm",
+          "isLocalTest": false,
+          "needCoverageInsert": false,
+          "debugLine": false,
+          "compileSdkVersion": 26,
+          "compatibleSdkVersion": 24,
+          "originCompatibleSdkVersion": "6.1.1(24)",
+          "etsLoaderVersion": "26.0.0.105",
+          "etsLoaderReleaseType": "Release",
+          "aotCompileMode": "type",
+          "isCrossplatform": false,
+          "bundleType": "app",
+          "apiVersion": 26,
+          "isFaMode": false,
+          "deviceTypes": [
+            "phone",
+            "tablet",
+            "2in1",
+            "car",
+            "wearable",
+            "tv"
+          ],
+          "integratedHsp": false,
+          "branchElimination": false,
+          "tsImportSendable": false,
+          "resolveConflictMode": true,
+          "useNativeResolver": true,
+          "shouldEmitJs": true,
+          "useTscResolve": false,
+          "singleFileEmit": false,
+          "executionMode": "memory",
+          "isHarDeduplicateEnabled": false,
+          "autoLazyImport": false,
+          "allowEmptyBundleName": false,
+          "reExportCheckMode": "noCheck",
+          "usePathPlaceholder": false,
+          "writeRollupCache": true,
+          "isExpandImportEnabled": false,
+          "ignoreCrossplatformCheck": false,
+          "skipOhModulesLint": false,
+          "enableStrictCheckOHModule": false,
+          "useDeclarationFileSignature": false,
+          "isPreloadSoEnabled": false,
+          "strictMode.caseSensitiveCheck": true,
+          "strictMode.useNormalizedOHMUrl": true,
+          "strictMode.noExternalImportByPath": true,
+          "runtimeOS": "HarmonyOS",
+          "sdkInfo": "false:26:26.0.0.105:Release",
+          "useSourceHash": false,
+          "isByteCodeHarOptimize": false,
+          "copyCodeResourceEnable": false,
+          "uiTransformOptimization": false
+        }
+      }
+    ],
+    "TOTAL_TIME": 12125800
+  }
+}
