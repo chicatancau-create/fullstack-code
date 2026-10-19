@@ -6,6 +6,8 @@ import Home from '../components/Home.vue'
 import About from '../components/About.vue'
 import Tab1 from '../components/Tab1.vue'
 import Tab2 from '../components/Tab2.vue'
+import Movie from '../components/Movie.vue'
+import MovieDetails from '../components/MovieDetails.vue'
 //3.创建路由实例
 const router = createRouter({
   history: createWebHashHistory(),
@@ -19,6 +21,14 @@ const router = createRouter({
       children: [
         { path: 'tab1', component: Tab1 },
         { path: 'tab2', component: Tab2 },
+      ],
+    },
+    {
+      path: '/movie',
+      component: Movie,
+      children: [
+        // 动态路由：:id 匹配到的值会作为 props.id 传给 MovieDetails
+        { path: ':id', component: MovieDetails, props: true },
       ],
     },
   ],

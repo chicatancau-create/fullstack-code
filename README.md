@@ -11,7 +11,12 @@
 | `Web/vue/` | Vue 3 + Vite + vue-router | 跟课练习：组件、路由、动态组件、商品管理表格与自定义指令 |
 | `Cpp/` | C / C++（MinGW g++） | 环境自检样例，各一个可执行文件 |
 | `Python/` | Python 3 + venv | 环境自检样例 |
-| `Harmony/MyApplication/` | HarmonyOS ArkTS | 家电商城 Demo：底部 Tab 导航、搜索过滤、购物车 |
+| `Harmony/yingye/` | HarmonyOS ArkTS | **当前主工程**：入口 `entry/src/main/ets/pages/Index.ets`，已备 10 张专辑封面素材供音乐播放器使用 |
+| `Harmony/MyApplication/` | HarmonyOS ArkTS | 早期家电商城 Demo：底部 Tab 导航、搜索过滤、购物车 |
+
+> ⚠️ `Harmony/` 下是**两个独立工程**，各自有 `entry/` 模块，互不引用。
+> `yingye` 是当前在写的主工程，`MyApplication` 保留作参考。
+> 用 DevEco Studio 打开时请分别打开各自的目录，不要打开 `Harmony/` 本身。
 
 ## 各模块怎么运行
 
@@ -32,6 +37,12 @@ npm run preview    # 预览构建产物
 ```
 
 要求 Node `^22.18.0 || >=24.12.0`。
+
+当前挂载的是**路由练习**：`src/App.vue` + `src/router/index.js` 只注册了
+`/home`、`/about`（含子路由 `tab1`、`tab2`）。
+`src/components/Goods/GoodsManage.vue`（商品管理表格 + `v-focus` 自定义指令）和
+`src/components/Login/`（动态组件切换）是完整可用的组件，但**目前没有任何路由指向它们**——
+要查看效果需临时在 `App.vue` 里直接引入，或补一条路由。
 
 ### Cpp
 
@@ -55,7 +66,10 @@ python EnvironmentTest.py
 
 ### Harmony
 
-用 DevEco Studio 打开 `Harmony/MyApplication` 工程后运行；依赖与构建产物（`oh_modules`、`.hvigor`、`build`）不入库。
+用 DevEco Studio 分别打开 `Harmony/yingye` 或 `Harmony/MyApplication` 后运行。
+
+- 工程内**没有** `hvigorw` / `hvigorw.bat` 包装脚本，无法直接在命令行构建，验证以 DevEco 预览器/模拟器为主。
+- 依赖与构建产物（`oh_modules`、`.hvigor`、`build`、`.preview`）不入库。
 
 ## 相关文档
 
@@ -65,4 +79,5 @@ python EnvironmentTest.py
 ## 仓库说明
 
 - 本仓库为个人学习用途。
-- `.gitignore` 已忽略依赖与构建产物（`node_modules/`、`.venv/`、`*.exe`、`oh_modules/` 等），克隆后各模块需按上文自行安装依赖。
+- `.gitignore` 已忽略依赖与构建产物（`node_modules/`、`.venv/`、`*.exe`、`oh_modules/`、`.hvigor/` 等），克隆后各模块需按上文自行安装依赖。
+- `.workbuddy-ai/` 存放助手的工作数据（报告、记忆、备份），已被忽略，不属于项目内容。

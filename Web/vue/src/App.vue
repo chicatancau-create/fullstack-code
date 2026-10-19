@@ -3,6 +3,7 @@
   <nav>
     <router-link to="/home">首页</router-link>
     <router-link to="/about">关于</router-link>
+    <router-link to="/movie">电影</router-link>
   </nav>
   <div class="view">
     <router-view />
@@ -31,8 +32,8 @@ nav a.router-link-active {
 }
 .view {
   min-height: 200px;
-  padding: 40px 0;
-  background: #eee;
+  padding: 16px 0 40px;
+  background: darkturquoise; /* 截图里那块青蓝色背景 */
   text-align: center;
 }
 </style>

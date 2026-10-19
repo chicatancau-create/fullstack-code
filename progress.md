@@ -15,7 +15,7 @@
 | `Web/js自学/` | `javaScript基础语法.html`、`循环与数组.html` 两页可运行的笔记 | 2026-10-12 重写（原件丢失） |
 | `Cpp/` | `c.cpp`（C++）+ `EnvironmentTest.c`（C），各自一个同名 exe | 可编译 |
 | `Python/` | `main.py`、`EnvironmentTest.py` + `.venv` | venv 2026-10-12 重建 |
-| `Harmony/` | `MyApplication/`（606 个文件） | 未受影响 |
+| `Harmony/` | `MyApplication/`（606 个文件）；`yingye/`（2026-10-13 后新增） | 未受影响 |
 
 ## 提交记录
 
@@ -62,8 +62,58 @@
 - **结果**：`git fsck` 干净、工作区一次性提交；旧提交 `9d9762d` / `59ba534` 不再存在于历史中。
 - **回滚**：解压备份 tarball 覆盖回 `.git` 即可恢复到重建前状态。
 
+## 2026-10-19 仓库整理
+
+本次只做「收口」：不改业务代码，把 git 跟踪范围与文档对齐到真实结构。**所有结论均为当日命令实测。**
+
+### 发现并修复
+
+| 问题 | 证据 | 处置 |
+|---|---|---|
+| `Harmony/yingye/` 完全没进任何文档 | 旧 README / progress 只写 `MyApplication`；而 `Harmony/.workbuddy-ai/memory/MEMORY.md` 记明 `yingye` 才是当前主工程 | README 补上两个工程，并标明 `yingye` 为主工程 |
+| `MyApplication/src/` 是 `entry/src/main/ets/` 的**残缺副本**，却被 git 跟踪 | 3 个文件，SHA256 与 `entry/` 下同名文件逐一相同；`entry/` 有 12 个 ets，此目录只有 3 个 | `git rm --cached` 取消跟踪（磁盘文件保留，git 历史里仍可找回） |
+| `MyApplication/.gitignore` 漏了 `.hvigor`、`.idea`、`local.properties`，导致构建缓存进了版本库 | `git ls-files` 在该项目下命中 **25 个** `.hvigor/cache`+`report` JSON，且每次构建都产生 diff 噪声 | 补齐忽略规则至与 `yingye/.gitignore` 一致；原 25 个文件 `git rm --cached` |
+| 两个 Harmony 工程 `.gitignore` 规则不一致 | `MyApplication` 忽略 `/build`（实际不存在）、未忽略 `.hvigor`；`yingye` 反之 | 统一 |
+
+### 验证（当日实跑）
+
+- `Web/vue`：`npm run build` 通过（vite 8.3.4，30 modules，产出 `dist/`）。
+- `Python`：`main.py` → `Hi, PyCharm`；`EnvironmentTest.py` → `Sum: 14`。
+- `Cpp`：`g++ 15.2.0` 编译 `c.cpp`、`EnvironmentTest.c` 均成功，运行均输出 `Sum: 14`（临时产物已删，原 `c.exe`/`EnvironmentTestC.exe` 未动）。
+- `git fsck --full`：无输出，仓库健康。
+
+### 未处理（需本人决定，不擅自改动）
+
+- **`yingye/entry/src/main/ets/pages/Index.ets` 有一处未完成的改动**：新增行 `.expandSafeArea({SafeAreaType })`
+  引用了未导入的标识符，属半成品编辑，当前状态是 **git 未提交**。保留了原样。
+- Harmony 两个工程**未做真实构建**：工程内无 `hvigorw` 包装脚本，只能在 DevEco Studio 里验证，本次未跑。
+- `Harmony/MyApplication/oh-package-lock.json5` 有未提交改动（构建过程产生）。
+
+## 2026-10-19 清理无用文件（当天第二轮）
+
+用户确认只删「可再生」的东西，**备份、源码、记忆文件一律不动**。
+
+| 删除 | 规模 | 为什么安全 |
+|---|---|---|
+| `Harmony/.workbuddy-ai/tmp/covers_raw/` | 19.22 MB / 12 张原图 | 成品 `music_cover_01~10.png` 已在 `yingye/.../resources/base/media/`，这里只是 1024×1024 中间产物 |
+| `Harmony/MyApplication/src/` | 3 个 ets | 与 `entry/src/main/ets/` 同名文件逐字节相同，且 git 历史里仍可找回 |
+| `Harmony/MyApplication/.preview/` | 0.53 MB / 105 文件 | 预览器缓存，DevEco 打开时自动重建 |
+| `Harmony/MyApplication/.hvigor/` | 3.45 MB / 24 文件 | hvigor 构建缓存 |
+| `Harmony/yingye/.hvigor/` | 4.79 MB / 21 文件 | 同上 |
+| `Web/vue/dist/` | 0.09 MB | `npm run build` 产物 |
+
+**刻意保留（删了不可恢复）**：`.workbuddy-ai/backup/`（git 重建前唯一回滚依据）、
+`Harmony/.workbuddy-ai/memory/`（ArkTS 踩坑约定）、`Harmony/MyApplication/` 整个旧工程、
+`Python/.venv`、`Web/vue/node_modules`、两个工程的 `oh_modules`。
+
+### 验证
+
+- 删除后 `Web/vue`（含当时新增的 `Movie.vue`/`MovieDetails.vue` 路由）`npm run build` 通过，exit 0。
+- 随后再次删除 `dist/`，保持工作区干净。
+
 ## 下一步
 
+- [ ] 补完或撤回 `yingye/.../pages/Index.ets` 里的 `.expandSafeArea({SafeAreaType })` 半成品
 - [ ] `Web/vue` 跟课继续（第 4 章 组件基础（下）：自定义指令已过，接下来是引用静态资源）
 - [ ] 决定 `Cpp/` 要不要拆成 `C/` + `Cpp/`
 - [x] ~~决定 git 怎么处理~~ → 已于 2026-10-13 重建历史（见上）

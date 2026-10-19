@@ -15,6 +15,8 @@
 |---|---|---|---|---|---|---|
 | 2026-09-14 前 | Git | 提交时身份未配置导致失败 | 查看提交报错与 `git config` | `user.name` / `user.email` 未设置 | 配置本地仓库级用户信息 | 通过（提交 `7dfeb0a`） |
 | 2026-09-14 前 | 文件路径 | 课程材料路径写错导致找不到文件 | 逐级确认目录与文件名 | 手工输入路径出错 | 用完整路径并核对目录层级 | 通过 |
+| 2026-10-19 | Git / Harmony | 无报错，但每次构建后 `git status` 都冒出 `.hvigor/` 缓存 diff，干扰「有没有真的改动源码」的判断 | `git ls-files Harmony/MyApplication` 发现 25 个 `.hvigor/cache`、`.hvigor/report` 文件在版本库中 | `MyApplication/.gitignore` 只写了 `/build`，漏了 `.hvigor`（该工程真正的缓存目录名） | 补齐 `.hvigor`、`.idea`、`local.properties`、`**/build` 等规则；对这 25 个文件执行 `git rm --cached` | 通过（规则对齐 `yingye`，缓存不再进版本库） |
+| 2026-10-19 | Git / Harmony | `MyApplication/src/` 长期存在但没人说得清用途，且**修改后不生效**（真正被编译的是 `entry/src/main/ets/`） | 逐文件 SHA256 比对：该目录 3 个文件与 `entry/` 下同名文件完全相同 | 编辑器按路径新建文件时落到了项目根 `src/`，而非模块内的 `entry/src/`；随后被误提交 | `git rm --cached -r` 取消跟踪（磁盘保留，历史仍可找回），并在 README 写明两个 Harmony 工程各自的入口 | 通过（`git ls-files` 该路径已无记录） |
 
 ## 待复测
 

@@ -11,5 +11,6 @@ struct Index {
    .width('100%')
    .height('100%')
    .backgroundColor('rgb(19, 19, 18)')
+   .expandSafeArea({SafeAreaType })
  }
 }
