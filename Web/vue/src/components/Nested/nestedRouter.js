@@ -2,12 +2,12 @@
 //1.导入路由相关函数 createRouter, createWebHashHistory
 import { createRouter, createWebHashHistory } from 'vue-router'
 //2.导入路由控制的组件
-import Home from '../components/Home.vue'
-import About from '../components/About.vue'
-import Tab1 from '../components/Tab1.vue'
-import Tab2 from '../components/Tab2.vue'
-import Movie from '../components/Movie.vue'
-import MovieDetails from '../components/MovieDetails.vue'
+import Home from '../Home.vue'
+import About from '../About.vue'
+import Tab1 from '../Tab1.vue'
+import Tab2 from '../Tab2.vue'
+import Movie from '../Movie.vue'
+import MovieDetails from '../MovieDetails.vue'
 //3.创建路由实例
 const router = createRouter({
   history: createWebHashHistory(),
