@@ -2,36 +2,37 @@
 //1.导入路由相关函数 createRouter, createWebHashHistory
 import { createRouter, createWebHashHistory } from 'vue-router'
 //2.导入路由控制的组件
-import Home from '../components/Home.vue'
-import About from '../components/About.vue'
-import Tab1 from '../components/Tab1.vue'
-import Tab2 from '../components/Tab2.vue'
-import Movie from '../components/Movie.vue'
-import MovieDetails from '../components/MovieDetails.vue'
+import Login from '../components/Admin/Login.vue'
+import Home from '../components/Admin/Home.vue'
+import Users from '../components/Admin/Users.vue'
+import UserDetail from '../components/Admin/UserDetail.vue'
+import Placeholder from '../components/Admin/Placeholder.vue'
 //3.创建路由实例
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     // 路由重定向
-    { path: '/', redirect: '/home' },
-    { path: '/home', component: Home },
+    { path: '/', redirect: '/home/users' },
+    { path: '/login', component: Login },
     {
-      path: '/about',
-      component: About,
+      path: '/home',
+      component: Home,
       children: [
-        { path: 'tab1', component: Tab1 },
-        { path: 'tab2', component: Tab2 },
-      ],
-    },
-    {
-      path: '/movie',
-      component: Movie,
-      children: [
-        // 动态路由：:id 匹配到的值会作为 props.id 传给 MovieDetails
-        { path: ':id', component: MovieDetails, props: true },
+        { path: 'users', component: Users },
+        { path: 'users/:id', component: UserDetail },
+        { path: 'rights', component: Placeholder, meta: { title: '权限管理' } },
+        { path: 'goods', component: Placeholder, meta: { title: '商品管理' } },
+        { path: 'orders', component: Placeholder, meta: { title: '订单管理' } },
+        { path: 'sets', component: Placeholder, meta: { title: '系统设置' } },
       ],
     },
   ],
 })
+
+//全局前置守卫:没有登录标记时,除了登录页哪里都去不了
+router.beforeEach((to) => {
+  if (to.path !== '/login' && !localStorage.getItem('token')) return '/login'
+})
+
 //导出路由实例
 export default router
