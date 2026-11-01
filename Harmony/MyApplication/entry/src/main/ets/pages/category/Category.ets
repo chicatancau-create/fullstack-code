@@ -1,4 +1,4 @@
-import { DetailArg, ProductRow, ProductsPayload, firstImage, getJson } from '../../utils/requestUtils'
+import { DetailArg, firstImage, getJson, GoodsDataModel, ProductDataModel, ResponseData } from '../../utils/requestUtils'
 
 interface Menu {
   name: string
@@ -20,7 +20,7 @@ const menus: Menu[] = [
 @Component
 export default struct Category {
   @State selected: number = 0
-  @State goodsList: ProductRow[] = []
+  @State goodsList: ProductDataModel[] = []
   @State tip: string = ''
   @State loading: boolean = false
 
@@ -34,15 +34,15 @@ export default struct Category {
     this.tip = ''
     try {
       const text: string = await getJson('/api/products?page=1&limit=20&category_id=' + categoryId.toString())
-      const payload: ProductsPayload = JSON.parse(text) as ProductsPayload
-      if (payload.code === 200 && payload.data !== undefined && payload.data.products !== undefined) {
-        this.goodsList = payload.data.products
+      const res: ResponseData<GoodsDataModel> = JSON.parse(text) as ResponseData<GoodsDataModel>
+      if (res.code === 200 && res.data !== undefined && res.data.products !== undefined) {
+        this.goodsList = res.data.products
         if (this.goodsList.length === 0) {
           this.tip = '该分类下服务端没有商品'
         }
       } else {
         this.goodsList = []
-        this.tip = '服务端返回异常：' + payload.message
+        this.tip = '服务端返回异常：' + res.message
       }
     } catch (err) {
       this.goodsList = []
@@ -53,10 +53,11 @@ export default struct Category {
     }
   }
 
-  private toDetail(item: ProductRow): DetailArg {
+  // 详情页统一参数：图片可能是服务端绝对地址，也可能是本地 rawfile 名
+  private toDetail(item: ProductDataModel): DetailArg {
     const arg: DetailArg = {
       title: item.name,
-      priceText: `￥${item.price}`,
+      priceText: `价格${item.price} 元`,
       content: item.description === null ? '' : item.description,
       image: firstImage(item.images),
       stockText: `库存：${item.stock}`
@@ -116,7 +117,7 @@ export default struct Category {
         }
 
         List({ space: 10 }) {
-          ForEach(this.goodsList, (item: ProductRow) => {
+          ForEach(this.goodsList, (item: ProductDataModel) => {
             ListItem() {
               Row() {
                 if (firstImage(item.images) === '') {
@@ -149,7 +150,7 @@ export default struct Category {
                 params: this.toDetail(item)
               })
             })
-          }, (item: ProductRow) => item.id.toString())
+          }, (item: ProductDataModel) => item.id.toString())
         }
         .layoutWeight(1)
         .width('100%')

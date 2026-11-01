@@ -1,21 +1,23 @@
 import { allGoods, addCart, Goods } from '../../model/Data'
 import { AdvertisementData, AdvertisementDataList } from '../../model/SwiperModel'
+import { CategoryArg } from '../../utils/requestUtils'
 
 // 第 6 章宫格：分类名与服务端 product_categories 种子数据对齐
 interface GridItemInfo {
   icon: string
   name: string
+  categoryId: number
 }
 
 const gridItems: GridItemInfo[] = [
-  { icon: 'dianzichanpin.png', name: '电子' },
-  { icon: 'fuzhuangfushi.png', name: '服装' },
-  { icon: 'tushu.png', name: '书籍' },
-  { icon: 'jiadian.png', name: '家居' },
-  { icon: 'gerenhuli.png', name: '美妆' },
-  { icon: 'yundongjianshen.png', name: '运动' },
-  { icon: 'wanju.png', name: '玩具' },
-  { icon: 'shipinyinliao.png', name: '食品' },
+  { icon: 'dianzichanpin.png', name: '电子', categoryId: 1 },
+  { icon: 'fuzhuangfushi.png', name: '服装', categoryId: 2 },
+  { icon: 'tushu.png', name: '书籍', categoryId: 3 },
+  { icon: 'jiadian.png', name: '家居', categoryId: 4 },
+  { icon: 'gerenhuli.png', name: '美妆', categoryId: 5 },
+  { icon: 'yundongjianshen.png', name: '运动', categoryId: 6 },
+  { icon: 'wanju.png', name: '玩具', categoryId: 7 },
+  { icon: 'shipinyinliao.png', name: '食品', categoryId: 8 },
 ]
 
 @Component
@@ -61,6 +63,14 @@ export default struct Home {
                 Text(item.name)
                   .fontSize(12)
               }
+              // 5.4 规定宫格要能跳到对应商品列表
+              .onClick(() => {
+                const arg: CategoryArg = { categoryId: item.categoryId }
+                this.getUIContext().getRouter().pushUrl({
+                  url: 'pages/test/NetGoodsPage',
+                  params: arg
+                })
+              })
             }
           }, (item: GridItemInfo) => item.name)
         }

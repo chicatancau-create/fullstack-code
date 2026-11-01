@@ -4,35 +4,42 @@ import { http } from '@kit.NetworkKit'
 // 例如老师快照里写的是 http://10.2.64.151:3000
 export const BASE_URL: string = 'http://127.0.0.1:3000'
 
-// 对应服务端 products 表（GET /api/products 返回 data.products 数组）
-// description / images 在服务端可为 NULL，所以声明成可空类型
-export interface ProductRow {
+// 对应服务端 products 表；模型命名按 5.4 任务演示规定的写法
+// description / images / stock 在服务端可为 NULL
+export interface ProductDataModel {
   id: number
   name: string
   description: string | null
   price: string
   stock: number
+  category_id: number
   images: string | null
 }
 
-// 服务端统一响应包：{ code, message, data }
-// GET /api/products 的 data 不是数组，而是 { products: [...], pagination: {...} }
-export interface ProductsPagination {
+// 分页信息
+export interface Pagination {
   total: number
   page: number
   limit: number
   totalPages: number
 }
 
-export interface ProductsData {
-  products: ProductRow[]
-  pagination: ProductsPagination
+// 商品列表数据体
+export interface GoodsDataModel {
+  products: ProductDataModel[]
+  pagination: Pagination
 }
 
-export interface ProductsPayload {
+// 服务端统一响应包：{ code, message, data }
+export interface ResponseData<T> {
   code: number
   message: string
-  data: ProductsData
+  data: T
+}
+
+// 宫格点进商品列表时传的分类参数
+export interface CategoryArg {
+  categoryId: number
 }
 
 // 第 9 章要求的最小流程：createHttp -> request -> destroy

@@ -1,36 +1,51 @@
-import { ProductRow, ProductsPayload, firstImage, getJson } from '../../utils/requestUtils'
+import { CategoryArg, firstImage, getJson, GoodsDataModel, ProductDataModel, ResponseData } from '../../utils/requestUtils'
 import Title from '../component/Title'
 
 @Entry
 @Component
 struct NetGoodsPage {
-  @State list: ProductRow[] = []
+  @State list: ProductDataModel[] = []
   @State loading: boolean = false
   @State tip: string = ''
+  @State categoryId: number = 1
+  private loadedFor: number = 0
 
   // 第 9 章：组件即将出现时发起网络请求
   aboutToAppear(): void {
-    this.load()
+    this.load(this.categoryId)
   }
 
-  private async load(): Promise<void> {
+  // 首页宫格跳进来时带分类参数，按 9.1 文档在页面显示时取参
+  onPageShow(): void {
+    const params: Object | undefined = this.getUIContext().getRouter().getParams()
+    if (params !== undefined) {
+      const arg: CategoryArg = params as CategoryArg
+      if (arg.categoryId !== undefined && arg.categoryId !== this.loadedFor) {
+        this.categoryId = arg.categoryId
+        this.load(arg.categoryId)
+      }
+    }
+  }
+
+  private async load(categoryId: number): Promise<void> {
     this.loading = true
     this.tip = ''
+    this.loadedFor = categoryId
     try {
-      const text: string = await getJson('/api/products?page=1&limit=20')
-      const payload: ProductsPayload = JSON.parse(text) as ProductsPayload
-      if (payload.code === 200 && payload.data !== undefined && payload.data.products !== undefined) {
-        this.list = payload.data.products
+      const text: string = await getJson('/api/products?page=1&limit=20&category_id=' + categoryId.toString())
+      const res: ResponseData<GoodsDataModel> = JSON.parse(text) as ResponseData<GoodsDataModel>
+      if (res.code === 200 && res.data !== undefined && res.data.products !== undefined) {
+        this.list = res.data.products
+        if (this.list.length === 0) {
+          this.tip = '服务端没有返回商品'
+        }
       } else {
         this.list = []
-        this.tip = payload.message === undefined ? '服务端返回格式不对' : payload.message
-      }
-      if (this.list.length === 0 && this.tip === '') {
-        this.tip = '服务端没有返回商品'
+        this.tip = '服务端返回异常：' + res.message
       }
     } catch (err) {
       this.list = []
-      this.tip = '加载失败：请确认服务端已启动，并且手机与电脑在同一局域网'
+      this.tip = '连不上服务端：请确认 shopmall-api-v2-server 已启动（默认 http://127.0.0.1:3000）'
     } finally {
       this.loading = false
     }
@@ -38,7 +53,7 @@ struct NetGoodsPage {
 
   build() {
     Column() {
-      Title({ title: '网络商品列表', arrow: true })
+      Title({ title: `网络商品列表 分类${this.categoryId}`, arrow: true })
 
       if (this.loading) {
         Text('加载中…')
@@ -55,7 +70,7 @@ struct NetGoodsPage {
             .textAlign(TextAlign.Center)
           Button('重新加载')
             .onClick(() => {
-              this.load()
+              this.load(this.categoryId)
             })
         }
         .width('90%')
@@ -63,7 +78,7 @@ struct NetGoodsPage {
       }
 
       List({ space: 8 }) {
-        ForEach(this.list, (item: ProductRow) => {
+        ForEach(this.list, (item: ProductDataModel) => {
           ListItem() {
             Row({ space: 10 }) {
               if (firstImage(item.images) === '') {
@@ -79,7 +94,7 @@ struct NetGoodsPage {
               Column({ space: 4 }) {
                 Text(item.name)
                   .fontSize(16)
-                Text(`￥${item.price}　库存 ${item.stock}`)
+                Text(`价格${item.price} 元　库存 ${item.stock}`)
                   .fontSize(13)
                   .fontColor('#E64545')
               }
@@ -89,7 +104,7 @@ struct NetGoodsPage {
             .width('100%')
             .padding(10)
           }
-        }, (item: ProductRow) => item.id.toString())
+        }, (item: ProductDataModel) => item.id.toString())
       }
       .width('100%')
       .layoutWeight(1)
