@@ -9,15 +9,18 @@ struct LoginApi {
   @Local email: string = ''
   @Local password: string = ''
   @Local busy: boolean = false
+  // 11.4 步骤2：登录失败信息用红字显示在页面上
+  @Local errorMessage: string = ''
   private user: User = connectUser()
 
   // 服务端契约：POST /api/auth/login  body { email, password }
   private async doLogin(): Promise<void> {
     if (this.email === '' || this.password === '') {
-      this.getUIContext().getPromptAction().showToast({ message: '邮箱和密码不能为空' })
+      this.errorMessage = '邮箱和密码不能为空'
       return
     }
     this.busy = true
+    this.errorMessage = ''
     try {
       const body: Record<string, string> = { 'email': this.email, 'password': this.password }
       const text: string = await postJson('/api/auth/login', JSON.stringify(body))
@@ -34,10 +37,10 @@ struct LoginApi {
         this.getUIContext().getPromptAction().showToast({ message: `欢迎，${api.username}` })
         this.getUIContext().getRouter().back()
       } else {
-        this.getUIContext().getPromptAction().showToast({ message: payload.message })
+        this.errorMessage = payload.message === undefined ? '登录失败' : payload.message
       }
     } catch (err) {
-      this.getUIContext().getPromptAction().showToast({ message: '连不上服务端，请先启动 shopmall-api-v2-server' })
+      this.errorMessage = '网络错误，请稍后重试'
     } finally {
       this.busy = false
     }
@@ -72,6 +75,12 @@ struct LoginApi {
         .onClick(() => {
           this.doLogin()
         })
+
+      if (this.errorMessage !== '') {
+        Text(this.errorMessage)
+          .fontSize(13)
+          .fontColor(Color.Red)
+      }
     }
     .width('100%')
     .height('100%')

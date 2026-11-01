@@ -3,15 +3,53 @@ import { addCart } from '../../model/CartStore'
 import { AdvertisementData, AdvertisementDataList } from '../../model/SwiperModel'
 import { connectUser, User } from '../../model/User'
 import { GoodsTypeData, GoodsTypeList } from '../../model/GoodsTypeModel'
-import { CategoryArg } from '../../utils/requestUtils'
+import { CategoryArg, BASE_URL } from '../../utils/requestUtils'
 
 @ComponentV2
 export default struct Home {
   @Local kw: string = ''
   @Local swiperData: AdvertisementData[] = AdvertisementDataList
   @Local types: GoodsTypeData[] = GoodsTypeList
-  @Local user: User = connectUser()
+  // 11.4 步骤4：首页作为数据提供方，用 @Provider 把全局登录态暴露给子孙组件
+  @Provider('user') user: User = connectUser()
   private goods: Goods[] = allGoods()
+
+  // 11.4 步骤4：首页顶部用户信息区（未登录时给「去登录」入口）
+  @Builder
+  UserHeader() {
+    if (this.user.isLoggedIn) {
+      Row({ space: 10 }) {
+        Image(this.user.avatar === '' ? $r('app.media.denglu') : BASE_URL + this.user.avatar)
+          .width(40)
+          .height(40)
+          .borderRadius(20)
+        Column() {
+          Text(`欢迎，${this.user.name}`)
+            .fontSize(15)
+          Text(this.user.email)
+            .fontSize(12)
+            .fontColor(Color.Gray)
+        }
+        .alignItems(HorizontalAlign.Start)
+      }
+      .width('92%')
+      .justifyContent(FlexAlign.Start)
+    } else {
+      Row() {
+        Text('未登录')
+          .fontSize(14)
+          .fontColor('#9B9B9B')
+        Blank()
+        Button('去登录')
+          .fontSize(13)
+          .height(30)
+          .onClick(() => {
+            this.getUIContext().getRouter().pushUrl({ url: 'pages/me/Login' })
+          })
+      }
+      .width('92%')
+    }
+  }
 
   private shown(): Goods[] {
     if (this.kw === '') {
@@ -43,13 +81,8 @@ export default struct Home {
   build() {
     Scroll() {
       Column({ space: 16 }) {
-        // 11.4 步骤4：首页读取全局登录状态并显示
-        if (this.user.isLoggedIn) {
-          Text(`已登录：${this.user.name}`)
-            .fontSize(14)
-            .fontColor('#1698CE')
-            .width('92%')
-        }
+        // 11.4 步骤4：顶部用户信息区
+        this.UserHeader()
 
         // 第 6 章轮播图：六张图，自动播放 2000 毫秒
         Swiper() {
