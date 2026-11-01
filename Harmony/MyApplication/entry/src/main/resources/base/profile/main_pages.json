@@ -9,6 +9,7 @@
     "pages/test/ContactPage",
     "pages/test/ListPage",
     "pages/test/NetGoodsPage",
-    "pages/goods/NavPage"
+    "pages/goods/NavPage",
+    "pages/goods/GoodsDetailRouter"
   ]
 }

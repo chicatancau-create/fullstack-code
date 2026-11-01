@@ -42,6 +42,13 @@ struct ListPage {
               .padding(10)
               .justifyContent(FlexAlign.SpaceBetween)
             }
+            // 第 10 章：点击列表项，把当前商品作为参数传给详情页
+            .onClick(() => {
+              this.getUIContext().getRouter().pushUrl({
+                url: 'pages/goods/GoodsDetailRouter',
+                params: item
+              })
+            })
             .swipeAction({
               end: {
                 builder: this.itemEnd(index)
