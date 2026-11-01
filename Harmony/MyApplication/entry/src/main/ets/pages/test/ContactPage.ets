@@ -20,7 +20,7 @@ struct ContactPage {
 
   build() {
     Column() {
-      Title({ title: '通讯录', arrow: true })
+      Title({ title: '通讯录', isShow: true })
       List({ space: 10 }) {
         ForEach(this.contactsList, (item: Contact, index: number) => {
           ListItem() {

@@ -22,7 +22,7 @@ struct ListPage {
 
   build() {
     Column() {
-      Title({ title: '商品列表', arrow: true })
+      Title({ title: '商品列表', isShow: true })
       // 下拉刷新：refreshing 双向绑定 isRefreshing
       Refresh({ refreshing: $$this.isRefreshing }) {
         List({ space: 10 }) {

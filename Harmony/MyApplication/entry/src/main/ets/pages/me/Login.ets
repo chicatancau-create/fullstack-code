@@ -39,7 +39,7 @@ struct Login {
 
   build() {
     Column({ space: 16 }) {
-      Title({ title: '用户登录', arrow: true })
+      Title({ title: '用户登录', isShow: true })
 
       Column({ space: 12 }) {
         TextInput({ placeholder: '请输入您的邮箱', text: this.email })

@@ -94,7 +94,7 @@ struct Edit {
 
   build() {
     Column({ space: 16 }) {
-      Title({ title: '修改个人信息', arrow: true })
+      Title({ title: '修改个人信息', isShow: true })
 
       if (this.tip !== '') {
         Text(this.tip)

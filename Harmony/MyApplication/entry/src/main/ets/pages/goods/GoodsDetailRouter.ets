@@ -16,7 +16,7 @@ struct GoodsDetailRouter {
 
   build() {
     Column({ space: 12 }) {
-      Title({ title: '商品详情', arrow: true })
+      Title({ title: '商品详情', isShow: true })
 
       // 图片可能是服务端绝对地址，也可能是本地 rawfile 文件名
       if (this.arg.image.startsWith('http')) {

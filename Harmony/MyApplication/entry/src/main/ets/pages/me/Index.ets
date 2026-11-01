@@ -7,7 +7,7 @@ export default struct Index {
 
   build() {
     Column({ space: 12 }) {
-      Title({ title: '个人中心' })
+      Title({ title: '个人中心', isShow: false })
       if (!this.user.isLoggedIn) {
         Text('登录')
           // 响应事件

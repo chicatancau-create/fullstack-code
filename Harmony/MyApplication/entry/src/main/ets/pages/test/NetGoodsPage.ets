@@ -53,7 +53,7 @@ struct NetGoodsPage {
 
   build() {
     Column() {
-      Title({ title: `网络商品列表 分类${this.categoryId}`, arrow: true })
+      Title({ title: `网络商品列表 分类${this.categoryId}`, isShow: true })
 
       if (this.loading) {
         Text('加载中…')

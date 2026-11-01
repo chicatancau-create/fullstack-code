@@ -45,7 +45,7 @@ struct LoginApi {
 
   build() {
     Column({ space: 16 }) {
-      Title({ title: '网络登录', arrow: true })
+      Title({ title: '网络登录', isShow: true })
 
       Text('第 11 章：调用课件服务端 /api/auth/login，登录状态用 AppStorageV2 全局共享')
         .fontSize(13)

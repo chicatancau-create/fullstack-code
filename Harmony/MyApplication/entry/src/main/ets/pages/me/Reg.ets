@@ -50,7 +50,7 @@ struct Reg {
 
   build() {
     Column({ space: 16 }) {
-      Title({ title: '用户注册', arrow: true })
+      Title({ title: '用户注册', isShow: true })
 
       Column({ space: 12 }) {
         TextInput({ placeholder: '用户名（4-10 位）', text: this.account })
