@@ -26,7 +26,7 @@ struct Login {
 
   build() {
     Column({ space: 16 }) {
-      Title({ title: '登录用户', arrow: true })
+      Title({ title: '用户登录', arrow: true })
 
       Column({ space: 12 }) {
         TextInput({ placeholder: '账号', text: this.account })

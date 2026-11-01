@@ -2,6 +2,10 @@
   "src": [
     "pages/Index",
     "pages/me/Login",
-    "pages/me/Reg"
+    "pages/me/Reg",
+    "pages/test/AddressPage",
+    "pages/test/ContactPage",
+    "pages/test/ListPage",
+    "pages/goods/NavPage"
   ]
 }

@@ -37,7 +37,7 @@ struct Reg {
 
   build() {
     Column({ space: 16 }) {
-      Title({ title: '注册用户', arrow: true })
+      Title({ title: '用户注册', arrow: true })
 
       Column({ space: 12 }) {
         TextInput({ placeholder: '账号', text: this.account })
