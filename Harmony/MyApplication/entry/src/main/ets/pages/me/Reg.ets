@@ -9,6 +9,20 @@ struct Reg {
   @Local phone: string = ''
   @Local password: string = ''
   @Local confirm: string = ''
+  // 8.4 规定注册页还要收集性别(Radio)、爱好(Checkbox)、出生日期(日历选择)
+  @Local gender: string = ''
+  @Local hobby: string[] = []
+  @Local birthday: string = ''
+
+  private toggleHobby(name: string, on: boolean): void {
+    const i: number = this.hobby.indexOf(name)
+    if (on && i < 0) {
+      this.hobby.push(name)
+    }
+    if (!on && i >= 0) {
+      this.hobby.splice(i, 1)
+    }
+  }
 
   // 第 8 章规定的校验项：用户名 4-10 位、邮箱格式、11 位手机号、密码至少 6 位、两次一致
   private check(): string {
@@ -78,6 +92,59 @@ struct Reg {
           .onChange((value: string) => {
             this.confirm = value
           })
+
+        Row() {
+          Text('请选择性别')
+            .fontSize(14)
+          Blank()
+          Radio({ value: '男', group: 'gender' })
+            .onChange((isChecked: boolean) => {
+              if (isChecked) {
+                this.gender = '男'
+              }
+            })
+          Text('男')
+            .fontSize(14)
+          Blank()
+          Radio({ value: '女', group: 'gender' })
+            .onChange((isChecked: boolean) => {
+              if (isChecked) {
+                this.gender = '女'
+              }
+            })
+          Text('女')
+            .fontSize(14)
+        }
+        .width('100%')
+
+        Row() {
+          Text('请选择爱好')
+            .fontSize(14)
+          Blank()
+          Checkbox({ name: '足球', group: 'hobby' })
+            .shape(CheckBoxShape.ROUNDED_SQUARE)
+            .onChange((value: boolean) => {
+              this.toggleHobby('足球', value)
+            })
+          Text('足球')
+            .fontSize(14)
+          Blank()
+          Checkbox({ name: '篮球', group: 'hobby' })
+            .shape(CheckBoxShape.ROUNDED_SQUARE)
+            .onChange((value: boolean) => {
+              this.toggleHobby('篮球', value)
+            })
+          Text('篮球')
+            .fontSize(14)
+        }
+        .width('100%')
+
+        // 8.4 还列了 CalendarPickerDialog，但本 SDK 里没有全局 CalendarController 类型，
+        // 先按课件结构代码里的写法用输入框收集日期，日历弹窗待查官方签名后再接
+        TextInput({ placeholder: '请输入出生日期（如 2005-01-01）', text: this.birthday })
+          .onChange((value: string) => {
+            this.birthday = value
+          })
       }
       .width('90%')
 
@@ -91,7 +158,9 @@ struct Reg {
             return
           }
           this.save()
-          this.getUIContext().getPromptAction().showToast({ message: '注册成功，请用该邮箱登录' })
+          this.getUIContext().getPromptAction().showToast({
+            message: `注册成功：${this.gender} ${this.hobby.join('/')} ${this.birthday}`
+          })
           this.getUIContext().getRouter().back()
         })
     }
