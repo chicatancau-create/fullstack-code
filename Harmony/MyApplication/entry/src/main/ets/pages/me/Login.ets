@@ -1,6 +1,7 @@
 import Title from '../component/Title'
 import { Account, findAccountByEmail, isEmail } from '../../model/Data'
 import { connectUser, User } from '../../model/User'
+import { TabIndexArg } from '../../utils/requestUtils'
 
 @Entry
 @ComponentV2
@@ -64,7 +65,10 @@ struct Login {
             return
           }
           this.getUIContext().getPromptAction().showToast({ message: `欢迎，${this.user.name}` })
-          this.getUIContext().getRouter().back()
+          // 第 8 章：登录成功后带参数跳回主页面，id 3 就是「我的」这个 tab
+          setTimeout(() => {
+            this.getUIContext().getRouter().pushUrl({ url: 'pages/Index', params: { id: 3 } as TabIndexArg })
+          }, 500)
         })
 
       Text('还没有账号？去注册')

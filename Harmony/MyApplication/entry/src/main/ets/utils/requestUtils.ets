@@ -156,6 +156,11 @@ export async function putWithToken(path: string, body: string, token: string): P
   }
 }
 
+// 登录成功后跳回主页面时带的参数：id 就是要定位到的 tab 下标
+export interface TabIndexArg {
+  id: number
+}
+
 // 详情页统一参数：本地商品和服务端商品都转成它再传参
 export interface DetailArg {
   title: string
