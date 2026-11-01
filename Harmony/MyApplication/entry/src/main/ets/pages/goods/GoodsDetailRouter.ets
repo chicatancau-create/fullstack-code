@@ -1,38 +1,53 @@
-import { Goods } from '../../data/interface'
+import { DetailArg } from '../../utils/requestUtils'
 import Title from '../component/Title'
 
 @Entry
 @Component
 struct GoodsDetailRouter {
-  @State item: Goods = { id: 0, goodsName: '', goodsContent: '', goodsQuantity: 0, icon: '01.png', goodsPrice: 0 }
+  @State arg: DetailArg = { title: '', priceText: '', content: '', image: '', stockText: '' }
 
-  // 第 10 章 Router 写法：页面显示时用 getParams 取列表传过来的商品
+  // 第 10 章 Router 写法：页面显示时取列表传过来的商品参数
   onPageShow(): void {
     const params: Object | undefined = this.getUIContext().getRouter().getParams()
     if (params !== undefined) {
-      this.item = params as Goods
+      this.arg = params as DetailArg
     }
   }
 
   build() {
     Column({ space: 12 }) {
       Title({ title: '商品详情', arrow: true })
-      Image($rawfile(this.item.icon))
-        .width(180)
-        .height(180)
-        .objectFit(ImageFit.Contain)
-      Text(this.item.goodsName)
+
+      // 图片可能是服务端绝对地址，也可能是本地 rawfile 文件名
+      if (this.arg.image.startsWith('http')) {
+        Image(this.arg.image)
+          .width(180)
+          .height(180)
+          .objectFit(ImageFit.Contain)
+      } else if (this.arg.image === '') {
+        Image($r('app.media.dianqi'))
+          .width(180)
+          .height(180)
+          .objectFit(ImageFit.Contain)
+      } else {
+        Image($rawfile(this.arg.image))
+          .width(180)
+          .height(180)
+          .objectFit(ImageFit.Contain)
+      }
+
+      Text(this.arg.title)
         .fontSize(18)
         .fontWeight(FontWeight.Bold)
         .width('90%')
-      Text(`￥${this.item.goodsPrice}`)
+      Text(this.arg.priceText)
         .fontSize(16)
         .fontColor('#E64545')
         .width('90%')
-      Text(`库存：${this.item.goodsQuantity}`)
+      Text(this.arg.stockText)
         .fontSize(14)
         .width('90%')
-      Text(this.item.goodsContent)
+      Text(this.arg.content)
         .fontSize(14)
         .width('90%')
     }

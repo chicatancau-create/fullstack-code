@@ -1,4 +1,5 @@
 import { Goods, listGoods } from '../../data/interface'
+import { DetailArg } from '../../utils/requestUtils'
 import Title from '../component/Title'
 
 @Entry
@@ -44,9 +45,16 @@ struct ListPage {
             }
             // 第 10 章：点击列表项，把当前商品作为参数传给详情页
             .onClick(() => {
+              const arg: DetailArg = {
+                title: item.goodsName,
+                priceText: `￥${item.goodsPrice}`,
+                content: item.goodsContent,
+                image: item.icon,
+                stockText: `库存：${item.goodsQuantity}`
+              }
               this.getUIContext().getRouter().pushUrl({
                 url: 'pages/goods/GoodsDetailRouter',
-                params: item
+                params: arg
               })
             })
             .swipeAction({

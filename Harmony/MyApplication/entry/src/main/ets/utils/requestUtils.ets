@@ -1,6 +1,7 @@
 import { http } from '@kit.NetworkKit'
 
-// 真机联调时把这里换成运行服务端那台电脑的局域网 IP，例如 http://192.168.1.5:3000
+// 本机自测用 127.0.0.1；真机或机房按课件示例改成服务端所在机器的局域网 IP，
+// 例如老师快照里写的是 http://10.2.64.151:3000
 export const BASE_URL: string = 'http://127.0.0.1:3000'
 
 // 对应服务端 products 表（GET /api/products 返回 data.products 数组）
@@ -155,4 +156,13 @@ export interface UserPayload {
   code: number
   message: string
   data: ApiUser
+}
+
+// 详情页统一参数：本地商品和服务端商品都转成它再传参
+export interface DetailArg {
+  title: string
+  priceText: string
+  content: string
+  image: string
+  stockText: string
 }
