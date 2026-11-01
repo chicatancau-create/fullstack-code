@@ -3,6 +3,7 @@
     "pages/Index",
     "pages/me/Login",
     "pages/me/Reg",
+    "pages/me/LoginApi",
     "pages/test/AddressPage",
     "pages/test/ContactPage",
     "pages/test/ListPage",

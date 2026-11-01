@@ -49,3 +49,43 @@ export function firstImage(images: string): string {
   const hit: string[] = images.split(',')
   return BASE_URL + hit[0]
 }
+
+// POST 用；服务端失败时也会回 { code, message }，所以非 200 也返回正文
+export async function postJson(path: string, body: string): Promise<string> {
+  const httpRequest: http.HttpRequest = http.createHttp()
+  try {
+    const options: http.HttpRequestOptions = {
+      method: http.RequestMethod.POST,
+      expectDataType: http.HttpDataType.STRING,
+      header: { 'Content-Type': 'application/json' } as Record<string, string>,
+      extraData: body,
+      connectTimeout: 10000,
+      readTimeout: 10000
+    }
+    const response: http.HttpResponse = await httpRequest.request(BASE_URL + path, options)
+    return response.result as string
+  } finally {
+    httpRequest.destroy()
+  }
+}
+
+// POST /api/auth/login 的成功响应：data = { user, token }
+export interface ApiUser {
+  id: number
+  username: string
+  email: string
+  phone: string
+  avatar: string
+  role: string
+}
+
+export interface LoginData {
+  user: ApiUser
+  token: string
+}
+
+export interface LoginPayload {
+  code: number
+  message: string
+  data: LoginData
+}

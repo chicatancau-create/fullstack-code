@@ -2,6 +2,7 @@ import Title from '../component/Title'
 @Component
 export default struct Index{
   @StorageLink('loginUser') loginUser: string = ''
+  @StorageLink('apiUser') apiUser: string = ''
   build() {
     Column({space:12}){
       Title({title:"个人中心"})
@@ -69,6 +70,15 @@ export default struct Index{
       .width('90%')
       .onClick(()=>{
         this.getUIContext().getRouter().pushUrl({url:"pages/test/NetGoodsPage"})
+      })
+      // 第 11 章服务端登录入口，和本地登录互不影响
+      Row({space:20}){
+        Image($r('app.media.denglu')).width(20)
+        Text(this.apiUser === '' ? '网络登录（服务端）' : `服务端已登录：${this.apiUser}`).fontSize(15)
+      }
+      .width('90%')
+      .onClick(()=>{
+        this.getUIContext().getRouter().pushUrl({url:"pages/me/LoginApi"})
       })
       // 以下四行按课件只做静态展示，暂无对应页面
       Row({space:20}){
