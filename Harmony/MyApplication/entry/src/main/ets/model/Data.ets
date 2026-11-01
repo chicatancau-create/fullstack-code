@@ -1,10 +1,12 @@
 export class Account {
   account: string = ''
+  email: string = ''
   password: string = ''
   phone: string = ''
 
-  constructor(account: string, password: string, phone: string) {
+  constructor(account: string, email: string, password: string, phone: string) {
     this.account = account
+    this.email = email
     this.password = password
     this.phone = phone
   }
@@ -45,6 +47,15 @@ export function allGoods(): Goods[] {
 
 export function findAccount(list: Account[], account: string): Account | undefined {
   return list.find((item: Account): boolean => item.account === account)
+}
+
+// 第 7 章规定用邮箱登录
+export function findAccountByEmail(list: Account[], email: string): Account | undefined {
+  return list.find((item: Account): boolean => item.email === email)
+}
+
+export function isEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }
 
 export function addCart(name: string, price: number): void {

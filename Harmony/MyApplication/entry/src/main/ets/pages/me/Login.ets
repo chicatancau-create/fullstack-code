@@ -1,26 +1,34 @@
 import Title from '../component/Title'
-import { Account, findAccount } from '../../model/Data'
+import { Account, findAccountByEmail, isEmail } from '../../model/Data'
 
 @Entry
 @Component
 struct Login {
-  @State account: string = ''
+  @State email: string = ''
   @State password: string = ''
   @StorageLink('loginUser') loginUser: string = ''
 
+  // 第 7 章规定：邮箱格式正确且密码不少于 6 位才允许点登录
+  private canSubmit(): boolean {
+    return isEmail(this.email) && this.password.length >= 6
+  }
+
   private login(): string {
-    if (this.account === '' || this.password === '') {
-      return '账号和密码不能为空'
+    if (!isEmail(this.email)) {
+      return '请输入有效邮箱'
+    }
+    if (this.password.length < 6) {
+      return '密码至少 6 位'
     }
     const list: Account[] = AppStorage.get<Account[]>('accounts') ?? []
-    const hit: Account | undefined = findAccount(list, this.account)
+    const hit: Account | undefined = findAccountByEmail(list, this.email)
     if (hit === undefined) {
-      return '账号不存在，请先注册'
+      return '该邮箱未注册，请先注册'
     }
     if (hit.password !== this.password) {
       return '密码错误'
     }
-    this.loginUser = this.account
+    this.loginUser = hit.account
     return ''
   }
 
@@ -29,11 +37,12 @@ struct Login {
       Title({ title: '用户登录', arrow: true })
 
       Column({ space: 12 }) {
-        TextInput({ placeholder: '账号', text: this.account })
+        TextInput({ placeholder: '请输入您的邮箱', text: this.email })
+          .type(InputType.Email)
           .onChange((value: string) => {
-            this.account = value
+            this.email = value
           })
-        TextInput({ placeholder: '密码', text: this.password })
+        TextInput({ placeholder: '请输入密码', text: this.password })
           .type(InputType.Password)
           .onChange((value: string) => {
             this.password = value
@@ -43,13 +52,14 @@ struct Login {
 
       Button('登录')
         .width('90%')
+        .enabled(this.canSubmit())
         .onClick(() => {
           const msg: string = this.login()
           if (msg !== '') {
             this.getUIContext().getPromptAction().showToast({ message: msg })
             return
           }
-          this.getUIContext().getPromptAction().showToast({ message: `欢迎，${this.account}` })
+          this.getUIContext().getPromptAction().showToast({ message: `欢迎，${this.loginUser}` })
           this.getUIContext().getRouter().back()
         })
 
