@@ -46,12 +46,16 @@ export function photoEdit(context: common.Context): Promise<ApiUser> {
           reject('头像上传失败')
         })
         const headerCallback = (headers: object) => {
-          const bag: Record<string, string> = headers as Record<string, string>
-          const payload: object = JSON.parse(bag['body']) as object
-          const data: Record<string, object> = payload as Record<string, object>
-          const user: ApiUser = data['data'] as ApiUser
-          if (user !== undefined) {
-            resolve(user)
+          try {
+            const bag: Record<string, string> = headers as Record<string, string>
+            const payload: object = JSON.parse(bag['body']) as object
+            const data: Record<string, object> = payload as Record<string, object>
+            const user: ApiUser = data['data'] as ApiUser
+            if (user !== undefined) {
+              resolve(user)
+            }
+          } catch (e) {
+            reject('上传响应解析失败')
           }
         }
         uploadTask.on('headerReceive', headerCallback)
