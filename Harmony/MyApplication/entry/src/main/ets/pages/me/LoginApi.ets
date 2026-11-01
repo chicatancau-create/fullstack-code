@@ -1,4 +1,5 @@
 import { ApiUser, LoginPayload, postJson } from '../../utils/requestUtils'
+import { setApiToken } from '../../model/Token'
 import Title from '../component/Title'
 
 @Entry
@@ -25,6 +26,7 @@ struct LoginApi {
       if (payload.code === 200 && payload.data !== undefined && payload.data.token !== '') {
         const user: ApiUser = payload.data.user
         this.apiToken = payload.data.token
+        setApiToken(payload.data.token)
         this.apiUser = user.username
         this.getUIContext().getPromptAction().showToast({ message: `欢迎，${user.username}` })
         this.getUIContext().getRouter().back()

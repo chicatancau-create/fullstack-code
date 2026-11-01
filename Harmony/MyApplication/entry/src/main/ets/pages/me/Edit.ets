@@ -1,4 +1,6 @@
-import { ApiUser, UserPayload, getWithToken, putWithToken } from '../../utils/requestUtils'
+import { ApiUser, BASE_URL, UserPayload, getWithToken, putWithToken } from '../../utils/requestUtils'
+import { photoEdit } from '../../utils/photoEdit'
+import { common } from '@kit.AbilityKit'
 import Title from '../component/Title'
 
 @Entry
@@ -7,6 +9,7 @@ struct Edit {
   @State username: string = ''
   @State email: string = ''
   @State phone: string = ''
+  @State avatar: string = ''
   @State tip: string = ''
   @StorageLink('apiToken') apiToken: string = ''
   @StorageLink('apiUser') apiUser: string = ''
@@ -29,6 +32,7 @@ struct Edit {
         this.username = user.username
         this.email = user.email
         this.phone = user.phone === null ? '' : user.phone
+        this.avatar = user.avatar === null ? '' : user.avatar
         this.tip = ''
       } else {
         this.tip = payload.message
@@ -68,6 +72,22 @@ struct Edit {
     }
   }
 
+  // 第 12 章规定的头像上传写法
+  private async uploadAvatar(): Promise<void> {
+    if (this.apiToken === '') {
+      this.getUIContext().getPromptAction().showToast({ message: '请先用网络登录登录' })
+      return
+    }
+    const ctx: common.Context = this.getUIContext().getHostContext() as common.Context
+    try {
+      const user: ApiUser = await photoEdit(ctx)
+      this.avatar = user.avatar === null || user.avatar === undefined ? '' : user.avatar
+      this.getUIContext().getPromptAction().showToast({ message: '头像已更新' })
+    } catch (err) {
+      this.getUIContext().getPromptAction().showToast({ message: '头像上传失败' })
+    }
+  }
+
   build() {
     Column({ space: 16 }) {
       Title({ title: '修改个人信息', arrow: true })
@@ -104,7 +124,23 @@ struct Edit {
           this.save()
         })
 
-      Text('头像上传（POST /api/users/avatar）未实现：需要相册选图与文件上传写法，暂不加入基础作业')
+      // 第 12 章：选择图片 -> 复制到缓存 -> 带令牌上传 -> 取回最新 user
+      Row({ space: 12 }) {
+        Image(this.avatar === '' ? $r('app.media.denglu') : BASE_URL + this.avatar)
+          .width(60)
+          .height(60)
+          .borderRadius(30)
+          .objectFit(ImageFit.Cover)
+        Button('选择并上传头像')
+          .fontSize(14)
+          .onClick(() => {
+            this.uploadAvatar()
+          })
+      }
+      .width('90%')
+      .justifyContent(FlexAlign.Start)
+
+      Text('服务端未启动时，以上网络功能会提示连不上，属正常现象')
         .fontSize(12)
         .fontColor('#9B9B9B')
         .width('90%')
