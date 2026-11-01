@@ -1,7 +1,7 @@
 import { http } from '@kit.NetworkKit'
 
 // 本机自测用 127.0.0.1；真机或机房按课件示例改成服务端所在机器的局域网 IP，
-// 例如老师快照里写的是 http://10.2.64.151:3000
+// 例如课件示例里是 http://10.2.64.151:3000
 export const BASE_URL: string = 'http://127.0.0.1:3000'
 
 // 对应服务端 products 表；模型命名按 5.4 任务演示规定的写法

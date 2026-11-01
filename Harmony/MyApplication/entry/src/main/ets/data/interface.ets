@@ -5,7 +5,7 @@ export interface Address {
   phone: string
 }
 
-// 任务一：AI 生成的 10 条地址记录
+// 任务一：10 条地址记录素材
 export const listAddress: Address[] = [
   { id: 1, name: '张三', address: '湖南省长沙市岳麓区麓山南路12号', phone: '13800001111' },
   { id: 2, name: '李四', address: '湖南省长沙市雨花区香樟路56号', phone: '13800002222' },
