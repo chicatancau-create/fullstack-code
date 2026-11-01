@@ -1,27 +1,27 @@
 import { allGoods, addCart, Goods } from '../../model/Data'
+import { AdvertisementData, AdvertisementDataList } from '../../model/SwiperModel'
 
-// 第 6 章宫格：图标与名称一一对应
+// 第 6 章宫格：分类名与服务端 product_categories 种子数据对齐
 interface GridItemInfo {
   icon: string
   name: string
 }
 
 const gridItems: GridItemInfo[] = [
-  { icon: 'dianzichanpin.png', name: '电子产品' },
-  { icon: 'fuzhuangfushi.png', name: '服装服饰' },
-  { icon: 'gerenhuli.png', name: '个人护理' },
-  { icon: 'jiadian.png', name: '家电' },
-  { icon: 'shipinyinliao.png', name: '食品饮料' },
-  { icon: 'tushu.png', name: '图书' },
+  { icon: 'dianzichanpin.png', name: '电子' },
+  { icon: 'fuzhuangfushi.png', name: '服装' },
+  { icon: 'tushu.png', name: '书籍' },
+  { icon: 'jiadian.png', name: '家居' },
+  { icon: 'gerenhuli.png', name: '美妆' },
+  { icon: 'yundongjianshen.png', name: '运动' },
   { icon: 'wanju.png', name: '玩具' },
-  { icon: 'yundongjianshen.png', name: '运动健身' },
+  { icon: 'shipinyinliao.png', name: '食品' },
 ]
-
-const bannerList: string[] = ['01.jpeg', '02.jpeg', '03.jpeg', '04.jpeg', '05.jpeg', '06.jpeg']
 
 @Component
 export default struct Home {
   @State kw: string = ''
+  @State swiperData: AdvertisementData[] = AdvertisementDataList
   private goods: Goods[] = allGoods()
 
   private shown(): Goods[] {
@@ -34,30 +34,30 @@ export default struct Home {
   build() {
     Scroll() {
       Column({ space: 16 }) {
-        // 第 6 章轮播图：六张图，3000 毫秒自动切换，也可手动滑动
+        // 第 6 章轮播图：六张图，自动播放 2000 毫秒，也可手动滑动
         Swiper() {
-          ForEach(bannerList, (item: string) => {
-            Image($rawfile(item))
+          ForEach(this.swiperData, (item: AdvertisementData) => {
+            Image(item.icon)
               .width('100%')
-              .height(150)
+              .height(200)
               .objectFit(ImageFit.Cover)
-          }, (item: string) => item)
+          }, (item: AdvertisementData) => item.id.toString())
         }
         .autoPlay(true)
-        .interval(3000)
+        .interval(2000)
         .loop(true)
         .indicator(true)
-        .width('92%')
-        .height(150)
+        .width('100%')
+        .height(200)
 
-        // 第 6 章宫格：四列八项
+        // 第 6 章宫格：四列两行八项
         Grid() {
           ForEach(gridItems, (item: GridItemInfo) => {
             GridItem() {
-              Column({ space: 6 }) {
+              Column({ space: 5 }) {
                 Image($rawfile(item.icon))
-                  .width(40)
-                  .height(40)
+                  .width(50)
+                  .height(50)
                 Text(item.name)
                   .fontSize(12)
               }
@@ -65,10 +65,11 @@ export default struct Home {
           }, (item: GridItemInfo) => item.name)
         }
         .columnsTemplate('1fr 1fr 1fr 1fr')
+        .rowsTemplate('1fr 1fr')
         .rowsGap(10)
         .columnsGap(10)
         .width('92%')
-        .height(170)
+        .height(200)
 
         Row({ space: 8 }) {
           Image($r('app.media.sousuo'))
