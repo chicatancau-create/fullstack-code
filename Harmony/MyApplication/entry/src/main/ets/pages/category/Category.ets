@@ -1,80 +1,72 @@
 import { DetailArg, ProductRow, ProductsPayload, firstImage, getJson } from '../../utils/requestUtils'
 
-// 左侧分类菜单，index 对应服务端 category_id
 interface Menu {
   name: string
   categoryId: number
 }
 
+// 名称与服务端 product_categories 表的种子数据一致
 const menus: Menu[] = [
-  { name: '手机数码', categoryId: 1 },
-  { name: '家用电器', categoryId: 2 },
-  { name: '服饰鞋包', categoryId: 3 },
-  { name: '食品生鲜', categoryId: 4 }
-]
-
-// 服务端不通时的本地兜底，保证演示不空白
-const localNames: string[][] = [
-  ['iPhone 15 Pro', '小米 14', '华为 Mate 60'],
-  ['冰箱', '电饭煲', '微波炉'],
-  ['运动鞋', '双肩包', 'T恤'],
-  ['牛奶', '坚果', '咖啡']
+  { name: '电子', categoryId: 1 },
+  { name: '服装', categoryId: 2 },
+  { name: '书籍', categoryId: 3 },
+  { name: '家居', categoryId: 4 },
+  { name: '美妆', categoryId: 5 },
+  { name: '运动', categoryId: 6 },
+  { name: '玩具', categoryId: 7 },
+  { name: '食品', categoryId: 8 }
 ]
 
 @Component
 export default struct Category {
   @State selected: number = 0
   @State goodsList: ProductRow[] = []
-  @State fromServer: boolean = false
+  @State tip: string = ''
+  @State loading: boolean = false
 
   aboutToAppear(): void {
-    this.load(1)
+    this.load(menus[0].categoryId)
   }
 
+  // 第 9 章：按分类取服务端商品
   private async load(categoryId: number): Promise<void> {
+    this.loading = true
+    this.tip = ''
     try {
       const text: string = await getJson('/api/products?page=1&limit=20&category_id=' + categoryId.toString())
       const payload: ProductsPayload = JSON.parse(text) as ProductsPayload
       if (payload.code === 200 && payload.data !== undefined && payload.data.products !== undefined) {
         this.goodsList = payload.data.products
-        this.fromServer = true
+        if (this.goodsList.length === 0) {
+          this.tip = '该分类下服务端没有商品'
+        }
       } else {
         this.goodsList = []
-        this.fromServer = false
+        this.tip = '服务端返回异常：' + payload.message
       }
     } catch (err) {
       this.goodsList = []
-      this.fromServer = false
+      this.tip = '连不上服务端（默认 http://127.0.0.1:3000）。请先启动 shopmall-api-v2-server，'
+        + '真机则把 requestUtils.ets 里的 BASE_URL 改成服务端所在机器的局域网地址。'
+    } finally {
+      this.loading = false
     }
   }
 
-  // 详情页统一参数：图片可能是服务端绝对地址，也可能是本地 rawfile 名
   private toDetail(item: ProductRow): DetailArg {
-    const pic: string = firstImage(item.images)
     const arg: DetailArg = {
       title: item.name,
       priceText: `￥${item.price}`,
       content: item.description === null ? '' : item.description,
-      image: pic,
+      image: firstImage(item.images),
       stockText: `库存：${item.stock}`
-    }
-    return arg
-  }
-
-  private localDetail(index: number): DetailArg {
-    const arg: DetailArg = {
-      title: localNames[this.selected][index],
-      priceText: '￥0.00',
-      content: '服务端未启动，这里显示的是本地占位数据。',
-      image: '',
-      stockText: '库存：—'
     }
     return arg
   }
 
   build() {
     Row() {
-      List({ space: 8 }) {
+      List({ space: 6 }) {
         ForEach(menus, (item: Menu, index: number) => {
           ListItem() {
             Text(item.name)
@@ -91,7 +83,7 @@ export default struct Category {
           })
         }, (item: Menu) => item.name)
       }
-      .width(100)
+      .width(90)
       .height('100%')
       .scrollBar(BarState.Off)
 
@@ -100,67 +92,64 @@ export default struct Category {
           .fontSize(18)
           .fontWeight(FontWeight.Bold)
 
-        Text(this.fromServer ? '数据来源：服务端 /api/products' : '数据来源：本地占位（服务端未启动）')
-          .fontSize(12)
-          .fontColor('#9B9B9B')
+        if (this.loading) {
+          Text('加载中…')
+            .fontSize(14)
+            .fontColor('#9B9B9B')
+            .margin({ top: 30 })
+        }
+
+        if (this.tip !== '') {
+          Column({ space: 10 }) {
+            Text(this.tip)
+              .fontSize(13)
+              .fontColor('#9B9B9B')
+              .textAlign(TextAlign.Center)
+            Button('重新加载')
+              .fontSize(13)
+              .onClick(() => {
+                this.load(menus[this.selected].categoryId)
+              })
+          }
+          .width('100%')
+          .margin({ top: 30 })
+        }
 
         List({ space: 10 }) {
-          if (this.fromServer) {
-            ForEach(this.goodsList, (item: ProductRow, index: number) => {
-              ListItem() {
-                Row() {
-                  if (firstImage(item.images) === '') {
-                    Image($r('app.media.dianqi'))
-                      .width(50)
-                      .height(50)
-                  } else {
-                    Image(firstImage(item.images))
-                      .width(50)
-                      .height(50)
-                      .objectFit(ImageFit.Cover)
-                  }
-                  Text(item.name)
-                    .fontSize(15)
-                    .maxLines(1)
-                    .textOverflow({ overflow: TextOverflow.Clip })
-                    .layoutWeight(1)
-                  Text(`￥${item.price}`)
-                    .fontSize(14)
-                    .fontColor('#E64545')
+          ForEach(this.goodsList, (item: ProductRow) => {
+            ListItem() {
+              Row() {
+                if (firstImage(item.images) === '') {
+                  Image($r('app.media.dianqi'))
+                    .width(50)
+                    .height(50)
+                } else {
+                  Image(firstImage(item.images))
+                    .width(50)
+                    .height(50)
+                    .objectFit(ImageFit.Cover)
                 }
-                .width('100%')
-                .height(60)
-                .justifyContent(FlexAlign.SpaceBetween)
+                Text(item.name)
+                  .fontSize(15)
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.Clip })
+                  .layoutWeight(1)
+                Text(`￥${item.price}`)
+                  .fontSize(14)
+                  .fontColor('#E64545')
               }
-              // 第 10 章：列表点击进详情并传参
-              .onClick(() => {
-                this.getUIContext().getRouter().pushUrl({
-                  url: 'pages/goods/GoodsDetailRouter',
-                  params: this.toDetail(item)
-                })
+              .width('100%')
+              .height(60)
+              .justifyContent(FlexAlign.SpaceBetween)
+            }
+            // 第 10 章：点击列表项，把当前商品传给详情页
+            .onClick(() => {
+              this.getUIContext().getRouter().pushUrl({
+                url: 'pages/goods/GoodsDetailRouter',
+                params: this.toDetail(item)
               })
-            }, (item: ProductRow) => item.id.toString())
-          } else {
-            ForEach(localNames[this.selected], (item: string, index: number) => {
-              ListItem() {
-                Row() {
-                  Text(item).fontSize(15)
-                  Image($r('app.media.jiantouyou'))
-                    .width(16)
-                    .fillColor('#9B9B9B')
-                }
-                .width('100%')
-                .justifyContent(FlexAlign.SpaceBetween)
-                .padding(10)
-              }
-              .onClick(() => {
-                this.getUIContext().getRouter().pushUrl({
-                  url: 'pages/goods/GoodsDetailRouter',
-                  params: this.localDetail(index)
-                })
-              })
-            }, (item: string) => item)
-          }
+            })
+          }, (item: ProductRow) => item.id.toString())
         }
         .layoutWeight(1)
         .width('100%')
