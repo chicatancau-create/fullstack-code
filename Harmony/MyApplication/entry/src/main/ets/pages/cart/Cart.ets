@@ -1,21 +1,29 @@
 import { CartItem } from '../../model/Data'
+import { CartStore, connectCart } from '../../model/CartStore'
+import { connectUser, User } from '../../model/User'
 
-@Component
+@ComponentV2
 export default struct Cart {
-  @StorageLink('cartList') cartList: CartItem[] = []
+  @Local store: CartStore = connectCart()
+  @Local user: User = connectUser()
+  @Local notice: string = ''
+
+  // 11.4 步骤5：购物车在路由栈里，返回后必须靠 @Monitor 监听全局 user 变化才刷新 UI
+  @Monitor('user.isLoggedIn')
+  onUserChange(): void {
+    this.notice = this.user.isLoggedIn ? `欢迎回来，${this.user.name}` : '已退出登录'
+  }
 
   private total(): number {
-    return this.cartList.reduce((sum: number, item: CartItem): number => sum + item.price * item.count, 0)
+    return this.store.items.reduce((sum: number, item: CartItem): number => sum + item.price * item.count, 0)
   }
 
   private change(index: number, delta: number): void {
-    const list: CartItem[] = this.cartList.slice()
-    const item: CartItem = list[index]
+    const item: CartItem = this.store.items[index]
     item.count += delta
     if (item.count <= 0) {
-      list.splice(index, 1)
+      this.store.items.splice(index, 1)
     }
-    this.cartList = list
   }
 
   build() {
@@ -25,7 +33,14 @@ export default struct Cart {
         .fontWeight(FontWeight.Bold)
         .width('92%')
 
-      if (this.cartList.length === 0) {
+      if (this.notice !== '') {
+        Text(this.notice)
+          .fontSize(13)
+          .fontColor('#1698CE')
+          .width('92%')
+      }
+
+      if (this.store.items.length === 0) {
         Text('购物车是空的，去首页加几件')
           .fontSize(14)
           .fontColor('#9B9B9B')
@@ -33,7 +48,7 @@ export default struct Cart {
       }
 
       List({ space: 8 }) {
-        ForEach(this.cartList, (item: CartItem, index: number) => {
+        ForEach(this.store.items, (item: CartItem, index: number) => {
           ListItem() {
             Row({ space: 12 }) {
               Column({ space: 4 }) {
@@ -81,13 +96,13 @@ export default struct Cart {
       Button('结算')
         .width('92%')
         .onClick(() => {
-          if (this.cartList.length === 0) {
+          if (this.store.items.length === 0) {
             this.getUIContext().getPromptAction().showToast({ message: '购物车是空的' })
             return
           }
-          const n: number = this.cartList.reduce((sum: number, item: CartItem): number => sum + item.count, 0)
+          const n: number = this.store.items.reduce((sum: number, item: CartItem): number => sum + item.count, 0)
           this.getUIContext().getPromptAction().showToast({ message: `已提交 ${n} 件商品` })
-          this.cartList = []
+          this.store.items.splice(0, this.store.items.length)
         })
     }
     .width('100%')

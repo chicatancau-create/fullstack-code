@@ -57,14 +57,3 @@ export function findAccountByEmail(list: Account[], email: string): Account | un
 export function isEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }
-
-export function addCart(name: string, price: number): void {
-  const list: CartItem[] = AppStorage.get<CartItem[]>('cartList') ?? []
-  const hit: CartItem | undefined = list.find((item: CartItem): boolean => item.name === name)
-  if (hit !== undefined) {
-    hit.count += 1
-  } else {
-    list.push(new CartItem(name, price))
-  }
-  AppStorage.setOrCreate('cartList', list.slice())
-}

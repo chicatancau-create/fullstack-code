@@ -1,18 +1,17 @@
 import { ApiUser, LoginPayload, postJson } from '../../utils/requestUtils'
 import { setApiToken } from '../../model/Token'
+import { connectUser, User } from '../../model/User'
 import Title from '../component/Title'
 
 @Entry
-@Component
+@ComponentV2
 struct LoginApi {
-  @State email: string = ''
-  @State password: string = ''
-  @State busy: boolean = false
-  @StorageLink('apiUser') apiUser: string = ''
-  @StorageLink('apiToken') apiToken: string = ''
+  @Local email: string = ''
+  @Local password: string = ''
+  @Local busy: boolean = false
+  private user: User = connectUser()
 
   // 服务端契约：POST /api/auth/login  body { email, password }
-  // 成功 { code:200, message:'登录成功', data:{ user, token } }
   private async doLogin(): Promise<void> {
     if (this.email === '' || this.password === '') {
       this.getUIContext().getPromptAction().showToast({ message: '邮箱和密码不能为空' })
@@ -24,11 +23,15 @@ struct LoginApi {
       const text: string = await postJson('/api/auth/login', JSON.stringify(body))
       const payload: LoginPayload = JSON.parse(text) as LoginPayload
       if (payload.code === 200 && payload.data !== undefined && payload.data.token !== '') {
-        const user: ApiUser = payload.data.user
-        this.apiToken = payload.data.token
+        const api: ApiUser = payload.data.user
+        // 11.4 步骤3：登录成功后用 AppStorageV2 保存用户信息与令牌
         setApiToken(payload.data.token)
-        this.apiUser = user.username
-        this.getUIContext().getPromptAction().showToast({ message: `欢迎，${user.username}` })
+        this.user.id = api.id
+        this.user.name = api.username
+        this.user.email = api.email
+        this.user.avatar = api.avatar === null ? '' : api.avatar
+        this.user.isLoggedIn = true
+        this.getUIContext().getPromptAction().showToast({ message: `欢迎，${api.username}` })
         this.getUIContext().getRouter().back()
       } else {
         this.getUIContext().getPromptAction().showToast({ message: payload.message })
@@ -44,7 +47,7 @@ struct LoginApi {
     Column({ space: 16 }) {
       Title({ title: '网络登录', arrow: true })
 
-      Text('第 11 章：调用课件服务端 /api/auth/login，与本地登录互不影响')
+      Text('第 11 章：调用课件服务端 /api/auth/login，登录状态用 AppStorageV2 全局共享')
         .fontSize(13)
         .fontColor('#9B9B9B')
         .width('90%')

@@ -1,4 +1,6 @@
-import { ApiUser, BASE_URL, UserPayload, getWithToken, putWithToken } from '../../utils/requestUtils'
+import { ApiUser, BASE_URL, getWithToken, putWithToken, ResponseData } from '../../utils/requestUtils'
+import { getApiToken } from '../../model/Token'
+import { connectUser, User } from '../../model/User'
 import { photoEdit } from '../../utils/photoEdit'
 import { common } from '@kit.AbilityKit'
 import Title from '../component/Title'
@@ -11,8 +13,6 @@ struct Edit {
   @State phone: string = ''
   @State avatar: string = ''
   @State tip: string = ''
-  @StorageLink('apiToken') apiToken: string = ''
-  @StorageLink('apiUser') apiUser: string = ''
 
   aboutToAppear(): void {
     this.load()
@@ -20,22 +20,23 @@ struct Edit {
 
   // 第 12 章：GET /api/auth/me 取回当前用户，回填表单
   private async load(): Promise<void> {
-    if (this.apiToken === '') {
+    const token: string = getApiToken()
+    if (token === '') {
       this.tip = '请先在「我的」里用网络登录登录一次'
       return
     }
     try {
-      const text: string = await getWithToken('/api/auth/me', this.apiToken)
-      const payload: UserPayload = JSON.parse(text) as UserPayload
-      if (payload.code === 200 && payload.data !== undefined) {
-        const user: ApiUser = payload.data
+      const text: string = await getWithToken('/api/auth/me', token)
+      const res: ResponseData<ApiUser> = JSON.parse(text) as ResponseData<ApiUser>
+      if (res.code === 200 && res.data !== undefined) {
+        const user: ApiUser = res.data
         this.username = user.username
         this.email = user.email
         this.phone = user.phone === null ? '' : user.phone
         this.avatar = user.avatar === null ? '' : user.avatar
         this.tip = ''
       } else {
-        this.tip = payload.message
+        this.tip = res.message
       }
     } catch (err) {
       this.tip = '连不上服务端，请先启动 shopmall-api-v2-server'
@@ -44,7 +45,8 @@ struct Edit {
 
   // 第 12 章：PUT /api/users  body { username, email, phone }
   private async save(): Promise<void> {
-    if (this.apiToken === '') {
+    const token: string = getApiToken()
+    if (token === '') {
       this.getUIContext().getPromptAction().showToast({ message: '请先用网络登录登录' })
       return
     }
@@ -58,23 +60,24 @@ struct Edit {
         'email': this.email,
         'phone': this.phone
       }
-      const text: string = await putWithToken('/api/users', JSON.stringify(body), this.apiToken)
-      const payload: UserPayload = JSON.parse(text) as UserPayload
-      if (payload.code === 200) {
-        this.apiUser = this.username
+      const text: string = await putWithToken('/api/users', JSON.stringify(body), token)
+      const res: ResponseData<ApiUser> = JSON.parse(text) as ResponseData<ApiUser>
+      if (res.code === 200) {
+        const global: User = connectUser()
+        global.name = this.username
         this.getUIContext().getPromptAction().showToast({ message: '保存成功' })
         this.getUIContext().getRouter().back()
       } else {
-        this.getUIContext().getPromptAction().showToast({ message: payload.message })
+        this.getUIContext().getPromptAction().showToast({ message: res.message })
       }
     } catch (err) {
       this.getUIContext().getPromptAction().showToast({ message: '保存失败，服务端未响应' })
     }
   }
 
-  // 第 12 章规定的头像上传写法
+  // 12.1 规定的头像上传写法：选图 -> 复制进缓存 -> uploadFile 带令牌 -> headerReceive 取回 user
   private async uploadAvatar(): Promise<void> {
-    if (this.apiToken === '') {
+    if (getApiToken() === '') {
       this.getUIContext().getPromptAction().showToast({ message: '请先用网络登录登录' })
       return
     }
@@ -82,6 +85,7 @@ struct Edit {
     try {
       const user: ApiUser = await photoEdit(ctx)
       this.avatar = user.avatar === null || user.avatar === undefined ? '' : user.avatar
+      connectUser().avatar = this.avatar
       this.getUIContext().getPromptAction().showToast({ message: '头像已更新' })
     } catch (err) {
       this.getUIContext().getPromptAction().showToast({ message: '头像上传失败' })
@@ -124,7 +128,6 @@ struct Edit {
           this.save()
         })
 
-      // 第 12 章：选择图片 -> 复制到缓存 -> 带令牌上传 -> 取回最新 user
       Row({ space: 12 }) {
         Image(this.avatar === '' ? $r('app.media.denglu') : BASE_URL + this.avatar)
           .width(60)

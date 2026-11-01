@@ -1,29 +1,16 @@
-import { allGoods, addCart, Goods } from '../../model/Data'
+import { allGoods, Goods } from '../../model/Data'
+import { addCart } from '../../model/CartStore'
 import { AdvertisementData, AdvertisementDataList } from '../../model/SwiperModel'
+import { connectUser, User } from '../../model/User'
+import { GoodsTypeData, GoodsTypeList } from '../../model/GoodsTypeModel'
 import { CategoryArg } from '../../utils/requestUtils'
 
-// 第 6 章宫格：分类名与服务端 product_categories 种子数据对齐
-interface GridItemInfo {
-  icon: string
-  name: string
-  categoryId: number
-}
-
-const gridItems: GridItemInfo[] = [
-  { icon: 'dianzichanpin.png', name: '电子', categoryId: 1 },
-  { icon: 'fuzhuangfushi.png', name: '服装', categoryId: 2 },
-  { icon: 'tushu.png', name: '书籍', categoryId: 3 },
-  { icon: 'jiadian.png', name: '家居', categoryId: 4 },
-  { icon: 'gerenhuli.png', name: '美妆', categoryId: 5 },
-  { icon: 'yundongjianshen.png', name: '运动', categoryId: 6 },
-  { icon: 'wanju.png', name: '玩具', categoryId: 7 },
-  { icon: 'shipinyinliao.png', name: '食品', categoryId: 8 },
-]
-
-@Component
+@ComponentV2
 export default struct Home {
-  @State kw: string = ''
-  @State swiperData: AdvertisementData[] = AdvertisementDataList
+  @Local kw: string = ''
+  @Local swiperData: AdvertisementData[] = AdvertisementDataList
+  @Local types: GoodsTypeData[] = GoodsTypeList
+  @Local user: User = connectUser()
   private goods: Goods[] = allGoods()
 
   private shown(): Goods[] {
@@ -33,10 +20,38 @@ export default struct Home {
     return this.goods.filter((item: Goods): boolean => item.name.includes(this.kw))
   }
 
+  // 6.5 步骤4：把宫格单元提炼成 @Builder
+  @Builder
+  typeCell(item: GoodsTypeData) {
+    Column({ space: 5 }) {
+      Image(item.icon)
+        .width(50)
+        .height(50)
+      Text(item.typeName)
+        .fontSize(12)
+    }
+    // 5.4 规定宫格要能跳到对应商品列表
+    .onClick(() => {
+      const arg: CategoryArg = { categoryId: item.categoryId }
+      this.getUIContext().getRouter().pushUrl({
+        url: 'pages/test/NetGoodsPage',
+        params: arg
+      })
+    })
+  }
+
   build() {
     Scroll() {
       Column({ space: 16 }) {
-        // 第 6 章轮播图：六张图，自动播放 2000 毫秒，也可手动滑动
+        // 11.4 步骤4：首页读取全局登录状态并显示
+        if (this.user.isLoggedIn) {
+          Text(`已登录：${this.user.name}`)
+            .fontSize(14)
+            .fontColor('#1698CE')
+            .width('92%')
+        }
+
+        // 第 6 章轮播图：六张图，自动播放 2000 毫秒
         Swiper() {
           ForEach(this.swiperData, (item: AdvertisementData) => {
             Image(item.icon)
@@ -54,25 +69,11 @@ export default struct Home {
 
         // 第 6 章宫格：四列两行八项
         Grid() {
-          ForEach(gridItems, (item: GridItemInfo) => {
+          ForEach(this.types, (item: GoodsTypeData) => {
             GridItem() {
-              Column({ space: 5 }) {
-                Image($rawfile(item.icon))
-                  .width(50)
-                  .height(50)
-                Text(item.name)
-                  .fontSize(12)
-              }
-              // 5.4 规定宫格要能跳到对应商品列表
-              .onClick(() => {
-                const arg: CategoryArg = { categoryId: item.categoryId }
-                this.getUIContext().getRouter().pushUrl({
-                  url: 'pages/test/NetGoodsPage',
-                  params: arg
-                })
-              })
+              this.typeCell(item)
             }
-          }, (item: GridItemInfo) => item.name)
+          }, (item: GoodsTypeData) => item.id.toString())
         }
         .columnsTemplate('1fr 1fr 1fr 1fr')
         .rowsTemplate('1fr 1fr')

@@ -1,12 +1,13 @@
 import Title from '../component/Title'
 import { Account, findAccountByEmail, isEmail } from '../../model/Data'
+import { connectUser, User } from '../../model/User'
 
 @Entry
-@Component
+@ComponentV2
 struct Login {
-  @State email: string = ''
-  @State password: string = ''
-  @StorageLink('loginUser') loginUser: string = ''
+  @Local email: string = ''
+  @Local password: string = ''
+  private user: User = connectUser()
 
   // 第 7 章规定：邮箱格式正确且密码不少于 6 位才允许点登录
   private canSubmit(): boolean {
@@ -28,7 +29,10 @@ struct Login {
     if (hit.password !== this.password) {
       return '密码错误'
     }
-    this.loginUser = hit.account
+    // 本地登录也写进同一个全局状态，首页与购物车都能读到
+    this.user.name = hit.account
+    this.user.email = hit.email
+    this.user.isLoggedIn = true
     return ''
   }
 
@@ -59,7 +63,7 @@ struct Login {
             this.getUIContext().getPromptAction().showToast({ message: msg })
             return
           }
-          this.getUIContext().getPromptAction().showToast({ message: `欢迎，${this.loginUser}` })
+          this.getUIContext().getPromptAction().showToast({ message: `欢迎，${this.user.name}` })
           this.getUIContext().getRouter().back()
         })
 

@@ -156,13 +156,6 @@ export async function putWithToken(path: string, body: string, token: string): P
   }
 }
 
-// { code, message, data } 的通用外壳，data 的具体类型由调用方再转
-export interface UserPayload {
-  code: number
-  message: string
-  data: ApiUser
-}
-
 // 详情页统一参数：本地商品和服务端商品都转成它再传参
 export interface DetailArg {
   title: string
