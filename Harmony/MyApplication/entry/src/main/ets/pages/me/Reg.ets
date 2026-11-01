@@ -13,6 +13,7 @@ struct Reg {
   @Local gender: string = ''
   @Local hobby: string[] = []
   @Local birthday: string = ''
+  @Local birthdayDate: Date = new Date()
 
   private toggleHobby(name: string, on: boolean): void {
     const i: number = this.hobby.indexOf(name)
@@ -141,9 +142,21 @@ struct Reg {
 
         // 8.4 还列了 CalendarPickerDialog，但本 SDK 里没有全局 CalendarController 类型，
         // 先按课件结构代码里的写法用输入框收集日期，日历弹窗待查官方签名后再接
-        TextInput({ placeholder: '请输入出生日期（如 2005-01-01）', text: this.birthday })
+        TextInput({ placeholder: '请选择出生日期', text: this.birthday })
           .onChange((value: string) => {
             this.birthday = value
+          })
+          .onClick(() => {
+            // 8.4 规定的日历弹窗：本 SDK 里 CalendarPickerDialog 是静态方法 show()
+            CalendarPickerDialog.show({
+              selected: this.birthdayDate,
+              onAccept: (value: Date) => {
+                this.birthdayDate = value
+                this.birthday = `${value.getFullYear()}-${value.getMonth() + 1}-${value.getDate()}`
+              },
+              onCancel: () => {
+              }
+            })
           })
       }
       .width('90%')

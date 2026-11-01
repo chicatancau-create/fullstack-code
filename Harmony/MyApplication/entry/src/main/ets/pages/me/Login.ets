@@ -10,6 +10,14 @@ struct Login {
   @Local password: string = ''
   private user: User = connectUser()
 
+  // 7.4 步骤4：用 @Styles 重用输入框样式
+  @Styles
+  inputStyle() {
+    .backgroundColor(0xefefefef)
+    .border({ color: Color.Black, width: 1 })
+    .borderRadius(6)
+  }
+
   // 第 7 章规定：邮箱格式正确且密码不少于 6 位才允许点登录
   private canSubmit(): boolean {
     return isEmail(this.email) && this.password.length >= 6
@@ -44,11 +52,13 @@ struct Login {
       Column({ space: 12 }) {
         TextInput({ placeholder: '请输入您的邮箱', text: this.email })
           .type(InputType.Email)
+          .inputStyle()
           .onChange((value: string) => {
             this.email = value
           })
         TextInput({ placeholder: '请输入密码', text: this.password })
           .type(InputType.Password)
+          .inputStyle()
           .onChange((value: string) => {
             this.password = value
           })
