@@ -19,8 +19,13 @@ struct NetGoodsPage {
     try {
       const text: string = await getJson('/api/products?page=1&limit=20')
       const payload: ProductsPayload = JSON.parse(text) as ProductsPayload
-      this.list = payload.data
-      if (this.list.length === 0) {
+      if (payload.code === 200 && payload.data !== undefined && payload.data.products !== undefined) {
+        this.list = payload.data.products
+      } else {
+        this.list = []
+        this.tip = payload.message === undefined ? '服务端返回格式不对' : payload.message
+      }
+      if (this.list.length === 0 && this.tip === '') {
         this.tip = '服务端没有返回商品'
       }
     } catch (err) {

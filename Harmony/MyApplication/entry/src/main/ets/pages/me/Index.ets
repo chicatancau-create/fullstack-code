@@ -80,7 +80,7 @@ export default struct Index{
       .onClick(()=>{
         this.getUIContext().getRouter().pushUrl({url:"pages/me/LoginApi"})
       })
-      // 以下四行按课件只做静态展示，暂无对应页面
+      // 以下三行按课件只做静态展示，暂无对应页面
       Row({space:20}){
         Image($r('app.media.shoucang')).width(20)
         Text("我的收藏").fontSize(15)
@@ -98,6 +98,9 @@ export default struct Index{
         Text("修改信息").fontSize(15)
       }
       .width('90%')
+      .onClick(()=>{
+        this.getUIContext().getRouter().pushUrl({url:"pages/me/Edit"})
+      })
       Divider()
       Row({space:20}){
         Image($r('app.media.kefu')).width(20)
