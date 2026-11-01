@@ -2,13 +2,13 @@ import Title from '../component/Title'
 import { Account, findAccount, findAccountByEmail, isEmail } from '../../model/Data'
 
 @Entry
-@Component
+@ComponentV2
 struct Reg {
-  @State account: string = ''
-  @State email: string = ''
-  @State phone: string = ''
-  @State password: string = ''
-  @State confirm: string = ''
+  @Local account: string = ''
+  @Local email: string = ''
+  @Local phone: string = ''
+  @Local password: string = ''
+  @Local confirm: string = ''
 
   // 第 8 章规定的校验项：用户名 4-10 位、邮箱格式、11 位手机号、密码至少 6 位、两次一致
   private check(): string {
