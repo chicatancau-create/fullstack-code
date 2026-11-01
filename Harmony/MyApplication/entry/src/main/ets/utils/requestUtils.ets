@@ -36,6 +36,7 @@ export interface ProductsPayload {
 }
 
 // 第 9 章要求的最小流程：createHttp -> request -> destroy
+// 非 200 也照常返回正文，交给调用方按 code 分支显示服务端真实文案
 export async function getJson(path: string): Promise<string> {
   const httpRequest: http.HttpRequest = http.createHttp()
   try {
@@ -47,9 +48,6 @@ export async function getJson(path: string): Promise<string> {
       readTimeout: 10000
     }
     const response: http.HttpResponse = await httpRequest.request(BASE_URL + path, options)
-    if (response.responseCode !== 200) {
-      throw new Error('HTTP ' + response.responseCode.toString())
-    }
     return response.result as string
   } finally {
     httpRequest.destroy()
