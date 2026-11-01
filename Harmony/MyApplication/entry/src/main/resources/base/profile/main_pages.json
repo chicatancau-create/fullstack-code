@@ -6,6 +6,7 @@
     "pages/test/AddressPage",
     "pages/test/ContactPage",
     "pages/test/ListPage",
+    "pages/test/NetGoodsPage",
     "pages/goods/NavPage"
   ]
 }

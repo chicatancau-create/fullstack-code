@@ -61,6 +61,15 @@ export default struct Index{
       .onClick(()=>{
         this.getUIContext().getRouter().pushUrl({url:"pages/goods/NavPage"})
       })
+      // 第 9 章网络商品列表入口（需先启动课件服务端）
+      Row({space:20}){
+        Image($r('app.media.liulan')).width(20)
+        Text("网络商品列表").fontSize(15)
+      }
+      .width('90%')
+      .onClick(()=>{
+        this.getUIContext().getRouter().pushUrl({url:"pages/test/NetGoodsPage"})
+      })
       // 以下四行按课件只做静态展示，暂无对应页面
       Row({space:20}){
         Image($r('app.media.shoucang')).width(20)
