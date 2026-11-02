@@ -2,6 +2,7 @@ import { ApiUser, LoginPayload, postJson } from '../../utils/requestUtils'
 import { setApiToken } from '../../model/Token'
 import { connectUser, User } from '../../model/User'
 import Title from '../component/Title'
+import { BG_PAGE, BORDER_LIGHT, CHIP_RADIUS, DANGER, INPUT_BG, PRIMARY_END, PRIMARY_START, TEXT_MUTED } from '../../common/UiTokens'
 
 @Entry
 @ComponentV2
@@ -52,17 +53,23 @@ struct LoginApi {
 
       Text('第 11 章：调用课件服务端 /api/auth/login，登录状态用 AppStorageV2 全局共享')
         .fontSize(13)
-        .fontColor('#9B9B9B')
+        .fontColor(TEXT_MUTED)
         .width('90%')
 
       Column({ space: 12 }) {
         TextInput({ placeholder: '邮箱', text: this.email })
           .type(InputType.Email)
+          .backgroundColor(INPUT_BG)
+          .border({ color: BORDER_LIGHT, width: 1 })
+          .borderRadius(CHIP_RADIUS)
           .onChange((value: string) => {
             this.email = value
           })
         TextInput({ placeholder: '密码', text: this.password })
           .type(InputType.Password)
+          .backgroundColor(INPUT_BG)
+          .border({ color: BORDER_LIGHT, width: 1 })
+          .borderRadius(CHIP_RADIUS)
           .onChange((value: string) => {
             this.password = value
           })
@@ -71,6 +78,10 @@ struct LoginApi {
 
       Button(this.busy ? '登录中…' : '登录')
         .width('90%')
+        .linearGradient({
+          angle: 135,
+          colors: [[PRIMARY_START, 0], [PRIMARY_END, 1]]
+        })
         .enabled(!this.busy)
         .onClick(() => {
           this.doLogin()
@@ -79,11 +90,12 @@ struct LoginApi {
       if (this.errorMessage !== '') {
         Text(this.errorMessage)
           .fontSize(13)
-          .fontColor(Color.Red)
+          .fontColor(DANGER)
       }
     }
     .width('100%')
     .height('100%')
     .padding({ top: 16 })
+    .backgroundColor(BG_PAGE)
   }
 }

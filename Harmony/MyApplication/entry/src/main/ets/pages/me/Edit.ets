@@ -4,6 +4,7 @@ import { connectUser, User } from '../../model/User'
 import { photoEdit } from '../../utils/photoEdit'
 import { common } from '@kit.AbilityKit'
 import Title from '../component/Title'
+import { BG_PAGE, BORDER_LIGHT, CHIP_RADIUS, INPUT_BG, PRIMARY_END, PRIMARY_START, TEXT_MUTED } from '../../common/UiTokens'
 
 @Entry
 @Component
@@ -99,22 +100,31 @@ struct Edit {
       if (this.tip !== '') {
         Text(this.tip)
           .fontSize(13)
-          .fontColor('#9B9B9B')
+          .fontColor(TEXT_MUTED)
           .width('90%')
       }
 
       Column({ space: 12 }) {
         TextInput({ placeholder: '用户名', text: this.username })
+          .backgroundColor(INPUT_BG)
+          .border({ color: BORDER_LIGHT, width: 1 })
+          .borderRadius(CHIP_RADIUS)
           .onChange((value: string) => {
             this.username = value
           })
         TextInput({ placeholder: '邮箱', text: this.email })
           .type(InputType.Email)
+          .backgroundColor(INPUT_BG)
+          .border({ color: BORDER_LIGHT, width: 1 })
+          .borderRadius(CHIP_RADIUS)
           .onChange((value: string) => {
             this.email = value
           })
         TextInput({ placeholder: '手机号', text: this.phone })
           .type(InputType.PhoneNumber)
+          .backgroundColor(INPUT_BG)
+          .border({ color: BORDER_LIGHT, width: 1 })
+          .borderRadius(CHIP_RADIUS)
           .maxLength(11)
           .onChange((value: string) => {
             this.phone = value
@@ -124,6 +134,10 @@ struct Edit {
 
       Button('保存')
         .width('90%')
+        .linearGradient({
+          angle: 135,
+          colors: [[PRIMARY_START, 0], [PRIMARY_END, 1]]
+        })
         .onClick(() => {
           this.save()
         })
@@ -145,11 +159,12 @@ struct Edit {
 
       Text('服务端未启动时，以上网络功能会提示连不上，属正常现象')
         .fontSize(12)
-        .fontColor('#9B9B9B')
+        .fontColor(TEXT_MUTED)
         .width('90%')
     }
     .width('100%')
     .height('100%')
     .padding({ top: 16 })
+    .backgroundColor(BG_PAGE)
   }
 }

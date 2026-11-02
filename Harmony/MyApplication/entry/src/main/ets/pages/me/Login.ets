@@ -1,4 +1,5 @@
 import Title from '../component/Title'
+import { BG_PAGE, BORDER_LIGHT, CHIP_RADIUS, INPUT_BG, PRIMARY, PRIMARY_END, PRIMARY_START } from '../../common/UiTokens'
 import { Account, findAccountByEmail, isEmail } from '../../model/Data'
 import { connectUser, User } from '../../model/User'
 import { TabIndexArg } from '../../utils/requestUtils'
@@ -10,12 +11,12 @@ struct Login {
   @Local password: string = ''
   private user: User = connectUser()
 
-  // 7.4 步骤4：用 @Styles 重用输入框样式
+  // 7.4 步骤4：用 @Styles 重用输入框样式（浅灰底 + 细描边 + 圆角）
   @Styles
   inputStyle() {
-    .backgroundColor(0xefefefef)
-    .border({ color: Color.Black, width: 1 })
-    .borderRadius(6)
+    .backgroundColor(INPUT_BG)
+    .border({ color: BORDER_LIGHT, width: 1 })
+    .borderRadius(CHIP_RADIUS)
   }
 
   // 第 7 章规定：邮箱格式正确且密码不少于 6 位才允许点登录
@@ -67,6 +68,10 @@ struct Login {
 
       Button('登录')
         .width('90%')
+        .linearGradient({
+          angle: 135,
+          colors: [[PRIMARY_START, 0], [PRIMARY_END, 1]]
+        })
         .enabled(this.canSubmit())
         .onClick(() => {
           const msg: string = this.login()
@@ -83,7 +88,7 @@ struct Login {
 
       Text('还没有账号？去注册')
         .fontSize(14)
-        .fontColor('#1698CE')
+        .fontColor(PRIMARY)
         .onClick(() => {
           this.getUIContext().getRouter().pushUrl({ url: 'pages/me/Reg' })
         })
@@ -91,5 +96,6 @@ struct Login {
     .width('100%')
     .height('100%')
     .padding({ top: 16 })
+    .backgroundColor(BG_PAGE)
   }
 }

@@ -1,5 +1,6 @@
 import Title from '../component/Title'
 import { Account, findAccount, findAccountByEmail, isEmail } from '../../model/Data'
+import { BG_PAGE, PRIMARY_END, PRIMARY_START } from '../../common/UiTokens'
 
 @Entry
 @ComponentV2
@@ -140,8 +141,7 @@ struct Reg {
         }
         .width('100%')
 
-        // 8.4 还列了 CalendarPickerDialog，但本 SDK 里没有全局 CalendarController 类型，
-        // 先按课件结构代码里的写法用输入框收集日期，日历弹窗待查官方签名后再接
+        // 8.4 规定的日历弹窗：点输入框弹 CalendarPickerDialog，确认后回填日期
         TextInput({ placeholder: '请选择出生日期', text: this.birthday })
           .onChange((value: string) => {
             this.birthday = value
@@ -163,6 +163,10 @@ struct Reg {
 
       Button('注册')
         .width('90%')
+        .linearGradient({
+          angle: 135,
+          colors: [[PRIMARY_START, 0], [PRIMARY_END, 1]]
+        })
         .enabled(this.canSubmit())
         .onClick(() => {
           const msg: string = this.check()
@@ -180,5 +184,6 @@ struct Reg {
     .width('100%')
     .height('100%')
     .padding({ top: 16 })
+    .backgroundColor(BG_PAGE)
   }
 }
