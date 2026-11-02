@@ -1,5 +1,25 @@
 // 10.4 步骤3：商品详情页用 NavDestination 作根容器，参数在 onReady 里取
 import { firstImage, getJson, ProductDataModel, ResponseData } from '../../utils/requestUtils'
+import {
+  BG_PAGE,
+  CARD_BG,
+  CARD_RADIUS,
+  CARD_SHADOW_COLOR,
+  CARD_SHADOW_OFFSET_Y,
+  CARD_SHADOW_RADIUS,
+  CHIP_RADIUS,
+  FONT_BODY,
+  FONT_CAPTION,
+  FONT_TITLE,
+  PRIMARY,
+  PRIMARY_END,
+  PRIMARY_START,
+  SPACE_MD,
+  SPACE_SM,
+  SPACE_XS,
+  TEXT_MAIN,
+  TEXT_MUTED
+} from '../../common/UiTokens'
 
 export interface GoodsDetailParam {
   goodsId: number
@@ -14,17 +34,18 @@ export function GoodsDetailPageBuilder(name: string, param: object) {
 export struct GoodsDetailPage {
   @State goodsInfo: ProductDataModel | null = null
   @State tip: string = ''
+  @State loading: boolean = false
   param?: GoodsDetailParam
 
   // 10.4 步骤5：拿 goodsId 去请求商品详情接口
   private async loadGoodsDetail(goodsId: number): Promise<void> {
-    this.tip = '加载中…'
+    this.loading = true
+    this.tip = ''
     try {
       const text: string = await getJson('/api/products/' + goodsId.toString())
       const res: ResponseData<ProductDataModel> = JSON.parse(text) as ResponseData<ProductDataModel>
       if (res.code === 200 && res.data !== undefined && res.data.name !== undefined) {
         this.goodsInfo = res.data
-        this.tip = ''
       } else {
         this.goodsInfo = null
         this.tip = '详情接口返回异常：' + res.message
@@ -32,44 +53,117 @@ export struct GoodsDetailPage {
     } catch (err) {
       this.goodsInfo = null
       this.tip = '连不上服务端（默认 http://127.0.0.1:3000），请先启动 shopmall-api-v2-server'
+    } finally {
+      this.loading = false
     }
   }
 
   build() {
     NavDestination() {
-      Column({ space: 12 }) {
+      Column({ space: SPACE_MD }) {
         if (this.goodsInfo !== null) {
-          if (firstImage(this.goodsInfo.images) === '') {
-            Image($r('app.media.dianqi'))
-              .width(140)
-              .height(140)
-          } else {
-            Image(firstImage(this.goodsInfo.images))
-              .width(140)
-              .height(140)
-              .objectFit(ImageFit.Contain)
+          // hero 大图：白色卡片衬底
+          Column() {
+            if (firstImage(this.goodsInfo.images) === '') {
+              Image($r('app.media.dianqi'))
+                .width('100%')
+                .height(200)
+                .objectFit(ImageFit.Contain)
+            } else {
+              Image(firstImage(this.goodsInfo.images))
+                .width('100%')
+                .height(200)
+                .objectFit(ImageFit.Contain)
+            }
           }
+          .width('100%')
+          .padding(SPACE_MD)
+          .borderRadius(CARD_RADIUS)
+          .backgroundColor(CARD_BG)
+          .shadow({
+            radius: CARD_SHADOW_RADIUS,
+            color: CARD_SHADOW_COLOR,
+            offsetX: 0,
+            offsetY: CARD_SHADOW_OFFSET_Y
+          })
+
           Text(this.goodsInfo.name)
-            .fontSize(18)
+            .fontSize(FONT_TITLE)
             .fontWeight(FontWeight.Bold)
-          Text(`价格${this.goodsInfo.price} 元`)
-            .fontSize(16)
-            .fontColor('#E64545')
-          Text(`库存：${this.goodsInfo.stock}`)
-            .fontSize(14)
-          Text(this.goodsInfo.description === null ? '' : this.goodsInfo.description)
-            .fontSize(14)
-            .fontColor('#6B6B6B')
+            .fontColor(TEXT_MAIN)
+            .width('100%')
+
+          // 渐变价格条：左边价格，右边库存
+          Row() {
+            Text(`价格${this.goodsInfo.price} 元`)
+              .fontSize(FONT_TITLE)
+              .fontWeight(FontWeight.Medium)
+              .fontColor('#FFFFFF')
+            Blank()
+            Text(`库存：${this.goodsInfo.stock}`)
+              .fontSize(FONT_CAPTION)
+              .fontColor('rgba(255,255,255,0.85)')
+          }
+          .width('100%')
+          .padding(SPACE_MD)
+          .borderRadius(CHIP_RADIUS)
+          .linearGradient({
+            angle: 135,
+            colors: [[PRIMARY_START, 0], [PRIMARY_END, 1]]
+          })
+
+          if (this.goodsInfo.description !== null && this.goodsInfo.description !== '') {
+            Column({ space: SPACE_XS }) {
+              Text('商品说明')
+                .fontSize(FONT_CAPTION)
+                .fontColor(TEXT_MUTED)
+                .width('100%')
+              Text(this.goodsInfo.description)
+                .fontSize(FONT_BODY)
+                .fontColor(TEXT_MAIN)
+                .lineHeight(22)
+                .width('100%')
+            }
+            .width('100%')
+            .padding(SPACE_MD)
+            .alignItems(HorizontalAlign.Start)
+            .borderRadius(CARD_RADIUS)
+            .backgroundColor(CARD_BG)
+            .shadow({
+              radius: CARD_SHADOW_RADIUS,
+              color: CARD_SHADOW_COLOR,
+              offsetX: 0,
+              offsetY: CARD_SHADOW_OFFSET_Y
+            })
+          }
+        } else if (this.loading) {
+          Row({ space: SPACE_XS }) {
+            LoadingProgress()
+              .width(22)
+              .height(22)
+              .color(PRIMARY)
+            Text('加载中…')
+              .fontSize(FONT_BODY)
+              .fontColor(TEXT_MUTED)
+          }
+          .width('100%')
+          .margin({ top: 40 })
         } else {
-          Text(this.tip)
-            .fontSize(14)
-            .fontColor('#9B9B9B')
-            .margin({ top: 40 })
+          Column({ space: SPACE_SM }) {
+            Text(this.tip)
+              .fontSize(FONT_BODY)
+              .fontColor(TEXT_MUTED)
+              .textAlign(TextAlign.Center)
+          }
+          .width('100%')
+          .margin({ top: 40 })
         }
       }
       .width('100%')
       .padding(16)
+      .alignItems(HorizontalAlign.Start)
     }
+    .backgroundColor(BG_PAGE)
     .title('商品详情')
     .onReady((context: NavDestinationContext) => {
       // 本 SDK 的 NavDestinationContext 把参数放在 pathInfo.param 里

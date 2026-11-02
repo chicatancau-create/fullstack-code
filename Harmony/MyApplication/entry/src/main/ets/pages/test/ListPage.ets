@@ -25,8 +25,28 @@ struct ListPage {
   @State goodsList: Goods[] = listGoods.slice()
   @State isRefreshing: boolean = false
 
+  // 删除前先弹确认框
+  private confirmDelete(index: number, name: string): void {
+    this.getUIContext().showAlertDialog({
+      title: '删除商品',
+      message: `确定从列表里删除${name}吗？`,
+      primaryButton: {
+        value: '取消',
+        action: () => {
+        }
+      },
+      secondaryButton: {
+        value: '删除',
+        fontColor: DANGER,
+        action: () => {
+          this.goodsList.splice(index, 1)
+        }
+      }
+    })
+  }
+
   // 侧滑后露出的删除按钮
-  @Builder itemEnd(index: number) {
+  @Builder itemEnd(index: number, name: string) {
     Column() {
       Image($r('app.media.delete_left'))
         .width(22)
@@ -39,8 +59,17 @@ struct ListPage {
     .backgroundColor(DANGER)
     .justifyContent(FlexAlign.Center)
     .margin({ left: SPACE_MD })
+    .stateStyles({
+      pressed: {
+        .opacity(0.7)
+      },
+      normal: {
+        .opacity(1)
+      }
+    })
+    .animation({ duration: MOTION_FAST, curve: Curve.EaseOut })
     .onClick(() => {
-      this.goodsList.splice(index, 1)
+      this.confirmDelete(index, name)
     })
   }
 
@@ -118,7 +147,7 @@ struct ListPage {
             })
             .swipeAction({
               end: {
-                builder: this.itemEnd(index)
+                builder: this.itemEnd(index, item.goodsName)
               }
             })
           }, (item: Goods) => JSON.stringify(item))

@@ -1,6 +1,31 @@
 import { CartItem } from '../../model/Data'
 import { CartStore, connectCart } from '../../model/CartStore'
 import { connectUser, User } from '../../model/User'
+import {
+  BG_PAGE,
+  CARD_BG,
+  CARD_RADIUS,
+  CARD_SHADOW_COLOR,
+  CARD_SHADOW_OFFSET_Y,
+  CARD_SHADOW_RADIUS,
+  CHIP_RADIUS,
+  DANGER,
+  FONT_BODY,
+  FONT_CAPTION,
+  FONT_PRICE,
+  FONT_SUBTITLE,
+  IMAGE_RADIUS,
+  INPUT_BG,
+  MOTION_FAST,
+  PRIMARY,
+  PRIMARY_END,
+  PRIMARY_START,
+  SPACE_MD,
+  SPACE_SM,
+  SPACE_XS,
+  TEXT_MAIN,
+  TEXT_MUTED
+} from '../../common/UiTokens'
 
 @ComponentV2
 export default struct Cart {
@@ -26,87 +51,154 @@ export default struct Cart {
     }
   }
 
+  // 数量按钮：圆角方块，按下变浅
+  @Builder countBtn(label: string, index: number, delta: number) {
+    Text(label)
+      .fontSize(FONT_SUBTITLE)
+      .fontColor(PRIMARY)
+      .width(30)
+      .height(30)
+      .textAlign(TextAlign.Center)
+      .borderRadius(IMAGE_RADIUS)
+      .backgroundColor(INPUT_BG)
+      .stateStyles({
+        pressed: {
+          .opacity(0.6)
+        },
+        normal: {
+          .opacity(1)
+        }
+      })
+      .animation({ duration: MOTION_FAST, curve: Curve.EaseOut })
+      .onClick(() => {
+        this.change(index, delta)
+      })
+  }
+
   build() {
-    Column({ space: 12 }) {
+    Column({ space: SPACE_SM }) {
       Text('购物车')
-        .fontSize(18)
+        .fontSize(FONT_PRICE)
         .fontWeight(FontWeight.Bold)
+        .fontColor(TEXT_MAIN)
         .width('92%')
 
       if (this.notice !== '') {
         Text(this.notice)
-          .fontSize(13)
-          .fontColor('#1698CE')
+          .fontSize(FONT_BODY)
+          .fontColor(PRIMARY)
           .width('92%')
       }
 
       if (this.store.items.length === 0) {
-        Text('购物车是空的，去首页加几件')
-          .fontSize(14)
-          .fontColor('#9B9B9B')
-          .margin({ top: 40 })
-      }
+        // 空态：图形 + 文案居中
+        Column({ space: SPACE_SM }) {
+          Image($r('app.media.cart_full'))
+            .width(56)
+            .height(56)
+            .fillColor('#DCE3EA')
+          Text('购物车是空的，去首页加几件')
+            .fontSize(FONT_BODY)
+            .fontColor(TEXT_MUTED)
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .justifyContent(FlexAlign.Center)
+      } else {
+        List({ space: 10 }) {
+          ForEach(this.store.items, (item: CartItem, index: number) => {
+            ListItem() {
+              Row({ space: SPACE_MD }) {
+                Column({ space: 4 }) {
+                  Text(item.name)
+                    .fontSize(FONT_SUBTITLE)
+                    .fontColor(TEXT_MAIN)
+                    .maxLines(2)
+                    .textOverflow({ overflow: TextOverflow.Ellipsis })
+                  Text(`¥${item.price}`)
+                    .fontSize(FONT_BODY)
+                    .fontColor(DANGER)
+                }
+                .layoutWeight(1)
+                .alignItems(HorizontalAlign.Start)
 
-      List({ space: 8 }) {
-        ForEach(this.store.items, (item: CartItem, index: number) => {
-          ListItem() {
-            Row({ space: 12 }) {
-              Column({ space: 4 }) {
-                Text(item.name).fontSize(16)
-                Text(`¥${item.price}`)
-                  .fontSize(14)
-                  .fontColor('#E64545')
+                Row({ space: SPACE_XS }) {
+                  this.countBtn('－', index, -1)
+                  Text(`${item.count}`)
+                    .fontSize(FONT_SUBTITLE)
+                    .fontColor(TEXT_MAIN)
+                    .width(28)
+                    .textAlign(TextAlign.Center)
+                  this.countBtn('＋', index, 1)
+                }
               }
-              .layoutWeight(1)
-              .alignItems(HorizontalAlign.Start)
-
-              Row({ space: 16 }) {
-                Text('－')
-                  .fontSize(18)
-                  .onClick(() => {
-                    this.change(index, -1)
-                  })
-                Text(`${item.count}`).fontSize(16)
-                Text('＋')
-                  .fontSize(18)
-                  .onClick(() => {
-                    this.change(index, 1)
-                  })
-              }
+              .width('100%')
+              .padding(SPACE_MD)
+              .alignItems(VerticalAlign.Center)
             }
-            .width('100%')
-            .padding(12)
-            .backgroundColor('#F7F7F7')
-          }
-        }, (item: CartItem) => item.name)
-      }
-      .layoutWeight(1)
-      .width('92%')
-
-      Row() {
-        Text('合计').fontSize(16)
-        Text(`¥${this.total()}`)
-          .fontSize(18)
-          .fontWeight(FontWeight.Bold)
-          .fontColor('#E64545')
-      }
-      .width('92%')
-      .justifyContent(FlexAlign.SpaceBetween)
-
-      Button('结算')
+            .borderRadius(CARD_RADIUS)
+            .backgroundColor(CARD_BG)
+            .shadow({
+              radius: CARD_SHADOW_RADIUS,
+              color: CARD_SHADOW_COLOR,
+              offsetX: 0,
+              offsetY: CARD_SHADOW_OFFSET_Y
+            })
+          }, (item: CartItem) => item.name)
+        }
+        .layoutWeight(1)
         .width('92%')
-        .onClick(() => {
-          if (this.store.items.length === 0) {
-            this.getUIContext().getPromptAction().showToast({ message: '购物车是空的' })
-            return
-          }
-          const n: number = this.store.items.reduce((sum: number, item: CartItem): number => sum + item.count, 0)
-          this.getUIContext().getPromptAction().showToast({ message: `已提交 ${n} 件商品` })
-          this.store.items.splice(0, this.store.items.length)
-        })
+        .scrollBar(BarState.Off)
+      }
+
+      // 吸底合计条
+      Column({ space: SPACE_XS }) {
+        Row() {
+          Text('合计')
+            .fontSize(FONT_SUBTITLE)
+            .fontColor(TEXT_MAIN)
+          Blank()
+          Text(`¥${this.total()}`)
+            .fontSize(FONT_PRICE)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(DANGER)
+        }
+        .width('100%')
+
+        Button('结算')
+          .width('100%')
+          .height(44)
+          .fontSize(FONT_SUBTITLE)
+          .fontColor('#FFFFFF')
+          .linearGradient({
+            angle: 135,
+            colors: [[PRIMARY_START, 0], [PRIMARY_END, 1]]
+          })
+          .onClick(() => {
+            if (this.store.items.length === 0) {
+              this.getUIContext().getPromptAction().showToast({ message: '购物车是空的' })
+              return
+            }
+            const n: number = this.store.items.reduce((sum: number, item: CartItem): number => sum + item.count, 0)
+            this.getUIContext().getPromptAction().showToast({ message: `已提交 ${n} 件商品` })
+            this.store.items.splice(0, this.store.items.length)
+          })
+      }
+      .width('92%')
+      .padding(SPACE_MD)
+      .borderRadius(CARD_RADIUS)
+      .backgroundColor(CARD_BG)
+      .shadow({
+        radius: CARD_SHADOW_RADIUS,
+        color: CARD_SHADOW_COLOR,
+        offsetX: 0,
+        offsetY: CARD_SHADOW_OFFSET_Y
+      })
+      .margin({ bottom: SPACE_MD })
     }
     .width('100%')
     .height('100%')
-    .padding({ top: 16 })
+    .padding({ top: SPACE_MD })
+    .backgroundColor(BG_PAGE)
   }
 }
