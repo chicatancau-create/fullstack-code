@@ -3,6 +3,7 @@ import Category from "./category/Category"
 import Cart from "./cart/Cart"
 import Me from "./me/Index"
 import { TabIndexArg } from '../utils/requestUtils'
+import { FONT_CAPTION, FONT_BODY, MOTION_FAST, PRIMARY, TAB_ACTIVE_BG, TEXT_SECONDARY } from '../common/UiTokens'
 
 @Entry
 @Component
@@ -20,16 +21,28 @@ struct Index {
     }
   }
 
+  // tab 选中态：图标放大 + 文字加粗 + 底下衬一块主色胶囊
   @Builder tabBuilder(title: string, targetIndex: number, image: Resource) {
     Column() {
-      Image(image)
-        .size({ width: 25, height: 25 })
-        .fillColor(this.currentIndex === targetIndex ? '#1698CE' : '#6B6B6B')
-      Text(title)
-        .fontColor(this.currentIndex === targetIndex ? '#1698CE' : '#6B6B6B')
+      Column({ space: 2 }) {
+        Image(image)
+          .size({ width: 24, height: 24 })
+          .fillColor(this.currentIndex === targetIndex ? PRIMARY : TEXT_SECONDARY)
+          .scale(this.currentIndex === targetIndex ? { x: 1.12, y: 1.12 } : { x: 1, y: 1 })
+        Text(title)
+          .fontSize(this.currentIndex === targetIndex ? FONT_BODY : FONT_CAPTION)
+          .fontWeight(this.currentIndex === targetIndex ? FontWeight.Medium : FontWeight.Normal)
+          .fontColor(this.currentIndex === targetIndex ? PRIMARY : TEXT_SECONDARY)
+      }
+      .width(64)
+      .height(42)
+      .justifyContent(FlexAlign.Center)
+      .borderRadius(21)
+      .backgroundColor(this.currentIndex === targetIndex ? TAB_ACTIVE_BG : Color.Transparent)
+      .animation({ duration: MOTION_FAST, curve: Curve.EaseOut })
     }
     .width('100%')
-    .height(50)
+    .height(56)
     .justifyContent(FlexAlign.Center)
   }
 
