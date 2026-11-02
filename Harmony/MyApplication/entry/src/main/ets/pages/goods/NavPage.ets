@@ -1,5 +1,19 @@
 import { GoodsDetailParam } from './GoodsDetailPage'
 import { firstImage, getJson, GoodsDataModel, ProductDataModel, ResponseData, BASE_URL } from '../../utils/requestUtils'
+import {
+  BG_PAGE,
+  CARD_BG,
+  CARD_RADIUS,
+  DANGER,
+  FONT_BODY,
+  FONT_CAPTION,
+  FONT_PRICE,
+  FONT_SUBTITLE,
+  IMAGE_RADIUS,
+  SPACE_MD,
+  TEXT_MAIN,
+  TEXT_MUTED
+} from '../../common/UiTokens'
 
 // 10.4：商品列表页根容器改为 Navigation，详情页交给系统路由表 router_map.json
 @Entry
@@ -34,48 +48,72 @@ struct NavPage {
     Navigation(this.pathStack) {
       Column({ space: 10 }) {
         Text(this.tip === '' ? '点击商品查看详情' : this.tip)
-          .fontSize(15)
-          .fontColor(this.tip === '' ? '#333333' : '#9B9B9B')
+          .fontSize(FONT_BODY)
+          .fontColor(this.tip === '' ? TEXT_MUTED : DANGER)
         List({ space: 10 }) {
           ForEach(this.goodsList, (item: ProductDataModel) => {
             ListItem() {
-              Row() {
+              Row({ space: SPACE_MD }) {
                 if (firstImage(item.images) === '') {
                   Image($r('app.media.dianqi'))
-                    .width(50)
-                    .height(50)
+                    .width(64)
+                    .height(64)
+                    .borderRadius(IMAGE_RADIUS)
+                    .backgroundColor('#F7F8FA')
                 } else {
                   Image(BASE_URL + String(item.images).split(',')[0])
-                    .width(50)
-                    .height(50)
+                    .width(64)
+                    .height(64)
                     .objectFit(ImageFit.Cover)
+                    .borderRadius(IMAGE_RADIUS)
                 }
-                Text(item.name)
-                  .fontSize(15)
-                  .layoutWeight(1)
+                Column({ space: 4 }) {
+                  Text(item.name)
+                    .fontSize(FONT_SUBTITLE)
+                    .fontColor(TEXT_MAIN)
+                    .maxLines(2)
+                    .textOverflow({ overflow: TextOverflow.Ellipsis })
+                  Text(`库存 ${item.stock}`)
+                    .fontSize(FONT_CAPTION)
+                    .fontColor(TEXT_MUTED)
+                }
+                .layoutWeight(1)
+                .alignItems(HorizontalAlign.Start)
+
                 Text(`￥${item.price}`)
-                  .fontSize(15)
-                  .fontColor('#E64545')
+                  .fontSize(FONT_PRICE)
+                  .fontColor(DANGER)
+                  .fontWeight(FontWeight.Medium)
+                Image($r('app.media.jiantouyou'))
+                  .width(14)
+                  .height(14)
+                  .fillColor(TEXT_MUTED)
               }
               .width('100%')
-              .padding(10)
+              .padding(SPACE_MD)
+              .alignItems(VerticalAlign.Center)
               .onClick(() => {
                 // 10.4 步骤4：按名字跳转，只传商品 id，由详情页自己请求详情
                 const arg: GoodsDetailParam = { goodsId: item.id }
                 this.pathStack.pushPathByName('GoodsDetail', arg)
               })
             }
+            .borderRadius(CARD_RADIUS)
+            .backgroundColor(CARD_BG)
           }, (item: ProductDataModel) => item.id.toString())
         }
         .width('100%')
         .layoutWeight(1)
+        .scrollBar(BarState.Off)
       }
       .width('100%')
       .height('100%')
       .padding(12)
+      .backgroundColor(BG_PAGE)
     }
     .mode(NavigationMode.Stack)
     .title('商品列表')
     .hideNavBar(true)
+    .backgroundColor(BG_PAGE)
   }
 }

@@ -1,4 +1,5 @@
 import { Address, listAddress } from '../../data/interface'
+import Title from '../component/Title'
 import {
   BG_PAGE,
   CARD_BG,
@@ -40,9 +41,21 @@ struct AddressPage {
 
   build() {
     Column() {
+      Title({ title: '收货地址', isShow: true })
+
       // 任务四：Refresh 包住 List，$$ 把转圈状态双向绑给 isRefreshing
       Refresh({ refreshing: $$this.isRefreshing }) {
         List({ space: 10 }) {
+          if (this.addressList.length === 0) {
+            ListItem() {
+              Text('地址已清空，下拉刷新可以恢复')
+                .fontSize(FONT_BODY)
+                .fontColor(TEXT_MUTED)
+                .textAlign(TextAlign.Center)
+                .width('100%')
+                .padding({ top: 40, bottom: 40 })
+            }
+          }
           ForEach(this.addressList, (item: Address, index: number) => {
             // 任务二：一条地址 = 姓名 / 地址 / 电话 三行
             ListItem() {
@@ -85,6 +98,7 @@ struct AddressPage {
         .padding({ left: SPACE_MD, right: SPACE_MD })
         .scrollBar(BarState.Off)
       }
+      .layoutWeight(1)
       .onRefreshing(() => {
         setTimeout(() => {
           this.addressList = listAddress.slice()

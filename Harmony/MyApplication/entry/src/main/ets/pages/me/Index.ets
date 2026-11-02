@@ -1,115 +1,142 @@
 import Title from '../component/Title'
 import { connectUser, User } from '../../model/User'
+import {
+  BG_PAGE,
+  CARD_BG,
+  CARD_RADIUS,
+  FONT_BODY,
+  FONT_SUBTITLE,
+  PRIMARY,
+  PRIMARY_TINT,
+  SPACE_MD,
+  SPACE_SM,
+  SPACE_XS,
+  TEXT_MAIN,
+  TEXT_MUTED
+} from '../../common/UiTokens'
 
 @ComponentV2
 export default struct Index {
   @Local user: User = connectUser()
 
+  // 6.5 同款写法：把一行入口提炼成 @Builder。target 为空表示课件里只做静态展示的行
+  @Builder
+  rowCell(icon: Resource, label: string, target: string) {
+    Row({ space: SPACE_MD }) {
+      Column() {
+        Image(icon)
+          .width(20)
+          .height(20)
+      }
+      .width(32)
+      .height(32)
+      .borderRadius(16)
+      .backgroundColor(PRIMARY_TINT)
+      .justifyContent(FlexAlign.Center)
+
+      Text(label)
+        .fontSize(FONT_SUBTITLE)
+        .fontColor(TEXT_MAIN)
+        .layoutWeight(1)
+
+      if (target !== '') {
+        Image($r('app.media.jiantouyou'))
+          .width(14)
+          .height(14)
+          .fillColor(TEXT_MUTED)
+      }
+    }
+    .width('100%')
+    .padding({ top: SPACE_SM, bottom: SPACE_SM })
+    .onClick(() => {
+      if (target !== '') {
+        this.getUIContext().getRouter().pushUrl({ url: target })
+      }
+    })
+  }
+
   build() {
-    Column({ space: 12 }) {
+    Column({ space: SPACE_MD }) {
       Title({ title: '个人中心', isShow: false })
+
+      // 账号状态：未登录给登录/注册两个入口，已登录给退出登录
       if (!this.user.isLoggedIn) {
-        Text('登录')
-          // 响应事件
-          .onClick(() => {
-            // this.getUIContext() 获取当前的上下文
-            this.getUIContext().getRouter().pushUrl({ url: 'pages/me/Login' })
-          })
-        Text('注册')
-          .onClick(() => {
-            this.getUIContext().getRouter().pushUrl({ url: 'pages/me/Reg' })
-          })
+        Row({ space: SPACE_MD }) {
+          Text('未登录')
+            .fontSize(FONT_BODY)
+            .fontColor(TEXT_MUTED)
+            .layoutWeight(1)
+          Text('登录')
+            // 响应事件
+            .fontSize(FONT_BODY)
+            .fontColor(PRIMARY)
+            .onClick(() => {
+              // this.getUIContext() 获取当前的上下文
+              this.getUIContext().getRouter().pushUrl({ url: 'pages/me/Login' })
+            })
+          Text('注册')
+            .fontSize(FONT_BODY)
+            .fontColor(PRIMARY)
+            .onClick(() => {
+              this.getUIContext().getRouter().pushUrl({ url: 'pages/me/Reg' })
+            })
+        }
+        .width('100%')
       } else {
-        Text(`已登录：${this.user.name}`)
-        Text('退出登录')
-          .onClick(() => {
-            this.user.isLoggedIn = false
-            this.user.name = ''
-          })
+        Row({ space: SPACE_MD }) {
+          Text(`已登录：${this.user.name}`)
+            .fontSize(FONT_BODY)
+            .fontColor(TEXT_MAIN)
+            .layoutWeight(1)
+          Text('退出登录')
+            .fontSize(FONT_BODY)
+            .fontColor(PRIMARY)
+            .onClick(() => {
+              this.user.isLoggedIn = false
+              this.user.name = ''
+            })
+        }
+        .width('100%')
       }
-      // 本周作业入口：收货地址列表页
-      Row({ space: 20 }) {
-        Image($r('app.media.daohangdizhi')).width(20)
-        Text('收货地址').fontSize(15)
+
+      Column({ space: SPACE_XS }) {
+        // 本周作业入口：收货地址列表页
+        this.rowCell($r('app.media.daohangdizhi'), '收货地址', 'pages/test/AddressPage')
+        Divider()
+        // 5.5 通讯录作业入口
+        this.rowCell($r('app.media.liulan'), '通讯录', 'pages/test/ContactPage')
+        Divider()
+        // 第 5 章商品列表练习入口
+        this.rowCell($r('app.media.liulan'), '商品列表', 'pages/test/ListPage')
+        Divider()
+        // 第 10 章 Navigation 商品详情入口
+        this.rowCell($r('app.media.liulan'), '商品详情', 'pages/goods/NavPage')
+        Divider()
+        // 第 9 章网络商品列表入口（需先启动课件服务端）
+        this.rowCell($r('app.media.liulan'), '网络商品列表', 'pages/test/NetGoodsPage')
+        Divider()
+        // 第 11 章服务端登录入口，和本地登录互不影响
+        this.rowCell($r('app.media.denglu'),
+          this.user.isLoggedIn ? `服务端/本地已登录：${this.user.name}` : '网络登录（服务端）', 'pages/me/LoginApi')
+        Divider()
+        // 修改个人信息入口（第 12 章）
+        this.rowCell($r('app.media.pingjia'), '修改信息', 'pages/me/Edit')
+        Divider()
+        // 以下三行按课件只做静态展示，暂无对应页面
+        this.rowCell($r('app.media.shoucang'), '我的收藏', '')
+        Divider()
+        this.rowCell($r('app.media.shimingrenzheng'), '修改密码', '')
+        Divider()
+        this.rowCell($r('app.media.kefu'), '联系客服', '')
       }
-      .width('90%')
-      .onClick(() => {
-        this.getUIContext().getRouter().pushUrl({ url: 'pages/test/AddressPage' })
-      })
-      // 5.5 通讯录作业入口
-      Row({ space: 20 }) {
-        Image($r('app.media.liulan')).width(20)
-        Text('通讯录').fontSize(15)
-      }
-      .width('90%')
-      .onClick(() => {
-        this.getUIContext().getRouter().pushUrl({ url: 'pages/test/ContactPage' })
-      })
-      // 第 5 章商品列表练习入口
-      Row({ space: 20 }) {
-        Image($r('app.media.liulan')).width(20)
-        Text('商品列表').fontSize(15)
-      }
-      .width('90%')
-      .onClick(() => {
-        this.getUIContext().getRouter().pushUrl({ url: 'pages/test/ListPage' })
-      })
-      // 第 10 章 Navigation 商品详情入口
-      Row({ space: 20 }) {
-        Image($r('app.media.liulan')).width(20)
-        Text('商品详情').fontSize(15)
-      }
-      .width('90%')
-      .onClick(() => {
-        this.getUIContext().getRouter().pushUrl({ url: 'pages/goods/NavPage' })
-      })
-      // 第 9 章网络商品列表入口（需先启动课件服务端）
-      Row({ space: 20 }) {
-        Image($r('app.media.liulan')).width(20)
-        Text('网络商品列表').fontSize(15)
-      }
-      .width('90%')
-      .onClick(() => {
-        this.getUIContext().getRouter().pushUrl({ url: 'pages/test/NetGoodsPage' })
-      })
-      // 第 11 章服务端登录入口，和本地登录互不影响
-      Row({ space: 20 }) {
-        Image($r('app.media.denglu')).width(20)
-        Text(this.user.isLoggedIn ? `服务端/本地已登录：${this.user.name}` : '网络登录（服务端）').fontSize(15)
-      }
-      .width('90%')
-      .onClick(() => {
-        this.getUIContext().getRouter().pushUrl({ url: 'pages/me/LoginApi' })
-      })
-      // 以下三行按课件只做静态展示，暂无对应页面
-      Row({ space: 20 }) {
-        Image($r('app.media.shoucang')).width(20)
-        Text('我的收藏').fontSize(15)
-      }
-      .width('90%')
-      Divider()
-      Row({ space: 20 }) {
-        Image($r('app.media.shimingrenzheng')).width(20)
-        Text('修改密码').fontSize(15)
-      }
-      .width('90%')
-      Divider()
-      Row({ space: 20 }) {
-        Image($r('app.media.pingjia')).width(20)
-        Text('修改信息').fontSize(15)
-      }
-      .width('90%')
-      .onClick(() => {
-        this.getUIContext().getRouter().pushUrl({ url: 'pages/me/Edit' })
-      })
-      Divider()
-      Row({ space: 20 }) {
-        Image($r('app.media.kefu')).width(20)
-        Text('联系客服').fontSize(15)
-      }
-      .width('90%')
+      .width('100%')
+      .padding({ left: SPACE_MD, right: SPACE_MD })
+      .borderRadius(CARD_RADIUS)
+      .backgroundColor(CARD_BG)
     }
     .width('100%')
     .height('100%')
+    .padding(SPACE_MD)
+    .backgroundColor(BG_PAGE)
   }
 }

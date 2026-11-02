@@ -46,6 +46,16 @@ struct ListPage {
       // 下拉刷新：refreshing 双向绑定 isRefreshing
       Refresh({ refreshing: $$this.isRefreshing }) {
         List({ space: 10 }) {
+          if (this.goodsList.length === 0) {
+            ListItem() {
+              Text('列表已清空，下拉刷新可以恢复')
+                .fontSize(FONT_BODY)
+                .fontColor(TEXT_MUTED)
+                .textAlign(TextAlign.Center)
+                .width('100%')
+                .padding({ top: 40, bottom: 40 })
+            }
+          }
           ForEach(this.goodsList, (item: Goods, index: number) => {
             ListItem() {
               Row({ space: SPACE_MD }) {
@@ -115,6 +125,7 @@ struct ListPage {
         .alignListItem(ListItemAlign.Center)
         .scrollBar(BarState.Off)
       }
+      .layoutWeight(1)
       .onRefreshing(() => {
         setTimeout(() => {
           this.goodsList = listGoods.slice()
