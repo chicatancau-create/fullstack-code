@@ -9,6 +9,7 @@
 |---|---|---|
 | `Web/js自学/` | 原生 HTML + JavaScript | 两页**可运行**的语法笔记，页面内会把 `console.log` 的真实输出打印到黄底框 |
 | `Web/vue/` | Vue 3 + Vite + vue-router | 跟课练习：组件、路由、动态组件、商品管理表格与自定义指令 |
+| `Web/webgl自学/` | 原生 HTML + Three.js r169（CDN importmap） | 单文件实时 3D 练习页。`浮空树脂小岛.html`：树脂圆柱沙盘、昼夜光照插值、GTAO + Bloom + AgX + SMAA、屏幕空间折射，贴图全程序化 |
 | `Cpp/` | C / C++（MinGW g++） | 环境自检样例，各一个可执行文件 |
 | `Python/` | Python 3 + venv | 环境自检样例 |
 | `Harmony/yingye/` | HarmonyOS ArkTS | **当前主工程**：入口 `entry/src/main/ets/pages/Index.ets`，已备 10 张专辑封面素材供音乐播放器使用 |
@@ -25,6 +26,21 @@
 
 - `Web/js自学/javaScript基础语法.html`
 - `Web/js自学/循环与数组.html`
+
+### Web / webgl自学
+
+无需构建，浏览器直接打开即可（需联网取 three.js）：
+
+- `Web/webgl自学/浮空树脂小岛.html`
+
+要点：
+
+- 依赖只走 importmap（`three@0.169.0`，主源 `fastly.jsdelivr.net`）。本机到 CDN 偶发连接重置，
+  已做三层兜底：addon 换镜像重试、核心库失败自动重载一次、失败面板给「重新加载」按钮；
+  若始终不通，把 importmap 里的域名换成 `unpkg.com` 或本地 three 构建。
+- 首次加载要 10–30s：所有贴图（沙纹/木纹/沉积层/法线）与高度场都是运行时程序化生成的，
+  外加十几个着色器程序编译，不是卡死。
+- 桌面端 only。交互：拖动环绕、滚轮缩放、`1`/`2`/`3` 切光照预设、空格停自动环绕、`H` 隐藏界面。
 
 ### Web / vue
 

@@ -18,6 +18,8 @@ export const GLASS_BG: string = 'rgba(255,255,255,0.18)'
 // 主色的浅底块，用来衬住宫格图标
 export const PRIMARY_TINT: string = '#EAF3FB'
 export const TEXT_ON_PRIMARY: string = '#FFFFFF'
+// 输入框默认描边，聚焦时换成主色
+export const BORDER_LIGHT: string = '#E5E7EA'
 
 // 圆角
 export const CARD_RADIUS: number = 16

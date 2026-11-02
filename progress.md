@@ -16,6 +16,7 @@
 | `Cpp/` | `c.cpp`（C++）+ `EnvironmentTest.c`（C），各自一个同名 exe | 可编译 |
 | `Python/` | `main.py`、`EnvironmentTest.py` + `.venv` | venv 2026-10-12 重建 |
 | `Harmony/` | `MyApplication/`（606 个文件）；`yingye/`（2026-10-13 后新增） | 未受影响 |
+| `Web/webgl自学/` | `浮空树脂小岛.html` 单文件实时 3D 沙盘（Three.js r169，全程序化贴图） | 2026-10-19 新增，headless Edge 实测可跑、无 console 报错 |
 
 ## 提交记录
 

@@ -56,39 +56,7 @@
     font:11px/1.5 ui-monospace,Consolas,monospace;color:#ffb4a6;background:rgba(255,90,60,.07);
     border:1px solid rgba(255,120,90,.25);border-radius:8px;max-height:40vh;overflow:auto}
 </style>
-<script>
-/* 依赖源探测：先同步挑一个可达的镜像再注入 importmap（Chromium 不支持 map 的 fallback 数组）。
-   若本脚本失败，下面静态的 importmap 仍会生效。 */
-(function () {
-  var HOSTS = [
-    'https://fastly.jsdelivr.net/npm/three@0.169.0/',
-    'https://cdn.jsdelivr.net/npm/three@0.169.0/',
-    'https://unpkg.com/three@0.169.0/',
-    'https://registry.npmmirror.com/three/0.169.0/files/'
-  ];
-  var probe = function (url) {
-    try {
-      var x = new XMLHttpRequest();
-      x.open('HEAD', url, false);
-      x.timeout = 4000;
-      x.send();
-      return x.status === 200;
-    } catch (e) { return false; }
-  };
-  var chosen = null;
-  for (var i = 0; i < HOSTS.length; i++) {
-    if (probe(HOSTS[i] + 'build/three.module.js')) { chosen = HOSTS[i]; break; }
-  }
-  window.__THREE_HOST = chosen;
-  var host = chosen || HOSTS[0];
-  var el = document.createElement('script');
-  el.type = 'importmap';
-  el.textContent = JSON.stringify({
-    imports: { three: host + 'build/three.module.js', 'three/addons/': host + 'examples/jsm/' }
-  });
-  document.head.appendChild(el);
-})();
-</script>
+
 <script type="importmap">
 {
   "imports": {
@@ -158,27 +126,48 @@ let THREE, OrbitControls, EffectComposer, RenderPass, ShaderPass, GTAOPass,
     UnrealBloomPass, OutputPass, SMAAPass, RoundedBoxGeometry, BGU;
 addEventListener('error', (e) => { if (document.getElementById('boot')) fatal(e.error || e.message); });
 addEventListener('unhandledrejection', (e) => { if (document.getElementById('boot')) fatal(e.reason); });
-const retry = async (spec, n = 3) => {
-  let err;
-  for (let k = 0; k < n; k++) {
-    try { return await import(spec); }
-    catch (e) { err = e; await new Promise((r) => setTimeout(r, 350 * (k + 1))); }
+/* 模块加载：同一 URL 失败会被浏览器负缓存，所以兜底要换镜像。
+   addon 内部的 import 'three' 始终走 importmap，因此不会出现两份 three 实例。 */
+const HOSTS = [
+  'https://fastly.jsdelivr.net/npm/three@0.169.0/',
+  'https://cdn.jsdelivr.net/npm/three@0.169.0/',
+  'https://unpkg.com/three@0.169.0/',
+  'https://registry.npmmirror.com/three/0.169.0/files/'
+];
+async function imp(spec) {
+  try { return await import(spec); }
+  catch (e) {
+    const rel = spec.startsWith('three/addons/') ? 'examples/jsm/' + spec.slice('three/addons/'.length) : null;
+    if (!rel) throw e;                       // 核心库必须与 importmap 同源，换源会得到两份 three
+    let last = e;
+    for (const h of HOSTS) { try { return await import(h + rel); } catch (e2) { last = e2; } }
+    throw last;
   }
-  throw err;
-};
+}
 try {
-  THREE = await retry('three');
-  ({ OrbitControls } = await retry('three/addons/controls/OrbitControls.js'));
-  ({ EffectComposer } = await retry('three/addons/postprocessing/EffectComposer.js'));
-  ({ RenderPass } = await retry('three/addons/postprocessing/RenderPass.js'));
-  ({ ShaderPass } = await retry('three/addons/postprocessing/ShaderPass.js'));
-  ({ GTAOPass } = await retry('three/addons/postprocessing/GTAOPass.js'));
-  ({ UnrealBloomPass } = await retry('three/addons/postprocessing/UnrealBloomPass.js'));
-  ({ OutputPass } = await retry('three/addons/postprocessing/OutputPass.js'));
-  ({ SMAAPass } = await retry('three/addons/postprocessing/SMAAPass.js'));
-  ({ RoundedBoxGeometry } = await retry('three/addons/geometries/RoundedBoxGeometry.js'));
-  BGU = await retry('three/addons/utils/BufferGeometryUtils.js');
-} catch (err) { fatal(err); throw err; }
+  THREE = await imp('three');
+  ({ OrbitControls } = await imp('three/addons/controls/OrbitControls.js'));
+  ({ EffectComposer } = await imp('three/addons/postprocessing/EffectComposer.js'));
+  ({ RenderPass } = await imp('three/addons/postprocessing/RenderPass.js'));
+  ({ ShaderPass } = await imp('three/addons/postprocessing/ShaderPass.js'));
+  ({ GTAOPass } = await imp('three/addons/postprocessing/GTAOPass.js'));
+  ({ UnrealBloomPass } = await imp('three/addons/postprocessing/UnrealBloomPass.js'));
+  ({ OutputPass } = await imp('three/addons/postprocessing/OutputPass.js'));
+  ({ SMAAPass } = await imp('three/addons/postprocessing/SMAAPass.js'));
+  ({ RoundedBoxGeometry } = await imp('three/addons/geometries/RoundedBoxGeometry.js'));
+  BGU = await imp('three/addons/utils/BufferGeometryUtils.js');
+} catch (err) {
+  // 核心库必须与 importmap 同源，无法换镜像；偶发连接重置用一次自动重载兜底
+  let reloading = false;
+  try {
+    if (!sessionStorage.getItem('isl-reloaded')) {
+      sessionStorage.setItem('isl-reloaded', '1');
+      location.reload();
+      reloading = true;
+    }
+  } catch (e) { /* sessionStorage 被禁用时跳过 */ }
+  if (!reloading) { fatal(err); throw err; }
+}
 
 /* ---------------------------------------------------------------- 尺寸常量 */
 const R = 1.0;                 // 名义半径（坐标域 / 高度场）
@@ -191,19 +180,19 @@ const LAND = { x: 0.46, z: -0.20 };   // 陆地中心（沙滩/木屋一侧）
 /* ---------------------------------------------------------------- 昼夜预设 */
 const PRESETS = [
   { t: 0.00, name: '正午', night: 0.00, elev: 1.05, azim: 0.55,
-    zenith: 0x2f6fb0, horizon: 0xc3dced, ground: 0x2c333d, haze: 0.20,
+    zenith: 0x1d5fae, horizon: 0xc2d8e8, ground: 0x4b5764, haze: 0.22,
     sun: 0xfff3e0, sunI: 2.9, sunPow: 1200.0, glow: 0.22,
-    absorb: [1.75, 0.78, 0.40], scatter: 0.14, waterDeep: 0x0b4a63, waterShallow: 0x35c7cf,
+    absorb: [1.75, 0.78, 0.40], scatter: 0.20, waterDeep: 0x0e5a78, waterShallow: 0x45d6d8,
     exposure: 0.95, ambient: 0.52, lamp: 0.0, bio: 0.0, star: 0.0, bloom: 0.30, shadowOp: 0.34 },
   { t: 0.50, name: '黄昏', night: 0.42, elev: 0.10, azim: 2.05,
-    zenith: 0x2b3d70, horizon: 0xf08b4e, ground: 0x191b23, haze: 0.55,
+    zenith: 0x2b3d70, horizon: 0xf08b4e, ground: 0x3a2a2c, haze: 0.55,
     sun: 0xff9a52, sunI: 2.2, sunPow: 320.0, glow: 0.85,
-    absorb: [1.95, 0.92, 0.48], scatter: 0.22, waterDeep: 0x14385c, waterShallow: 0xc98a63,
+    absorb: [1.95, 0.92, 0.48], scatter: 0.26, waterDeep: 0x174a6e, waterShallow: 0xd79a6b,
     exposure: 1.00, ambient: 0.52, lamp: 0.55, bio: 0.25, star: 0.15, bloom: 0.48, shadowOp: 0.30 },
   { t: 1.00, name: '夜晚', night: 1.00, elev: 0.62, azim: -1.75,
-    zenith: 0x050a16, horizon: 0x16203a, ground: 0x04050a, haze: 0.12,
+    zenith: 0x050a16, horizon: 0x16203a, ground: 0x0d1018, haze: 0.12,
     sun: 0x9dbcff, sunI: 0.42, sunPow: 2600.0, glow: 0.10,
-    absorb: [2.10, 1.05, 0.60], scatter: 0.10, waterDeep: 0x03121f, waterShallow: 0x0d4460,
+    absorb: [2.10, 1.05, 0.60], scatter: 0.14, waterDeep: 0x051a2c, waterShallow: 0x11587a,
     exposure: 1.22, ambient: 0.16, lamp: 1.0, bio: 1.0, star: 1.0, bloom: 0.82, shadowOp: 0.22 }
 ];
 
@@ -285,12 +274,6 @@ TEX.rockNormal = normalFromHeight(512, 512, (x, y) => {
   const u = x / 512, v = y / 512;
   return 0.7 * fbm(u * 6, v * 6, 5, 3) + 0.3 * ridged(u * 14, v * 14, 4, 11);
 }, 1.5);
-TEX.grain = canvasTex(256, 256, (ctx, w, h) => {
-  const img = ctx.createImageData(w, h), d = img.data;
-  for (let i = 0; i < w * h; i++) { const g = Math.floor(hash2i(i % w, (i / w) | 0, 4) * 255); d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = g; d[i * 4 + 3] = 255; }
-  ctx.putImageData(img, 0, 0);
-}, { srgb: false });
-
 // 树皮：环状叶痕
 TEX.bark = canvasTex(256, 256, (ctx, w, h) => {
   ctx.fillStyle = '#6d5638'; ctx.fillRect(0, 0, w, h);
@@ -422,7 +405,7 @@ function terrainH(x, z) {
   const t = smoothstep(-0.46, 0.055, inland);
 
   const shelf = 0.115 * smoothstep(0.56, 0.97, rho);
-  const seabed = -0.455 + 0.085 * ridged(x * 2.0 + 3, z * 2.0 - 1, 3, 11) + shelf
+  const seabed = -0.335 + 0.080 * ridged(x * 2.0 + 3, z * 2.0 - 1, 3, 11) + shelf
     + 0.030 * fbm(x * 3.4, z * 3.4, 3, 5);
 
   const hill = 0.14 * Math.exp(-((x - 0.60) ** 2 + (z + 0.30) ** 2) / (2 * 0.26 * 0.26));
@@ -474,12 +457,13 @@ renderer.shadowMap.autoUpdate = false;      // 每帧只刷新一次阴影贴图
 renderer.info.autoReset = true;
 
 const scene = new THREE.Scene();
+if ('environmentIntensity' in scene) scene.environmentIntensity = 0.88;
 const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.05, 120);
-camera.position.set(2.35, 1.25, 2.55);
+camera.position.set(2.05, 1.92, 2.35);
 camera.layers.enable(1);
 
 const controls = new OrbitControls(camera, canvas);
-controls.target.set(0, 0.02, 0);
+controls.target.set(0, 0.06, 0);
 controls.enableDamping = true; controls.dampingFactor = 0.055;
 controls.enablePan = false;
 controls.minDistance = 1.65; controls.maxDistance = 5.6;
@@ -509,7 +493,6 @@ const U = {
   waterShallow: { value: new THREE.Color(0x35c7cf) },
   wind: { value: new THREE.Vector2(0.86, 0.34) },
   windI: { value: 1 },
-  res: { value: new THREE.Vector2(1, 1) },
   pre: { value: null },
   preDepth: { value: null },
   projInv: { value: new THREE.Matrix4() },
@@ -517,8 +500,7 @@ const U = {
   viewProj: { value: new THREE.Matrix4() },
   shellPos: { value: new THREE.Vector3() },
   heightTex: { value: heightTex },
-  heightRange: { value: HEIGHT_RANGE },
-  grainTex: { value: TEX.grain }
+  heightRange: { value: HEIGHT_RANGE }
 };
 
 /* ---------------------------------------------------------------- GLSL 片段 */
@@ -563,9 +545,9 @@ vec3 skyColor(vec3 d){
   if(uNight>0.002 && up>-0.02){
     vec3 q=floor(normalize(d)*170.0);
     float hs=h31(q);
-    if(hs>0.9958){
+    if(hs>0.9938){
       float tw=0.5+0.5*sin(uStarT*(2.0+hs*46.0)+hs*70.0);
-      c+=vec3(0.82,0.88,1.0)*uNight*tw*0.55*(0.5+0.5*smoothstep(-0.02,0.5,up));
+      c+=vec3(0.82,0.88,1.0)*uNight*tw*0.85*(0.5+0.5*smoothstep(-0.02,0.5,up));
     }
   }
   return max(c,vec3(0.0));
@@ -630,7 +612,6 @@ blob.rotation.x = -Math.PI / 2; blob.position.y = -1.02;
 blob.layers.set(0);
 scene.add(blob);
 /* ---------------------------------------------------------------- 材质增强注入 */
-const UW_HOOKS = [];
 function applyUnderwater(mat, { caustic = 1.0, wetRough = 0.30, wind = 0, windFreq = 1.15, fin = false, tag = 'a' } = {}) {
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, {
@@ -698,7 +679,6 @@ function applyUnderwater(mat, { caustic = 1.0, wetRough = 0.30, wind = 0, windFr
     mat.defines = Object.assign({}, mat.defines, wind > 0 ? { USE_WIND: '' } : {}, fin ? { USE_FIN: '' } : {});
   }
   mat.customProgramCacheKey = () => 'uw-' + tag;
-  UW_HOOKS.push(mat);
   return mat;
 }
 
@@ -739,7 +719,7 @@ function discGeometry(radius, rings, sectors, yFn, nFn, cFn) {
 }
 
 /* ---------------------------------------------------------------- 沙地色板 */
-const SAND_DRY = new THREE.Color(0xd8b678), SAND_WET = new THREE.Color(0xb0854c),
+const SAND_DRY = new THREE.Color(0xdcae6a), SAND_WET = new THREE.Color(0xa87b41),
       SAND_SUB = new THREE.Color(0xbda06a), MUD = new THREE.Color(0x6d6350),
       ROCK = new THREE.Color(0x4a4640), MOSS = new THREE.Color(0x7d8a56);
 function terrainColor(x, h, z, out) {
@@ -911,14 +891,14 @@ const waterMat = new THREE.ShaderMaterial({
       col += uSunCol * cc * 0.035 * ( 1.0 - smoothstep( 0.0, 0.5, depth ) );
 
       // 泡沫：岸线 + 贴壁
-      float shore = 1.0 - smoothstep( 0.0, 0.075, depth );
+      float shore = 1.0 - smoothstep( 0.0, 0.030, depth );
       float wall = smoothstep( 0.955, 0.998, vRho );
       float streak = 0.55 + 0.45*vn( p*26.0 + vec2(t*0.5, -t*0.35) );
       float crest = smoothstep( 0.0055, 0.0092, vW - uWaterY ) * uWindI;
       float foam = clamp( (shore*streak + wall*0.85 + crest*0.5) * uFoam, 0.0, 1.0 );
-      col = mix( col, vec3(0.94,0.97,1.0), foam*0.9 );
+      col = mix( col, vec3(0.93,0.96,1.0), foam*0.42 );
 
-      float alpha = clamp( 0.055 + F*0.80 + sp*0.55 + foam*0.9, 0.0, 1.0 );
+      float alpha = clamp( 0.055 + F*0.80 + sp*0.55 + foam*0.7, 0.0, 1.0 );
       gl_FragColor = vec4( nanSafe(col), alpha );
     }`
 });
@@ -928,14 +908,13 @@ island.add(water);
 
 /* 树脂外壳：拉旋体 + 屏幕空间物理折射（外壁→内壁→背景深度） */
 const shellUni = Object.assign(skyUniformValues(), {
-  uPre: U.pre, uPreDepth: U.preDepth, uRes: U.res, uProjInv: U.projInv,
+  uPre: U.pre, uPreDepth: U.preDepth, uProjInv: U.projInv,
   uCamWorld: U.camWorld, uViewProj: U.viewProj,
-  uShellPos: U.shellPos, uRi: { value: 0.992 }, uTime: U.time,
+  uShellPos: U.shellPos, uRi: { value: RI }, uTime: U.time,
   uResinAbsorb: { value: new THREE.Vector3(0.62, 0.26, 0.13) },
   uResinTint: { value: new THREE.Color(0xeaf6f4) },
   uIOR: { value: 1.491 }, uDisp: { value: 0.0022 }, uScratch: { value: 0.9 },
-  uRefl: { value: 1.0 }, uNight: U.night, uGrain: U.grainTex, uWaterY: { value: WATER_Y },
-  uAbsorbW: U.absorb
+  uRefl: { value: 1.0 }, uNight: U.night, uWaterY: { value: WATER_Y }
 });
 const shellMat = new THREE.ShaderMaterial({
   uniforms: shellUni, transparent: true, blending: THREE.NoBlending,
@@ -952,14 +931,11 @@ shellMat.vertexShader = /* glsl */`
     gl_Position = cp;
   }`;
 shellMat.fragmentShader = GLSL_NOISE + GLSL_SAFE + GLSL_SKY + /* glsl */`
-  uniform sampler2D uPre, uPreDepth, uGrain;
-  uniform vec2 uRes; uniform mat4 uProjInv, uCamWorld, uViewProj;
+  uniform sampler2D uPre, uPreDepth;
+  uniform mat4 uProjInv, uCamWorld, uViewProj;
   uniform vec3 uShellPos, uResinAbsorb, uResinTint;
   uniform float uRi, uIOR, uDisp, uScratch, uRefl, uTime, uWaterY;
-  uniform vec3 uAbsorbW;
   varying vec3 vWPos; varying vec3 vNrm; varying vec2 vSUV;
-
-  vec2 proj(vec3 P){ vec4 c = uViewProj*vec4(P,1.0); return (c.xy/c.w)*0.5+0.5; }
 
   // 与以 Y 为轴、半径 rad 的圆柱求交（取正向最近交点）
   float cylT(vec3 o, vec3 d, float rad, out vec3 hitN){
@@ -972,12 +948,12 @@ shellMat.fragmentShader = GLSL_NOISE + GLSL_SAFE + GLSL_SKY + /* glsl */`
     float t1 = (-b - sq)/(2.0*a);
     float t2r = (-b + sq)/(2.0*a);
     float t = t1 > 1e-4 ? t1 : (t2r > 1e-4 ? t2r : -1.0);
-    if ( t < 0.0 ) { hitN = vec3(0.0); return -1.0; }
+    if ( t < 0.0 || t > 0.6 ) { hitN = vec3(0.0); return -1.0; }
     vec3 hp = o + d*t;
     float hl = length(hp.xz);
-    hitN = hl > 1e-5 ? vec3(hp.x, 0.0, hp.z)/hl : vec3(0.0, 0.0, 1.0);
+    hitN = hl > 1e-4 ? vec3(hp.x, 0.0, hp.z)/hl : vec3(0.0, 0.0, 1.0);
     hitN *= ( dot(d, hitN) > 0.0 ? -1.0 : 1.0 );
-    return min( t, 0.42 );
+    return t;
   }
 
   vec2 projSafe(vec3 P, vec2 fallback){
@@ -1000,15 +976,14 @@ shellMat.fragmentShader = GLSL_NOISE + GLSL_SAFE + GLSL_SKY + /* glsl */`
     vec3 D1 = refract( V, N, 1.0/uIOR );
     if ( dot(D1,D1) < 0.5 ) D1 = reflect( V, N );
     vec3 nIn; float tRaw = cylT( lp, D1, uRi, nIn );
-    float t2 = tRaw;
-    if ( t2 < 0.0 ) t2 = 0.06;                      // 掠射/脱靶：按名义壁厚处理
-    float resinPath = clamp( t2, 0.02, 0.42 );
-    vec3 P1 = lp + D1 * max( tRaw, 0.0 );
+    bool hit = tRaw > 0.0;
+    float resinPath = hit ? clamp( tRaw, 0.02, 0.34 ) : 0.055;
+    vec3 P1 = lp + D1 * ( hit ? tRaw : 0.055 );
 
     // 2) 树脂→内部（水或空气）
     vec3 D2 = D1;
     float interiorWater = ( P1.y + uShellPos.y ) < uWaterY ? 1.0 : 0.0;
-    if ( tRaw > 0.0 ) {
+    if ( hit && length( P1.xz ) > 0.05 ) {
       float etaIn = mix( 1.0, 1.333, interiorWater );
       vec3 nn = normalize( vec3(P1.x, 0.0, P1.z) );
       if ( dot(D1, nn) < 0.0 ) nn = -nn;
@@ -1053,9 +1028,9 @@ shellMat.fragmentShader = GLSL_NOISE + GLSL_SAFE + GLSL_SKY + /* glsl */`
   }`;
 
 const shellProfile = [
-  [0.992, Y_BOT + 0.03], [0.992, Y_TOP - 0.004],
+  [RI, Y_BOT + 0.03], [RI, Y_TOP - 0.004],
   [1.000, Y_TOP + 0.010], [1.046, Y_TOP + 0.014],
-  [1.062, Y_TOP + 0.002], [1.062, Y_BOT + 0.010],
+  [RO, Y_TOP + 0.002], [RO, Y_BOT + 0.010],
   [1.052, Y_BOT - 0.004], [1.004, Y_BOT - 0.008], [0.992, Y_BOT + 0.014]
 ].map(([x, y]) => new THREE.Vector2(x, y));
 const shellGeo = new THREE.LatheGeometry(shellProfile, 192);
@@ -1263,12 +1238,12 @@ function makePalm(px, pz, h = 0.55, lean = 0.16) {
     fr.castShadow = true;
     tilt.add(fr); yaw.add(tilt); crown.add(yaw);
   }
-  const bud = new THREE.Mesh(new THREE.SphereGeometry(0.028, 12, 8), trunkMat);
+  const bud = new THREE.Mesh(new THREE.SphereGeometry(0.019, 12, 8), trunkMat);
   bud.position.y = -0.012; crown.add(bud);
   for (let i = 0; i < 3; i++) {
-    const nut = new THREE.Mesh(new THREE.SphereGeometry(0.019, 12, 10), trunkMat);
+    const nut = new THREE.Mesh(new THREE.SphereGeometry(0.013, 12, 10), trunkMat);
     const a = i / 3 * Math.PI * 2 + rr(0, 1);
-    nut.position.set(Math.cos(a) * 0.028, -0.030, Math.sin(a) * 0.028);
+    nut.position.set(Math.cos(a) * 0.021, -0.024, Math.sin(a) * 0.021);
     nut.scale.y = 0.86; nut.castShadow = true;
     crown.add(nut);
   }
@@ -1277,7 +1252,7 @@ function makePalm(px, pz, h = 0.55, lean = 0.16) {
   return g;
 }
 
-const palms = [makePalm(0.42, -0.30, 0.60, 0.20), makePalm(0.60, -0.02, 0.46, -0.14), makePalm(0.30, -0.62, 0.46, 0.06)];
+const palms = [makePalm(0.58, -0.10, 0.60, 0.18), makePalm(0.60, -0.02, 0.46, -0.14), makePalm(0.30, -0.62, 0.46, 0.06)];
 palms.forEach(p => island.add(p));
 
 /* ---------------------------------------------------------------- 木屋 + 栈桥 */
@@ -1336,7 +1311,8 @@ function makeHut() {
   const lampBulb = new THREE.Mesh(new THREE.SphereGeometry(0.011, 12, 10), emissiveMat(0xffd9a0, 0));
   lampBulb.position.set(0.0, deck + 0.150, -0.105);
   g.add(lampBulb);
-  lampWarm.position.set(hx, deck + 0.14, hz - 0.12);
+  g.rotation.y = Math.PI / 2;
+  lampWarm.position.set(hx - 0.13, deck + 0.14, hz);
   return { g, deck, pos: new THREE.Vector3(hx, 0, hz) };
 }
 const hut = makeHut();
@@ -1362,7 +1338,7 @@ function makePier(fromX, fromZ, toX, toZ, deckY) {
       const bed = terrainH(x, z);
       for (const off of [-w * 0.42, w * 0.42]) {
         const ox = Math.cos(ang) * off, oz = -Math.sin(ang) * off;
-        const hl = deckY - bed + 0.03;
+        const hl = Math.max(deckY - bed + 0.03, 0.012);
         const c = new THREE.CylinderGeometry(0.0075, 0.0085, hl, 5, 1);
         const cg = np(c).clone().translate(x + ox, bed - 0.02 + hl / 2, z + oz);
         posts.push(stamp(cg, new THREE.Color(0x6b5537)));
@@ -1373,6 +1349,7 @@ function makePier(fromX, fromZ, toX, toZ, deckY) {
   for (const off of [-w * 0.5, w * 0.5]) {
     const rail = new THREE.CylinderGeometry(0.0055, 0.0055, len, 4, 1);
     rail.rotateX(Math.PI / 2);
+    rail.rotateY(ang);
     const ox = Math.cos(ang) * off, oz = -Math.sin(ang) * off;
     rail.translate((fromX + toX) / 2 + ox, deckY + 0.058, (fromZ + toZ) / 2 + oz);
     parts.push(stamp(np(rail), new THREE.Color(0x9c7d52)));
@@ -1394,7 +1371,7 @@ function makePier(fromX, fromZ, toX, toZ, deckY) {
   lampPier.position.set(toX, lampY, toZ);
   return g;
 }
-island.add(makePier(hut.pos.x - 0.06, hut.pos.z + 0.06, -0.10, -0.02, WATER_Y + 0.058));
+island.add(makePier(hut.pos.x - 0.10, hut.pos.z, -0.44, -0.16, WATER_Y + 0.058));
 
 /* ---------------------------------------------------------------- 岩石 */
 TEX.rockNormal.repeat.set(2, 2);
@@ -1482,7 +1459,7 @@ for (let i = 0; i < 9; i++) {
   const a = rr(0, Math.PI * 2), rad = rr(0.30, 0.93);
   const x = Math.cos(a) * rad, z = Math.sin(a) * rad;
   const y = terrainH(x, z);
-  if (y > WATER_Y - 0.045) continue;
+  if (y > WATER_Y - 0.035) continue;
   const col = [coralColA, coralColB, coralColC, coralColD][(rnd() * 4) | 0];
   branchCoral(coralGeos, new THREE.Vector3(x, y - 0.005, z),
     new THREE.Vector3(rr(-0.25, 0.25), 1, rr(-0.25, 0.25)).normalize(),
@@ -1556,7 +1533,7 @@ grass.castShadow = true; grass.receiveShadow = true;
   while (placed < GRASS_N && guard++ < 4000) {
     const a = rr(0, 6.28), rad = rr(0.22, 0.94);
     const x = Math.cos(a) * rad, z = Math.sin(a) * rad, y = terrainH(x, z);
-    if (y > WATER_Y - 0.02 || y < -0.44) continue;
+    if (y > WATER_Y - 0.02 || y < -0.33) continue;
     d.position.set(x, y - 0.004, z);
     d.rotation.set(rr(-0.15, 0.15), rr(0, 6.28), rr(-0.15, 0.15));
     const s = rr(0.7, 1.5);
@@ -1609,7 +1586,7 @@ const fish = [];
     fish.push({
       p: new THREE.Vector3(Math.cos(a) * rad, rr(-0.34, 0.14), Math.sin(a) * rad),
       v: new THREE.Vector3(rr(-0.1, 0.1), 0, rr(-0.1, 0.1)),
-      s: rr(0.72, 1.25), ph: rr(0, 6.28), band: (rnd() * 2) | 0
+      s: rr(1.0, 1.6), ph: rr(0, 6.28)
     });
     c.setHex(PAL[i % PAL.length]);
     fishMesh.setColorAt(i, c);
@@ -1632,7 +1609,7 @@ let plankton;
       y = rr(terrainH(x, z) + 0.02, WATER_Y - 0.01);
     } while (y < -0.5 && guard++ < 40);
     p[i * 3] = x; p[i * 3 + 1] = y; p[i * 3 + 2] = z;
-    ph[i] = rr(0, 6.28); sz[i] = rr(1.2, 4.0);
+    ph[i] = rr(0, 6.28); sz[i] = rr(0.5, 1.6);
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(p, 3));
@@ -1649,14 +1626,14 @@ let plankton;
         p.y += sin(uTime*0.3 + aPhase*2.3)*0.008;
         vTw = 0.35 + 0.65*pow(0.5+0.5*sin(uTime*1.7 + aPhase*6.0), 2.0);
         vec4 mv = viewMatrix*vec4(p,1.0);
-        gl_PointSize = aSize * uPix * (1.0/max(-mv.z,0.05)) * 8.0;
+        gl_PointSize = aSize * uPix * (1.0/max(-mv.z,0.05)) * 3.2;
         gl_Position = projectionMatrix*mv;
       }`,
     fragmentShader: `uniform float uNight; varying float vTw;
       void main(){
         float d = length(gl_PointCoord - 0.5);
         float a = smoothstep(0.5, 0.02, d);
-        gl_FragColor = vec4(vec3(0.45,1.0,0.9)*vTw*1.6, a*vTw*uNight*uNight*0.9);
+        gl_FragColor = vec4(vec3(0.45,1.0,0.9)*vTw*1.3, a*vTw*uNight*uNight*0.55);
       }`
   });
   const planktonMesh = new THREE.Points(g, mat);
@@ -1762,7 +1739,7 @@ function applyTime(t) {
   U.windI.value = mix(0.72, 0.42, U.night.value);
 
   sun.color.copy(U.sunCol.value);
-  sun.intensity = L('sunI') * 0.85;
+  sun.intensity = L('sunI') * 1.05;
   sun.position.copy(U.sunDir.value).multiplyScalar(6);
   fillTop.color.copy(U.zenith.value).lerp(U.horizon.value, 0.4);
   fillTop.groundColor.copy(U.ground.value);
@@ -1799,7 +1776,6 @@ function setSize() {
   const pw = Math.round(w * pr), ph = Math.round(h * pr);
   gtaoPass.setSize(pw, ph);
   smaaPass.setSize(pw, ph);
-  U.res.value.set(pw, ph);
   gradePass.uniforms.uRes.value.set(pw, ph);
   const sw = Math.max(2, Math.round(pw * quality.pre)), sh = Math.max(2, Math.round(ph * quality.pre));
   preRT.setSize(sw, sh);
@@ -1960,8 +1936,7 @@ try {
   updateEnvironment();
   setSize();
   renderer.compile(scene, camera);
-  window.__island = { renderer, scene, camera, composer, gtaoPass, bloomPass, gradePass, smaaPass, shell, island, U, THREE,
-    obj: { water, meniscus, corals, grass, fishMesh, terrain, coreWall, bottom, blob, skyDome, plankton } };
+  try { sessionStorage.removeItem('isl-reloaded'); } catch (e) { /* 隐私模式下不可用 */ }
   renderer.setAnimationLoop(tick);
 } catch (err) {
   renderer.setAnimationLoop(null);

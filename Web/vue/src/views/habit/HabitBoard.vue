@@ -1,0 +1,306 @@
+<template>
+  <section class="habit-board">
+    <div class="card week-card">
+      <div class="week-head">
+        <h2 class="section-title">{{ weekTitle }}</h2>
+        <div class="week-nav">
+          <button type="button" class="btn-plain" @click="weekOffset -= 1">上一周</button>
+          <button
+            type="button"
+            class="btn-plain"
+            :disabled="isFutureWeekDisabled"
+            :title="isFutureWeekDisabled ? '不能查看未来的周' : '查看下一周'"
+            @click="weekOffset += 1"
+          >下一周</button>
+          <button v-if="!isCurrentWeek" type="button" class="btn-plain" @click="weekOffset = 0">回到本周</button>
+          <span v-if="isFutureWeekDisabled" class="future-hint">未来周不可查看</span>
+        </div>
+      </div>
+      <p class="week-range">{{ weekRangeText }}</p>
+    </div>
+
+    <div v-if="state.storageError" class="warn-bar" role="alert">{{ state.storageError }}</div>
+
+    <div class="card toolbar">
+      <button v-if="!formOpen" type="button" class="btn-primary" @click="openCreate">＋ 新增习惯</button>
+      <button v-else type="button" class="btn-plain" @click="closeForm">收起表单</button>
+      <p v-if="notice" class="notice" role="status">{{ notice }}</p>
+    </div>
+
+    <div v-if="formOpen" class="card form-card">
+      <HabitForm :initial="editingHabit" @submit="onFormSubmit" @cancel="closeForm" />
+      <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
+    </div>
+
+    <HabitList
+      v-if="state.habits.length"
+      :habits="state.habits"
+      :week-keys="weekKeys"
+      :checkins="state.checkins"
+      @toggle="onToggle"
+      @edit="openEdit"
+      @remove="onRemove"
+    />
+
+    <div v-else class="card empty-state">
+      <p class="empty-title">还没有打卡习惯</p>
+      <p class="empty-desc">先新增一个学习习惯（例如「专注阅读」），再每天回到这里点格子打卡，就能跟踪每周目标完成情况和连续天数。</p>
+      <button type="button" class="btn-primary" @click="openCreate">新增第一个习惯</button>
+      <button type="button" class="btn-plain" @click="loadDemo">载入示例数据</button>
+    </div>
+  </section>
+</template>
+
+<script setup>
+import { computed, ref, watch } from 'vue'
+import { useHabits } from '@/composables/useHabits'
+import { addDays, formatShortDate, getWeekDates, startOfWeek, toDateKey } from '@/utils/date'
+import HabitForm from '@/components/habit/HabitForm.vue'
+import HabitList from '@/components/habit/HabitList.vue'
+
+const { state, addHabit, updateHabit, deleteHabit, toggleCheckin, resetData } = useHabits()
+
+const now = new Date()
+const todayKey = toDateKey(now)
+const currentMonday = startOfWeek(now)
+
+const weekOffset = ref(0)
+const formOpen = ref(false)
+const editingHabit = ref(null)
+const formError = ref('')
+const notice = ref('')
+let noticeTimer = null
+
+const weekStart = computed(() => addDays(currentMonday, weekOffset.value * 7))
+const weekKeys = computed(() => getWeekDates(weekStart.value).map(toDateKey))
+
+// ISO 周序号：取本周四所在年份定位「第 N 周」
+function isoWeekNumber(date) {
+  const sample = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12)
+  sample.setDate(sample.getDate() - ((sample.getDay() + 6) % 7) + 3)
+  const firstThursday = new Date(sample.getFullYear(), 0, 4, 12)
+  firstThursday.setDate(firstThursday.getDate() - ((firstThursday.getDay() + 6) % 7) + 3)
+  return 1 + Math.round((sample - firstThursday) / 604800000)
+}
+
+const weekTitle = computed(
+  () => `第 ${isoWeekNumber(weekStart.value)} 周（${weekStart.value.getFullYear()} 年）`,
+)
+const weekRangeText = computed(
+  () => `${formatShortDate(weekKeys.value[0])} – ${formatShortDate(weekKeys.value[6])}`,
+)
+const isCurrentWeek = computed(() => weekOffset.value === 0)
+const isFutureWeekDisabled = computed(() => weekOffset.value >= 0)
+
+// 切换周属于视图上下文变化：收起表单、清掉行内错误与提示，避免把上一周的编辑状态带过来
+watch(weekOffset, () => {
+  closeForm()
+  showNotice('')
+})
+
+function closeForm() {
+  formOpen.value = false
+  editingHabit.value = null
+  formError.value = ''
+}
+
+function openCreate() {
+  editingHabit.value = null
+  formError.value = ''
+  formOpen.value = true
+}
+
+function openEdit(habit) {
+  editingHabit.value = habit
+  formError.value = ''
+  formOpen.value = true
+}
+
+function showNotice(text) {
+  if (noticeTimer !== null) {
+    clearTimeout(noticeTimer)
+    noticeTimer = null
+  }
+  notice.value = text
+  if (text) {
+    noticeTimer = setTimeout(() => {
+      notice.value = ''
+      noticeTimer = null
+    }, 2500)
+  }
+}
+
+function onFormSubmit(payload) {
+  const isEdit = Boolean(editingHabit.value)
+  const result = isEdit
+    ? updateHabit(editingHabit.value.id, payload)
+    : addHabit(payload)
+  if (!result.success) {
+    formError.value = result.message || '保存失败，请检查输入后重试'
+    return
+  }
+  closeForm()
+  showNotice(isEdit ? '习惯已更新' : '习惯已添加')
+}
+
+function onToggle(habitId, dateKey) {
+  if (!toggleCheckin(habitId, dateKey)) {
+    showNotice('该日期不可打卡（未来日期或数据已变动）')
+  }
+}
+
+function onRemove(habit) {
+  deleteHabit(habit.id)
+  if (editingHabit.value && editingHabit.value.id === habit.id) closeForm()
+  showNotice(`已删除「${habit.name}」`)
+}
+
+function loadDemo() {
+  resetData()
+  showNotice('已载入示例数据')
+}
+</script>
+
+<style scoped>
+.habit-board {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 18px 16px 40px;
+  display: grid;
+  /* 单列轨道显式写成 minmax(0, 1fr)：默认的 auto 轨道不会小于内容最小宽度，
+     而下面最宽的子项（周矩阵）内容最小宽度约 783px，会把整列撑到 783px，
+     连带把 .week-card / .toolbar 这些兄弟卡片一起撑出去（窄屏整页横向溢出的真因） */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text);
+}
+/* flex/grid item 的默认 min-width:auto 同样会撑破轨道，这里统一允许收缩 */
+.habit-board > * {
+  min-width: 0;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(31, 58, 95, 0.05);
+  padding: 18px 20px;
+  min-width: 0;
+}
+.section-title {
+  margin: 0;
+  font-size: 14.5px;
+  color: var(--brand);
+}
+.section-title::before {
+  content: '▍';
+  color: var(--accent);
+}
+.week-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.week-nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 8px;
+}
+.week-range {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.future-hint {
+  font-size: 12px;
+  color: var(--warn);
+}
+.warn-bar {
+  padding: 10px 16px;
+  border: 1px solid var(--warn);
+  border-radius: 12px;
+  background: #fff6e5;
+  color: var(--warn);
+  font-size: 13px;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 12px 20px;
+}
+.notice {
+  margin: 0;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--accent2);
+}
+.form-error {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--danger);
+}
+.empty-state {
+  text-align: center;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+.empty-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--brand);
+}
+.empty-desc {
+  margin: 0;
+  max-width: 560px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.btn-primary {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+.btn-plain {
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--brand);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.btn-plain:disabled {
+  color: var(--muted);
+  background: #eef1f6;
+  cursor: not-allowed;
+}
+
+/* 更窄的一档：只压缩留白，把宽度尽量让给周矩阵的 7 个打卡格子（配色、字号不动） */
+@media (max-width: 420px) {
+  .habit-board {
+    padding: 14px 10px 32px;
+    gap: 12px;
+  }
+  .card {
+    padding: 14px 12px;
+  }
+  .toolbar {
+    padding: 10px 12px;
+  }
+}
+</style>
