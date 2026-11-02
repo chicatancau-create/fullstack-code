@@ -9,6 +9,7 @@ import {
   FONT_CAPTION,
   FONT_PRICE,
   FONT_SUBTITLE,
+  IMAGE_BG,
   IMAGE_RADIUS,
   SPACE_MD,
   TEXT_MAIN,
@@ -59,7 +60,7 @@ struct NavPage {
                     .width(64)
                     .height(64)
                     .borderRadius(IMAGE_RADIUS)
-                    .backgroundColor('#F7F8FA')
+                    .backgroundColor(IMAGE_BG)
                 } else {
                   Image(BASE_URL + String(item.images).split(',')[0])
                     .width(64)

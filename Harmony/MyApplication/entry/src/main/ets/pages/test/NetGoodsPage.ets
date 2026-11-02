@@ -9,6 +9,7 @@ import {
   FONT_CAPTION,
   FONT_PRICE,
   FONT_SUBTITLE,
+  IMAGE_BG,
   IMAGE_RADIUS,
   PRIMARY,
   SPACE_MD,
@@ -104,7 +105,7 @@ struct NetGoodsPage {
                   .width(64)
                   .height(64)
                   .borderRadius(IMAGE_RADIUS)
-                  .backgroundColor('#F7F8FA')
+                  .backgroundColor(IMAGE_BG)
               } else {
                 Image(firstImage(item.images))
                   .width(64)

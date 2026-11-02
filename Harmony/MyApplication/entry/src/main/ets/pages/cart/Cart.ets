@@ -7,16 +7,19 @@ import {
   CARD_RADIUS,
   DANGER,
   FONT_BODY,
+  FONT_CAPTION,
   FONT_PRICE,
   FONT_SUBTITLE,
   IMAGE_RADIUS,
   INPUT_BG,
   PRIMARY,
+  PRIMARY_TINT,
   SPACE_MD,
   SPACE_SM,
   SPACE_XS,
   TEXT_MAIN,
-  TEXT_MUTED
+  TEXT_MUTED,
+  TEXT_ON_PRIMARY
 } from '../../common/UiTokens'
 
 @ComponentV2
@@ -33,6 +36,10 @@ export default struct Cart {
 
   private total(): number {
     return this.store.items.reduce((sum: number, item: CartItem): number => sum + item.price * item.count, 0)
+  }
+
+  private count(): number {
+    return this.store.items.reduce((sum: number, item: CartItem): number => sum + item.count, 0)
   }
 
   private change(index: number, delta: number): void {
@@ -79,7 +86,7 @@ export default struct Cart {
           Image($r('app.media.cart_full'))
             .width(56)
             .height(56)
-            .fillColor('#DCE3EA')
+            .fillColor(PRIMARY_TINT)
           Text('购物车是空的，去首页加几件')
             .fontSize(FONT_BODY)
             .fontColor(TEXT_MUTED)
@@ -130,10 +137,13 @@ export default struct Cart {
 
       // 吸底合计条
       Column({ space: SPACE_XS }) {
-        Row() {
+        Row({ space: SPACE_XS }) {
           Text('合计')
             .fontSize(FONT_SUBTITLE)
             .fontColor(TEXT_MAIN)
+          Text(`共 ${this.count()} 件`)
+            .fontSize(FONT_CAPTION)
+            .fontColor(TEXT_MUTED)
           Blank()
           Text(`¥${this.total()}`)
             .fontSize(FONT_PRICE)
@@ -146,7 +156,7 @@ export default struct Cart {
           .width('100%')
           .height(44)
           .fontSize(FONT_SUBTITLE)
-          .fontColor('#FFFFFF')
+          .fontColor(TEXT_ON_PRIMARY)
           .onClick(() => {
             if (this.store.items.length === 0) {
               this.getUIContext().getPromptAction().showToast({ message: '购物车是空的' })

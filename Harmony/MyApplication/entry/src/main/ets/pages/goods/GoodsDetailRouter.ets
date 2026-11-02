@@ -13,7 +13,8 @@ import {
   SPACE_SM,
   SPACE_XS,
   TEXT_MAIN,
-  TEXT_MUTED
+  TEXT_MUTED,
+  TEXT_ON_PRIMARY
 } from '../../common/UiTokens'
 
 @Entry
@@ -70,7 +71,7 @@ struct GoodsDetailRouter {
             Text(this.arg.priceText)
               .fontSize(FONT_TITLE)
               .fontWeight(FontWeight.Medium)
-              .fontColor('#FFFFFF')
+              .fontColor(TEXT_ON_PRIMARY)
             Blank()
             Text(this.arg.stockText)
               .fontSize(FONT_CAPTION)

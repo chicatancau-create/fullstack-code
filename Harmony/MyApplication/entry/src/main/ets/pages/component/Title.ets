@@ -1,4 +1,11 @@
-import { CARD_RADIUS, FONT_DISPLAY, PRIMARY, SPACE_SM, SPACE_XS } from '../../common/UiTokens'
+import {
+  CARD_RADIUS,
+  FONT_DISPLAY,
+  PRIMARY,
+  SPACE_SM,
+  SPACE_XS,
+  TEXT_ON_PRIMARY
+} from '../../common/UiTokens'
 
 // 课件 11 章规定：公共标题用状态管理 V2 的 @ComponentV2 + @Param，属性名 isShow 控制返回箭头
 @ComponentV2
@@ -12,7 +19,7 @@ export default struct Title {
         Image($r('app.media.jiantouzuo'))
           .width(18)
           .height(18)
-          .fillColor('#FFFFFF')
+          .fillColor(TEXT_ON_PRIMARY)
           .padding(SPACE_XS)
           .backgroundColor('rgba(255,255,255,0.22)')
           .borderRadius(18)
@@ -26,7 +33,7 @@ export default struct Title {
       Text(this.title)
         .fontSize(FONT_DISPLAY)
         .fontWeight(FontWeight.Bold)
-        .fontColor('#FFFFFF')
+        .fontColor(TEXT_ON_PRIMARY)
         .width('100%')
         .textAlign(TextAlign.Center)
     }

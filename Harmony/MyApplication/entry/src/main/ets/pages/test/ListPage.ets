@@ -9,10 +9,12 @@ import {
   FONT_BODY,
   FONT_PRICE,
   FONT_SUBTITLE,
+  IMAGE_BG,
   IMAGE_RADIUS,
   SPACE_MD,
   TEXT_MAIN,
-  TEXT_MUTED
+  TEXT_MUTED,
+  TEXT_ON_PRIMARY
 } from '../../common/UiTokens'
 
 @Entry
@@ -27,7 +29,7 @@ struct ListPage {
       Image($r('app.media.delete_left'))
         .width(22)
         .height(22)
-        .fillColor('#FFFFFF')
+        .fillColor(TEXT_ON_PRIMARY)
     }
     .width(56)
     .height(64)
@@ -63,7 +65,7 @@ struct ListPage {
                   .width(60)
                   .height(60)
                   .borderRadius(IMAGE_RADIUS)
-                  .backgroundColor('#F7F8FA')
+                  .backgroundColor(IMAGE_BG)
                 Column({ space: 4 }) {
                   Text(item.goodsName)
                     .fontSize(FONT_SUBTITLE)

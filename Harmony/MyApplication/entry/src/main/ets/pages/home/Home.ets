@@ -15,6 +15,7 @@ import {
   FONT_SUBTITLE,
   FONT_TITLE,
   GLASS_BG,
+  IMAGE_BG,
   IMAGE_RADIUS,
   PRIMARY,
   PRIMARY_TINT,
@@ -226,12 +227,13 @@ export default struct Home {
                 .height(110)
                 .objectFit(ImageFit.Contain)
                 .borderRadius(IMAGE_RADIUS)
-                .backgroundColor('#F7F8FA')
+                .backgroundColor(IMAGE_BG)
               Text(item.name)
                 .fontSize(FONT_BODY)
                 .fontColor(TEXT_MAIN)
                 .maxLines(2)
                 .textOverflow({ overflow: TextOverflow.Ellipsis })
+                .height(40)
               Text(`¥${item.price}`)
                 .fontSize(FONT_SUBTITLE)
                 .fontColor(DANGER)

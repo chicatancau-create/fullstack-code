@@ -11,7 +11,8 @@ import {
   SPACE_MD,
   SPACE_SM,
   TEXT_MAIN,
-  TEXT_MUTED
+  TEXT_MUTED,
+  TEXT_ON_PRIMARY
 } from '../../common/UiTokens'
 
 @Entry
@@ -26,7 +27,7 @@ struct AddressPage {
       Image($r('app.media.delete_left'))
         .width(22)
         .height(22)
-        .fillColor('#FFFFFF')
+        .fillColor(TEXT_ON_PRIMARY)
     }
     .width(56)
     .height(64)

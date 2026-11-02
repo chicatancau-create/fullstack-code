@@ -13,7 +13,8 @@ import {
   SPACE_SM,
   SPACE_XS,
   TEXT_MAIN,
-  TEXT_MUTED
+  TEXT_MUTED,
+  TEXT_ON_PRIMARY
 } from '../../common/UiTokens'
 
 export interface GoodsDetailParam {
@@ -86,7 +87,7 @@ export struct GoodsDetailPage {
             Text(`价格${this.goodsInfo.price} 元`)
               .fontSize(FONT_TITLE)
               .fontWeight(FontWeight.Medium)
-              .fontColor('#FFFFFF')
+              .fontColor(TEXT_ON_PRIMARY)
             Blank()
             Text(`库存：${this.goodsInfo.stock}`)
               .fontSize(FONT_CAPTION)
