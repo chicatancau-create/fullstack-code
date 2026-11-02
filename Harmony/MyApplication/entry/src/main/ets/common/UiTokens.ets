@@ -13,6 +13,11 @@ export const BG_PAGE: string = '#F5F6F7'
 export const CARD_BG: string = '#FFFFFF'
 export const INPUT_BG: string = '#F2F3F5'
 export const TAB_ACTIVE_BG: string = 'rgba(22,152,206,0.12)'
+// 渐变底上的半透明白块，用来衬住首页用户区与搜索框
+export const GLASS_BG: string = 'rgba(255,255,255,0.18)'
+// 主色的浅底块，用来衬住宫格图标
+export const PRIMARY_TINT: string = '#EAF3FB'
+export const TEXT_ON_PRIMARY: string = '#FFFFFF'
 
 // 圆角
 export const CARD_RADIUS: number = 16
@@ -29,6 +34,7 @@ export const SPACE_LG: number = 24
 export const FONT_CAPTION: number = 12
 export const FONT_BODY: number = 14
 export const FONT_SUBTITLE: number = 16
+export const FONT_PRICE: number = 18
 export const FONT_TITLE: number = 20
 export const FONT_DISPLAY: number = 26
 

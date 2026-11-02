@@ -1,5 +1,25 @@
 import { CategoryArg, firstImage, getJson, GoodsDataModel, ProductDataModel, ResponseData } from '../../utils/requestUtils'
 import Title from '../component/Title'
+import {
+  BG_PAGE,
+  CARD_BG,
+  CARD_RADIUS,
+  CARD_SHADOW_COLOR,
+  CARD_SHADOW_OFFSET_Y,
+  CARD_SHADOW_RADIUS,
+  DANGER,
+  FONT_BODY,
+  FONT_CAPTION,
+  FONT_PRICE,
+  FONT_SUBTITLE,
+  IMAGE_RADIUS,
+  MOTION_FAST,
+  PRIMARY,
+  SPACE_MD,
+  SPACE_XS,
+  TEXT_MAIN,
+  TEXT_MUTED
+} from '../../common/UiTokens'
 
 @Entry
 @Component
@@ -52,64 +72,110 @@ struct NetGoodsPage {
   }
 
   build() {
-    Column() {
+    Column({ space: SPACE_XS }) {
       Title({ title: `网络商品列表 分类${this.categoryId}`, isShow: true })
 
       if (this.loading) {
-        Text('加载中…')
-          .fontSize(15)
-          .fontColor('#9B9B9B')
-          .margin({ top: 30 })
+        Row({ space: SPACE_XS }) {
+          LoadingProgress()
+            .width(22)
+            .height(22)
+            .color(PRIMARY)
+          Text('加载中…')
+            .fontSize(FONT_BODY)
+            .fontColor(TEXT_MUTED)
+        }
+        .width('92%')
+        .margin({ top: SPACE_XS })
       }
 
       if (this.tip !== '') {
         Column({ space: 12 }) {
           Text(this.tip)
-            .fontSize(14)
-            .fontColor('#9B9B9B')
+            .fontSize(FONT_BODY)
+            .fontColor(TEXT_MUTED)
             .textAlign(TextAlign.Center)
           Button('重新加载')
+            .fontSize(FONT_BODY)
+            .backgroundColor(PRIMARY)
             .onClick(() => {
               this.load(this.categoryId)
             })
         }
-        .width('90%')
+        .width('92%')
         .margin({ top: 30 })
       }
 
-      List({ space: 8 }) {
+      List({ space: 10 }) {
         ForEach(this.list, (item: ProductDataModel) => {
           ListItem() {
-            Row({ space: 10 }) {
+            Row({ space: SPACE_MD }) {
               if (firstImage(item.images) === '') {
                 Image($r('app.media.dianqi'))
-                  .width(56)
-                  .height(56)
+                  .width(64)
+                  .height(64)
+                  .borderRadius(IMAGE_RADIUS)
+                  .backgroundColor('#F7F8FA')
               } else {
                 Image(firstImage(item.images))
-                  .width(56)
-                  .height(56)
+                  .width(64)
+                  .height(64)
                   .objectFit(ImageFit.Cover)
+                  .borderRadius(IMAGE_RADIUS)
               }
               Column({ space: 4 }) {
                 Text(item.name)
-                  .fontSize(16)
-                Text(`价格${item.price} 元　库存 ${item.stock}`)
-                  .fontSize(13)
-                  .fontColor('#E64545')
+                  .fontSize(FONT_SUBTITLE)
+                  .fontColor(TEXT_MAIN)
+                  .maxLines(2)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+                Text(`库存 ${item.stock}`)
+                  .fontSize(FONT_CAPTION)
+                  .fontColor(TEXT_MUTED)
               }
               .layoutWeight(1)
               .alignItems(HorizontalAlign.Start)
+
+              Text(`￥${item.price}`)
+                .fontSize(FONT_PRICE)
+                .fontColor(DANGER)
+                .fontWeight(FontWeight.Medium)
+              Image($r('app.media.jiantouyou'))
+                .width(14)
+                .height(14)
+                .fillColor(TEXT_MUTED)
             }
             .width('100%')
-            .padding(10)
+            .alignItems(VerticalAlign.Center)
           }
+          .width('94%')
+          .padding(SPACE_MD)
+          .borderRadius(CARD_RADIUS)
+          .backgroundColor(CARD_BG)
+          .shadow({
+            radius: CARD_SHADOW_RADIUS,
+            color: CARD_SHADOW_COLOR,
+            offsetX: 0,
+            offsetY: CARD_SHADOW_OFFSET_Y
+          })
+          .stateStyles({
+            pressed: {
+              .scale({ x: 0.98, y: 0.98 })
+            },
+            normal: {
+              .scale({ x: 1, y: 1 })
+            }
+          })
+          .animation({ duration: MOTION_FAST, curve: Curve.EaseOut })
         }, (item: ProductDataModel) => item.id.toString())
       }
       .width('100%')
       .layoutWeight(1)
+      .alignListItem(ListItemAlign.Center)
+      .scrollBar(BarState.Off)
     }
     .width('100%')
     .height('100%')
+    .backgroundColor(BG_PAGE)
   }
 }

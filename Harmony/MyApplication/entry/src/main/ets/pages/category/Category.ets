@@ -1,4 +1,26 @@
 import { DetailArg, firstImage, getJson, GoodsDataModel, ProductDataModel, ResponseData } from '../../utils/requestUtils'
+import {
+  BG_PAGE,
+  CARD_BG,
+  CARD_RADIUS,
+  CARD_SHADOW_COLOR,
+  CARD_SHADOW_OFFSET_Y,
+  CARD_SHADOW_RADIUS,
+  DANGER,
+  FONT_BODY,
+  FONT_CAPTION,
+  FONT_PRICE,
+  FONT_SUBTITLE,
+  FONT_TITLE,
+  IMAGE_RADIUS,
+  MOTION_FAST,
+  PRIMARY,
+  SPACE_MD,
+  SPACE_XS,
+  TEXT_MAIN,
+  TEXT_MUTED,
+  TEXT_SECONDARY
+} from '../../common/UiTokens'
 
 interface CategoryTab {
   name: string
@@ -82,35 +104,53 @@ export default struct Category {
     return arg
   }
 
+  // 列表项：白色圆角卡片，图片圆角、名称两行截断、右侧价格与箭头
   @Builder
-  goodsRow(item: ProductDataModel) {
-    Row() {
+  goodsCard(item: ProductDataModel) {
+    Row({ space: SPACE_MD }) {
       if (firstImage(item.images) === '') {
         Image($r('app.media.dianqi'))
-          .width(50)
-          .height(50)
+          .width(64)
+          .height(64)
+          .borderRadius(IMAGE_RADIUS)
+          .backgroundColor('#F7F8FA')
       } else {
         Image(firstImage(item.images))
-          .width(50)
-          .height(50)
+          .width(64)
+          .height(64)
           .objectFit(ImageFit.Cover)
+          .borderRadius(IMAGE_RADIUS)
       }
-      Text(item.name)
-        .fontSize(15)
-        .maxLines(1)
-        .textOverflow({ overflow: TextOverflow.Clip })
-        .layoutWeight(1)
+      Column({ space: 4 }) {
+        Text(item.name)
+          .fontSize(FONT_SUBTITLE)
+          .fontColor(TEXT_MAIN)
+          .maxLines(2)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+        Text(item.description === null ? '' : item.description)
+          .fontSize(FONT_CAPTION)
+          .fontColor(TEXT_MUTED)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+
       Text(`￥${item.price}`)
-        .fontSize(14)
-        .fontColor('#E64545')
+        .fontSize(FONT_PRICE)
+        .fontColor(DANGER)
+        .fontWeight(FontWeight.Medium)
+      Image($r('app.media.jiantouyou'))
+        .width(14)
+        .height(14)
+        .fillColor(TEXT_MUTED)
     }
-    .width('95%')
-    .height(60)
-    .justifyContent(FlexAlign.SpaceBetween)
+    .width('100%')
+    .alignItems(VerticalAlign.Center)
   }
 
   build() {
-    Column() {
+    Column({ space: SPACE_XS }) {
       Tabs({ barPosition: BarPosition.Start }) {
         TabContent() {
         }
@@ -123,31 +163,44 @@ export default struct Category {
         }, (item: CategoryTab) => item.name)
       }
       .barMode(BarMode.Scrollable)
-      .height(50)
+      .barHeight(46)
+      .height(48)
       .onChange((index: number) => {
         this.pick(index)
       })
 
       Row() {
-        Text(this.current)
-          .fontSize(18)
-          .fontWeight(FontWeight.Bold)
+        Column({ space: 2 }) {
+          Text(this.current)
+            .fontSize(FONT_TITLE)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(TEXT_MAIN)
+          Text(this.loading ? '加载中…' : `共 ${this.goodsList.length} 件`)
+            .fontSize(FONT_BODY)
+            .fontColor(TEXT_SECONDARY)
+        }
+        .alignItems(HorizontalAlign.Start)
+
         Blank()
-        Text(this.loading ? '加载中…' : `共 ${this.goodsList.length} 件`)
-          .fontSize(13)
-          .fontColor('#9B9B9B')
+        if (this.loading) {
+          LoadingProgress()
+            .width(22)
+            .height(22)
+            .color(PRIMARY)
+        }
       }
       .width('92%')
-      .margin({ top: 10, bottom: 6 })
+      .margin({ top: SPACE_XS })
 
       if (this.tip !== '') {
         Column({ space: 10 }) {
           Text(this.tip)
-            .fontSize(13)
-            .fontColor('#9B9B9B')
+            .fontSize(FONT_BODY)
+            .fontColor(TEXT_MUTED)
             .textAlign(TextAlign.Center)
           Button('重新加载')
-            .fontSize(13)
+            .fontSize(FONT_BODY)
+            .backgroundColor(PRIMARY)
             .onClick(() => {
               const index: number = this.current === '全部' ? 0 : this.currentIndexOf()
               this.pick(index)
@@ -157,11 +210,30 @@ export default struct Category {
         .margin({ top: 30 })
       }
 
-      List({ space: 15 }) {
+      List({ space: 10 }) {
         ForEach(this.goodsList, (item: ProductDataModel) => {
           ListItem() {
-            this.goodsRow(item)
+            this.goodsCard(item)
           }
+          .width('94%')
+          .padding(SPACE_MD)
+          .borderRadius(CARD_RADIUS)
+          .backgroundColor(CARD_BG)
+          .shadow({
+            radius: CARD_SHADOW_RADIUS,
+            color: CARD_SHADOW_COLOR,
+            offsetX: 0,
+            offsetY: CARD_SHADOW_OFFSET_Y
+          })
+          .stateStyles({
+            pressed: {
+              .scale({ x: 0.98, y: 0.98 })
+            },
+            normal: {
+              .scale({ x: 1, y: 1 })
+            }
+          })
+          .animation({ duration: MOTION_FAST, curve: Curve.EaseOut })
           // 第 10 章：点击列表项，把当前商品传给详情页
           .onClick(() => {
             this.getUIContext().getRouter().pushUrl({
@@ -174,9 +246,11 @@ export default struct Category {
       .width('100%')
       .layoutWeight(1)
       .alignListItem(ListItemAlign.Center)
+      .scrollBar(BarState.Off)
     }
     .width('100%')
     .height('100%')
+    .backgroundColor(BG_PAGE)
   }
 
   private currentIndexOf(): number {
