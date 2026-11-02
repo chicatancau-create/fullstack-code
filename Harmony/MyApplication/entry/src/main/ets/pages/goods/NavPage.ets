@@ -1,17 +1,11 @@
 import { Goods, listGoods } from '../../data/interface'
-import GoodsDetail from '../goods/GoodsDetail'
+import { GoodsDetailParam } from './GoodsDetailPage'
 
+// 10.4：商品列表页根容器改为 Navigation，详情页交给系统路由表 router_map.json
 @Entry
 @Component
 struct NavPage {
   @State pathStack: NavPathStack = new NavPathStack()
-
-  // 路由表：根据 name 决定显示哪个目标页
-  @Builder pageMap(name: string, param: object) {
-    if (name === 'GoodsDetail') {
-      GoodsDetail({ item: param as Goods })
-    }
-  }
 
   build() {
     Navigation(this.pathStack) {
@@ -35,8 +29,9 @@ struct NavPage {
               .width('100%')
               .padding(10)
               .onClick(() => {
-                // 把当前商品作为参数压入路由栈
-                this.pathStack.pushPath({ name: 'GoodsDetail', param: item })
+                // 10.4 步骤4：按名字跳转，只传商品 id，由详情页自己请求详情
+                const arg: GoodsDetailParam = { goodsId: item.id }
+                this.pathStack.pushPathByName('GoodsDetail', arg)
               })
             }
           }, (item: Goods) => item.id.toString())
@@ -48,9 +43,8 @@ struct NavPage {
       .height('100%')
       .padding(12)
     }
-    .navDestination(this.pageMap)
     .mode(NavigationMode.Stack)
-    .title('商品详情')
-    .hideNavBar(false)
+    .title('商品列表')
+    .hideNavBar(true)
   }
 }
