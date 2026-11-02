@@ -1,5 +1,5 @@
 // 10.4 步骤3：商品详情页用 NavDestination 作根容器，参数在 onReady 里取
-import { BASE_URL, firstImage, getJson, ProductDataModel, ResponseData, GoodsDataModel } from '../../utils/requestUtils'
+import { firstImage, getJson, ProductDataModel, ResponseData } from '../../utils/requestUtils'
 
 export interface GoodsDetailParam {
   goodsId: number
