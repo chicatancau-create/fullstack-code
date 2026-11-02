@@ -3,14 +3,10 @@ import {
   BG_PAGE,
   CARD_BG,
   CARD_RADIUS,
-  CARD_SHADOW_COLOR,
-  CARD_SHADOW_OFFSET_Y,
-  CARD_SHADOW_RADIUS,
   DANGER,
   FONT_BODY,
   FONT_SUBTITLE,
   IMAGE_RADIUS,
-  MOTION_FAST,
   SPACE_MD,
   SPACE_SM,
   TEXT_MAIN,
@@ -23,28 +19,8 @@ struct AddressPage {
   @State addressList: Address[] = listAddress.slice()
   @State isRefreshing: boolean = false
 
-  // 删除是不可逆操作，先弹确认框，点「删除」才真的从列表里去掉
-  private confirmDelete(index: number, name: string): void {
-    this.getUIContext().showAlertDialog({
-      title: '删除地址',
-      message: `确定删除${name}的收货地址吗？`,
-      primaryButton: {
-        value: '取消',
-        action: () => {
-        }
-      },
-      secondaryButton: {
-        value: '删除',
-        fontColor: DANGER,
-        action: () => {
-          this.addressList.splice(index, 1)
-        }
-      }
-    })
-  }
-
   // 任务三：侧滑后露出的删除按钮，危险红底
-  @Builder itemEnd(index: number, name: string) {
+  @Builder itemEnd(index: number) {
     Column() {
       Image($r('app.media.delete_left'))
         .width(22)
@@ -57,17 +33,8 @@ struct AddressPage {
     .backgroundColor(DANGER)
     .justifyContent(FlexAlign.Center)
     .margin({ left: SPACE_MD })
-    .stateStyles({
-      pressed: {
-        .opacity(0.7)
-      },
-      normal: {
-        .opacity(1)
-      }
-    })
-    .animation({ duration: MOTION_FAST, curve: Curve.EaseOut })
     .onClick(() => {
-      this.confirmDelete(index, name)
+      this.addressList.splice(index, 1)
     })
   }
 
@@ -100,15 +67,9 @@ struct AddressPage {
             }
             .borderRadius(CARD_RADIUS)
             .backgroundColor(CARD_BG)
-            .shadow({
-              radius: CARD_SHADOW_RADIUS,
-              color: CARD_SHADOW_COLOR,
-              offsetX: 0,
-              offsetY: CARD_SHADOW_OFFSET_Y
-            })
             .swipeAction({
               end: {
-                builder: this.itemEnd(index, item.name)
+                builder: this.itemEnd(index)
               }
             })
           }, (item: Address) => JSON.stringify(item))

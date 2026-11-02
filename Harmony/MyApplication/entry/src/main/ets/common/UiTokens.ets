@@ -1,9 +1,7 @@
-// 全局视觉令牌：颜色、圆角、间距、字号、阴影都从这里取，页面里不再手写色值。
-// 主色是蓝色渐变，起色 PRIMARY_START、止色 PRIMARY_END，用到渐变的组件把两者一起写进 colors。
+// 全局视觉令牌：颜色和圆角、间距、字号都从这里取，页面里不再手写色值。
+// 主色只有一个 PRIMARY，标题条、价格条、选中态都用它。
 
 // 颜色
-export const PRIMARY_START: string = '#2B7FF3'
-export const PRIMARY_END: string = '#1698CE'
 export const PRIMARY: string = '#1698CE'
 export const DANGER: string = '#E64545'
 export const TEXT_MAIN: string = '#1A1A1A'
@@ -13,12 +11,12 @@ export const BG_PAGE: string = '#F5F6F7'
 export const CARD_BG: string = '#FFFFFF'
 export const INPUT_BG: string = '#F2F3F5'
 export const TAB_ACTIVE_BG: string = 'rgba(22,152,206,0.12)'
-// 渐变底上的半透明白块，用来衬住首页用户区与搜索框
+// 主色底上的半透明白块，用来衬住首页用户区与搜索框
 export const GLASS_BG: string = 'rgba(255,255,255,0.18)'
 // 主色的浅底块，用来衬住宫格图标
 export const PRIMARY_TINT: string = '#EAF3FB'
 export const TEXT_ON_PRIMARY: string = '#FFFFFF'
-// 输入框默认描边，聚焦时换成主色
+// 输入框默认描边
 export const BORDER_LIGHT: string = '#E5E7EA'
 
 // 圆角
@@ -30,7 +28,6 @@ export const IMAGE_RADIUS: number = 10
 export const SPACE_XS: number = 8
 export const SPACE_SM: number = 12
 export const SPACE_MD: number = 16
-export const SPACE_LG: number = 24
 
 // 字号
 export const FONT_CAPTION: number = 12
@@ -40,11 +37,4 @@ export const FONT_PRICE: number = 18
 export const FONT_TITLE: number = 20
 export const FONT_DISPLAY: number = 26
 
-// 阴影（卡片用，页面里配 .shadow({ radius, color, offsetX, offsetY })）
-export const CARD_SHADOW_RADIUS: number = 12
-export const CARD_SHADOW_COLOR: string = 'rgba(0,0,0,0.06)'
-export const CARD_SHADOW_OFFSET_Y: number = 4
 
-// 动效时长
-export const MOTION_FAST: number = 150
-export const MOTION_NORMAL: number = 250

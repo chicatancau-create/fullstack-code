@@ -4,15 +4,11 @@ import {
   BG_PAGE,
   CARD_BG,
   CARD_RADIUS,
-  CARD_SHADOW_COLOR,
-  CARD_SHADOW_OFFSET_Y,
-  CARD_SHADOW_RADIUS,
   CHIP_RADIUS,
   FONT_BODY,
   FONT_CAPTION,
   FONT_TITLE,
-  PRIMARY_END,
-  PRIMARY_START,
+  PRIMARY,
   SPACE_MD,
   SPACE_SM,
   SPACE_XS,
@@ -62,12 +58,6 @@ struct GoodsDetailRouter {
           .padding(SPACE_MD)
           .borderRadius(CARD_RADIUS)
           .backgroundColor(CARD_BG)
-          .shadow({
-            radius: CARD_SHADOW_RADIUS,
-            color: CARD_SHADOW_COLOR,
-            offsetX: 0,
-            offsetY: CARD_SHADOW_OFFSET_Y
-          })
 
           Text(this.arg.title)
             .fontSize(FONT_TITLE)
@@ -75,7 +65,7 @@ struct GoodsDetailRouter {
             .fontColor(TEXT_MAIN)
             .width('92%')
 
-          // 渐变价格条：左边价格，右边库存
+          // 价格条：左边价格，右边库存
           Row() {
             Text(this.arg.priceText)
               .fontSize(FONT_TITLE)
@@ -89,10 +79,7 @@ struct GoodsDetailRouter {
           .width('92%')
           .padding(SPACE_MD)
           .borderRadius(CHIP_RADIUS)
-          .linearGradient({
-            angle: 135,
-            colors: [[PRIMARY_START, 0], [PRIMARY_END, 1]]
-          })
+          .backgroundColor(PRIMARY)
 
           if (this.arg.content !== '') {
             Column({ space: SPACE_XS }) {
@@ -103,7 +90,6 @@ struct GoodsDetailRouter {
               Text(this.arg.content)
                 .fontSize(FONT_BODY)
                 .fontColor(TEXT_MAIN)
-                .lineHeight(22)
                 .width('100%')
             }
             .width('92%')
@@ -111,12 +97,6 @@ struct GoodsDetailRouter {
             .alignItems(HorizontalAlign.Start)
             .borderRadius(CARD_RADIUS)
             .backgroundColor(CARD_BG)
-            .shadow({
-              radius: CARD_SHADOW_RADIUS,
-              color: CARD_SHADOW_COLOR,
-              offsetX: 0,
-              offsetY: CARD_SHADOW_OFFSET_Y
-            })
           }
         }
         .width('100%')

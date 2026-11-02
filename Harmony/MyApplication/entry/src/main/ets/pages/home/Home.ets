@@ -8,9 +8,6 @@ import {
   BG_PAGE,
   CARD_BG,
   CARD_RADIUS,
-  CARD_SHADOW_COLOR,
-  CARD_SHADOW_OFFSET_Y,
-  CARD_SHADOW_RADIUS,
   CHIP_RADIUS,
   DANGER,
   FONT_BODY,
@@ -19,10 +16,7 @@ import {
   FONT_TITLE,
   GLASS_BG,
   IMAGE_RADIUS,
-  MOTION_FAST,
   PRIMARY,
-  PRIMARY_END,
-  PRIMARY_START,
   PRIMARY_TINT,
   SPACE_MD,
   SPACE_SM,
@@ -41,7 +35,7 @@ export default struct Home {
   @Provider('user') user: User = connectUser()
   private goods: Goods[] = allGoods()
 
-  // 11.4 步骤4：顶部用户信息区。白色半透明卡片衬在渐变底上，未登录时给「去登录」入口
+  // 11.4 步骤4：顶部用户信息区。白色半透明卡片衬在主色底上，未登录时给「去登录」入口
   @Builder
   UserHeader() {
     if (this.user.isLoggedIn) {
@@ -50,8 +44,7 @@ export default struct Home {
           .width(44)
           .height(44)
           .borderRadius(22)
-          .borderWidth(2)
-          .borderColor('rgba(255,255,255,0.6)')
+          .border({ width: 2, color: 'rgba(255,255,255,0.6)' })
         Column({ space: 2 }) {
           Text(`欢迎，${this.user.name}`)
             .fontSize(FONT_SUBTITLE)
@@ -99,7 +92,7 @@ export default struct Home {
     }
   }
 
-  // 搜索框也放进顶部渐变区，白字浅底
+  // 搜索框也放进顶部主色区，白字浅底
   @Builder
   SearchBar() {
     Row({ space: SPACE_XS }) {
@@ -112,10 +105,7 @@ export default struct Home {
         .height(36)
         .fontSize(FONT_BODY)
         .fontColor(TEXT_ON_PRIMARY)
-        .placeholderColor('rgba(255,255,255,0.7)')
-        .placeholderFont({ size: FONT_BODY })
-        .caretColor(CARD_BG)
-        .backgroundColor(Color.Transparent)
+        .backgroundColor(PRIMARY)
         .onChange((value: string) => {
           this.kw = value
         })
@@ -156,15 +146,6 @@ export default struct Home {
     .width('100%')
     .height('100%')
     .justifyContent(FlexAlign.Center)
-    .stateStyles({
-      pressed: {
-        .scale({ x: 0.94, y: 0.94 })
-      },
-      normal: {
-        .scale({ x: 1, y: 1 })
-      }
-    })
-    .animation({ duration: MOTION_FAST, curve: Curve.EaseOut })
     // 5.4 规定宫格要能跳到对应商品列表
     .onClick(() => {
       const arg: CategoryArg = { categoryId: item.categoryId }
@@ -178,7 +159,7 @@ export default struct Home {
   build() {
     Scroll() {
       Column({ space: SPACE_MD }) {
-        // 顶部渐变区：包住用户区与搜索框，底部两大圆角
+        // 顶部主色区：包住用户区与搜索框
         Column({ space: SPACE_SM }) {
           // 11.4 步骤4：顶部用户信息区
           this.UserHeader()
@@ -186,13 +167,10 @@ export default struct Home {
         }
         .width('100%')
         .padding({ left: SPACE_MD, right: SPACE_MD, top: SPACE_MD, bottom: SPACE_MD })
-        .borderRadius({ bottomLeft: 24, bottomRight: 24 })
-        .linearGradient({
-          angle: 135,
-          colors: [[PRIMARY_START, 0], [PRIMARY_END, 1]]
-        })
+        .borderRadius(CHIP_RADIUS)
+        .backgroundColor(PRIMARY)
 
-        // 第 6 章轮播图：六张图，自动播放 2000 毫秒。图片圆角，指示器改成白点
+        // 第 6 章轮播图：六张图，自动播放 2000 毫秒
         Swiper() {
           ForEach(this.swiperData, (item: AdvertisementData) => {
             Image(item.icon)
@@ -205,13 +183,7 @@ export default struct Home {
         .autoPlay(true)
         .interval(2000)
         .loop(true)
-        .indicator(new DotIndicator()
-          .itemWidth(6)
-          .itemHeight(6)
-          .selectedItemWidth(16)
-          .selectedItemHeight(6)
-          .color('rgba(255,255,255,0.5)')
-          .selectedColor('#FFFFFF'))
+        .indicator(true)
         .width('92%')
         .height(200)
 
@@ -234,19 +206,12 @@ export default struct Home {
           .rowsGap(10)
           .columnsGap(10)
           .width('100%')
-          .height(180)
+          .height(200)
         }
         .width('92%')
         .padding(SPACE_MD)
         .borderRadius(CARD_RADIUS)
         .backgroundColor(CARD_BG)
-        .shadow({
-          radius: CARD_SHADOW_RADIUS,
-          color: CARD_SHADOW_COLOR,
-          offsetX: 0,
-          offsetY: CARD_SHADOW_OFFSET_Y
-        })
-
         Text('热门推荐')
           .fontSize(FONT_TITLE)
           .fontWeight(FontWeight.Bold)
@@ -286,21 +251,6 @@ export default struct Home {
             .alignItems(HorizontalAlign.Start)
             .borderRadius(CARD_RADIUS)
             .backgroundColor(CARD_BG)
-            .shadow({
-              radius: CARD_SHADOW_RADIUS,
-              color: CARD_SHADOW_COLOR,
-              offsetX: 0,
-              offsetY: CARD_SHADOW_OFFSET_Y
-            })
-            .stateStyles({
-              pressed: {
-                .scale({ x: 0.97, y: 0.97 })
-              },
-              normal: {
-                .scale({ x: 1, y: 1 })
-              }
-            })
-            .animation({ duration: MOTION_FAST, curve: Curve.EaseOut })
           }, (item: Goods) => item.name)
         }
         .width('92%')

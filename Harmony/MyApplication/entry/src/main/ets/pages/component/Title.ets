@@ -1,4 +1,4 @@
-import { CARD_RADIUS, FONT_DISPLAY, MOTION_FAST, PRIMARY_END, PRIMARY_START, SPACE_SM, SPACE_XS } from '../../common/UiTokens'
+import { CARD_RADIUS, FONT_DISPLAY, PRIMARY, SPACE_SM, SPACE_XS } from '../../common/UiTokens'
 
 // 课件 11 章规定：公共标题用状态管理 V2 的 @ComponentV2 + @Param，属性名 isShow 控制返回箭头
 @ComponentV2
@@ -20,15 +20,6 @@ export default struct Title {
           .onClick(() => {
             this.getUIContext().getRouter().back()
           })
-          .stateStyles({
-            pressed: {
-              .opacity(0.6)
-            },
-            normal: {
-              .opacity(1)
-            }
-          })
-          .animation({ duration: MOTION_FAST })
       }
       .width('100%')
 
@@ -43,16 +34,7 @@ export default struct Title {
     .height(56)
     .padding({ left: SPACE_SM, right: SPACE_SM })
     .borderRadius(CARD_RADIUS)
-    .linearGradient({
-      angle: 135,
-      colors: [[PRIMARY_START, 0], [PRIMARY_END, 1]]
-    })
-    .shadow({
-      radius: 10,
-      color: 'rgba(43,127,243,0.28)',
-      offsetX: 0,
-      offsetY: 4
-    })
+    .backgroundColor(PRIMARY)
     .margin({ bottom: SPACE_XS })
   }
 }

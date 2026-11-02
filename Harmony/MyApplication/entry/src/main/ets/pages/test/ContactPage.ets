@@ -4,14 +4,10 @@ import {
   BG_PAGE,
   CARD_BG,
   CARD_RADIUS,
-  CARD_SHADOW_COLOR,
-  CARD_SHADOW_OFFSET_Y,
-  CARD_SHADOW_RADIUS,
   DANGER,
   FONT_CAPTION,
   FONT_SUBTITLE,
   IMAGE_RADIUS,
-  MOTION_FAST,
   PRIMARY_TINT,
   SPACE_MD,
   TEXT_MAIN,
@@ -23,31 +19,8 @@ import {
 struct ContactPage {
   @State contactsList: Contact[] = contacts.slice()
 
-  // 删除前先弹确认框
-  private confirmDelete(item: Contact): void {
-    this.getUIContext().showAlertDialog({
-      title: '删除联系人',
-      message: `确定删除${item.name}吗？`,
-      primaryButton: {
-        value: '取消',
-        action: () => {
-        }
-      },
-      secondaryButton: {
-        value: '删除',
-        fontColor: DANGER,
-        action: () => {
-          const index: number = this.contactsList.indexOf(item)
-          if (index >= 0) {
-            this.contactsList.splice(index, 1)
-          }
-        }
-      }
-    })
-  }
-
   // 侧滑后露出的删除按钮，危险红底
-  @Builder itemEnd(item: Contact) {
+  @Builder itemEnd(index: number) {
     Column() {
       Image($r('app.media.delete_left'))
         .width(22)
@@ -60,17 +33,8 @@ struct ContactPage {
     .backgroundColor(DANGER)
     .justifyContent(FlexAlign.Center)
     .margin({ left: SPACE_MD })
-    .stateStyles({
-      pressed: {
-        .opacity(0.7)
-      },
-      normal: {
-        .opacity(1)
-      }
-    })
-    .animation({ duration: MOTION_FAST, curve: Curve.EaseOut })
     .onClick(() => {
-      this.confirmDelete(item)
+      this.contactsList.splice(index, 1)
     })
   }
 
@@ -78,7 +42,7 @@ struct ContactPage {
     Column() {
       Title({ title: '通讯录', isShow: true })
       List({ space: 10 }) {
-        ForEach(this.contactsList, (item: Contact) => {
+        ForEach(this.contactsList, (item: Contact, index: number) => {
           ListItem() {
             Row({ space: SPACE_MD }) {
               // 圆形头像：取姓名第一个字，衬主色浅底
@@ -124,24 +88,9 @@ struct ContactPage {
           }
           .borderRadius(CARD_RADIUS)
           .backgroundColor(CARD_BG)
-          .shadow({
-            radius: CARD_SHADOW_RADIUS,
-            color: CARD_SHADOW_COLOR,
-            offsetX: 0,
-            offsetY: CARD_SHADOW_OFFSET_Y
-          })
-          .stateStyles({
-            pressed: {
-              .opacity(0.85)
-            },
-            normal: {
-              .opacity(1)
-            }
-          })
-          .animation({ duration: MOTION_FAST, curve: Curve.EaseOut })
           .swipeAction({
             end: {
-              builder: this.itemEnd(item)
+              builder: this.itemEnd(index)
             }
           })
         }, (item: Contact) => item.phone)

@@ -4,16 +4,12 @@ import {
   BG_PAGE,
   CARD_BG,
   CARD_RADIUS,
-  CARD_SHADOW_COLOR,
-  CARD_SHADOW_OFFSET_Y,
-  CARD_SHADOW_RADIUS,
   DANGER,
   FONT_BODY,
   FONT_CAPTION,
   FONT_PRICE,
   FONT_SUBTITLE,
   IMAGE_RADIUS,
-  MOTION_FAST,
   PRIMARY,
   SPACE_MD,
   SPACE_XS,
@@ -76,17 +72,10 @@ struct NetGoodsPage {
       Title({ title: `网络商品列表 分类${this.categoryId}`, isShow: true })
 
       if (this.loading) {
-        Row({ space: SPACE_XS }) {
-          LoadingProgress()
-            .width(22)
-            .height(22)
-            .color(PRIMARY)
-          Text('加载中…')
-            .fontSize(FONT_BODY)
-            .fontColor(TEXT_MUTED)
-        }
-        .width('92%')
-        .margin({ top: SPACE_XS })
+        Text('加载中…')
+          .fontSize(FONT_BODY)
+          .fontColor(TEXT_MUTED)
+          .margin({ top: 30 })
       }
 
       if (this.tip !== '') {
@@ -152,21 +141,6 @@ struct NetGoodsPage {
           .padding(SPACE_MD)
           .borderRadius(CARD_RADIUS)
           .backgroundColor(CARD_BG)
-          .shadow({
-            radius: CARD_SHADOW_RADIUS,
-            color: CARD_SHADOW_COLOR,
-            offsetX: 0,
-            offsetY: CARD_SHADOW_OFFSET_Y
-          })
-          .stateStyles({
-            pressed: {
-              .scale({ x: 0.98, y: 0.98 })
-            },
-            normal: {
-              .scale({ x: 1, y: 1 })
-            }
-          })
-          .animation({ duration: MOTION_FAST, curve: Curve.EaseOut })
         }, (item: ProductDataModel) => item.id.toString())
       }
       .width('100%')

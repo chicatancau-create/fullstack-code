@@ -1,5 +1,5 @@
 import Title from '../component/Title'
-import { BG_PAGE, BORDER_LIGHT, CHIP_RADIUS, INPUT_BG, PRIMARY, PRIMARY_END, PRIMARY_START } from '../../common/UiTokens'
+import { BG_PAGE, BORDER_LIGHT, CHIP_RADIUS, INPUT_BG, PRIMARY } from '../../common/UiTokens'
 import { Account, findAccountByEmail, isEmail } from '../../model/Data'
 import { connectUser, User } from '../../model/User'
 import { TabIndexArg } from '../../utils/requestUtils'
@@ -68,10 +68,6 @@ struct Login {
 
       Button('登录')
         .width('90%')
-        .linearGradient({
-          angle: 135,
-          colors: [[PRIMARY_START, 0], [PRIMARY_END, 1]]
-        })
         .enabled(this.canSubmit())
         .onClick(() => {
           const msg: string = this.login()

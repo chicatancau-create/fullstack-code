@@ -3,9 +3,6 @@ import {
   BG_PAGE,
   CARD_BG,
   CARD_RADIUS,
-  CARD_SHADOW_COLOR,
-  CARD_SHADOW_OFFSET_Y,
-  CARD_SHADOW_RADIUS,
   DANGER,
   FONT_BODY,
   FONT_CAPTION,
@@ -13,7 +10,6 @@ import {
   FONT_SUBTITLE,
   FONT_TITLE,
   IMAGE_RADIUS,
-  MOTION_FAST,
   PRIMARY,
   SPACE_MD,
   SPACE_XS,
@@ -163,8 +159,7 @@ export default struct Category {
         }, (item: CategoryTab) => item.name)
       }
       .barMode(BarMode.Scrollable)
-      .barHeight(46)
-      .height(48)
+      .height(50)
       .onChange((index: number) => {
         this.pick(index)
       })
@@ -180,14 +175,6 @@ export default struct Category {
             .fontColor(TEXT_SECONDARY)
         }
         .alignItems(HorizontalAlign.Start)
-
-        Blank()
-        if (this.loading) {
-          LoadingProgress()
-            .width(22)
-            .height(22)
-            .color(PRIMARY)
-        }
       }
       .width('92%')
       .margin({ top: SPACE_XS })
@@ -219,21 +206,6 @@ export default struct Category {
           .padding(SPACE_MD)
           .borderRadius(CARD_RADIUS)
           .backgroundColor(CARD_BG)
-          .shadow({
-            radius: CARD_SHADOW_RADIUS,
-            color: CARD_SHADOW_COLOR,
-            offsetX: 0,
-            offsetY: CARD_SHADOW_OFFSET_Y
-          })
-          .stateStyles({
-            pressed: {
-              .scale({ x: 0.98, y: 0.98 })
-            },
-            normal: {
-              .scale({ x: 1, y: 1 })
-            }
-          })
-          .animation({ duration: MOTION_FAST, curve: Curve.EaseOut })
           // 第 10 章：点击列表项，把当前商品传给详情页
           .onClick(() => {
             this.getUIContext().getRouter().pushUrl({

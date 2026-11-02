@@ -4,16 +4,11 @@ import {
   BG_PAGE,
   CARD_BG,
   CARD_RADIUS,
-  CARD_SHADOW_COLOR,
-  CARD_SHADOW_OFFSET_Y,
-  CARD_SHADOW_RADIUS,
   CHIP_RADIUS,
   FONT_BODY,
   FONT_CAPTION,
   FONT_TITLE,
   PRIMARY,
-  PRIMARY_END,
-  PRIMARY_START,
   SPACE_MD,
   SPACE_SM,
   SPACE_XS,
@@ -80,20 +75,13 @@ export struct GoodsDetailPage {
           .padding(SPACE_MD)
           .borderRadius(CARD_RADIUS)
           .backgroundColor(CARD_BG)
-          .shadow({
-            radius: CARD_SHADOW_RADIUS,
-            color: CARD_SHADOW_COLOR,
-            offsetX: 0,
-            offsetY: CARD_SHADOW_OFFSET_Y
-          })
-
           Text(this.goodsInfo.name)
             .fontSize(FONT_TITLE)
             .fontWeight(FontWeight.Bold)
             .fontColor(TEXT_MAIN)
             .width('100%')
 
-          // 渐变价格条：左边价格，右边库存
+          // 价格条：左边价格，右边库存
           Row() {
             Text(`价格${this.goodsInfo.price} 元`)
               .fontSize(FONT_TITLE)
@@ -107,10 +95,7 @@ export struct GoodsDetailPage {
           .width('100%')
           .padding(SPACE_MD)
           .borderRadius(CHIP_RADIUS)
-          .linearGradient({
-            angle: 135,
-            colors: [[PRIMARY_START, 0], [PRIMARY_END, 1]]
-          })
+          .backgroundColor(PRIMARY)
 
           if (this.goodsInfo.description !== null && this.goodsInfo.description !== '') {
             Column({ space: SPACE_XS }) {
@@ -121,7 +106,6 @@ export struct GoodsDetailPage {
               Text(this.goodsInfo.description)
                 .fontSize(FONT_BODY)
                 .fontColor(TEXT_MAIN)
-                .lineHeight(22)
                 .width('100%')
             }
             .width('100%')
@@ -129,25 +113,12 @@ export struct GoodsDetailPage {
             .alignItems(HorizontalAlign.Start)
             .borderRadius(CARD_RADIUS)
             .backgroundColor(CARD_BG)
-            .shadow({
-              radius: CARD_SHADOW_RADIUS,
-              color: CARD_SHADOW_COLOR,
-              offsetX: 0,
-              offsetY: CARD_SHADOW_OFFSET_Y
-            })
           }
         } else if (this.loading) {
-          Row({ space: SPACE_XS }) {
-            LoadingProgress()
-              .width(22)
-              .height(22)
-              .color(PRIMARY)
-            Text('加载中…')
-              .fontSize(FONT_BODY)
-              .fontColor(TEXT_MUTED)
-          }
-          .width('100%')
-          .margin({ top: 40 })
+          Text('加载中…')
+            .fontSize(FONT_BODY)
+            .fontColor(TEXT_MUTED)
+            .margin({ top: 40 })
         } else {
           Column({ space: SPACE_SM }) {
             Text(this.tip)

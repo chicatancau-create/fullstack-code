@@ -2,7 +2,7 @@ import { ApiUser, LoginPayload, postJson } from '../../utils/requestUtils'
 import { setApiToken } from '../../model/Token'
 import { connectUser, User } from '../../model/User'
 import Title from '../component/Title'
-import { BG_PAGE, BORDER_LIGHT, CHIP_RADIUS, DANGER, INPUT_BG, PRIMARY_END, PRIMARY_START, TEXT_MUTED } from '../../common/UiTokens'
+import { BG_PAGE, BORDER_LIGHT, CHIP_RADIUS, DANGER, INPUT_BG, TEXT_MUTED } from '../../common/UiTokens'
 
 @Entry
 @ComponentV2
@@ -78,10 +78,6 @@ struct LoginApi {
 
       Button(this.busy ? '登录中…' : '登录')
         .width('90%')
-        .linearGradient({
-          angle: 135,
-          colors: [[PRIMARY_START, 0], [PRIMARY_END, 1]]
-        })
         .enabled(!this.busy)
         .onClick(() => {
           this.doLogin()

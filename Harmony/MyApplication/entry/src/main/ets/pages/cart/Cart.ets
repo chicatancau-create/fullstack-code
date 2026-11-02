@@ -5,21 +5,13 @@ import {
   BG_PAGE,
   CARD_BG,
   CARD_RADIUS,
-  CARD_SHADOW_COLOR,
-  CARD_SHADOW_OFFSET_Y,
-  CARD_SHADOW_RADIUS,
-  CHIP_RADIUS,
   DANGER,
   FONT_BODY,
-  FONT_CAPTION,
   FONT_PRICE,
   FONT_SUBTITLE,
   IMAGE_RADIUS,
   INPUT_BG,
-  MOTION_FAST,
   PRIMARY,
-  PRIMARY_END,
-  PRIMARY_START,
   SPACE_MD,
   SPACE_SM,
   SPACE_XS,
@@ -61,15 +53,6 @@ export default struct Cart {
       .textAlign(TextAlign.Center)
       .borderRadius(IMAGE_RADIUS)
       .backgroundColor(INPUT_BG)
-      .stateStyles({
-        pressed: {
-          .opacity(0.6)
-        },
-        normal: {
-          .opacity(1)
-        }
-      })
-      .animation({ duration: MOTION_FAST, curve: Curve.EaseOut })
       .onClick(() => {
         this.change(index, delta)
       })
@@ -138,13 +121,7 @@ export default struct Cart {
             }
             .borderRadius(CARD_RADIUS)
             .backgroundColor(CARD_BG)
-            .shadow({
-              radius: CARD_SHADOW_RADIUS,
-              color: CARD_SHADOW_COLOR,
-              offsetX: 0,
-              offsetY: CARD_SHADOW_OFFSET_Y
-            })
-          }, (item: CartItem) => item.name)
+            }, (item: CartItem) => item.name)
         }
         .layoutWeight(1)
         .width('92%')
@@ -170,10 +147,6 @@ export default struct Cart {
           .height(44)
           .fontSize(FONT_SUBTITLE)
           .fontColor('#FFFFFF')
-          .linearGradient({
-            angle: 135,
-            colors: [[PRIMARY_START, 0], [PRIMARY_END, 1]]
-          })
           .onClick(() => {
             if (this.store.items.length === 0) {
               this.getUIContext().getPromptAction().showToast({ message: '购物车是空的' })
@@ -188,12 +161,6 @@ export default struct Cart {
       .padding(SPACE_MD)
       .borderRadius(CARD_RADIUS)
       .backgroundColor(CARD_BG)
-      .shadow({
-        radius: CARD_SHADOW_RADIUS,
-        color: CARD_SHADOW_COLOR,
-        offsetX: 0,
-        offsetY: CARD_SHADOW_OFFSET_Y
-      })
       .margin({ bottom: SPACE_MD })
     }
     .width('100%')

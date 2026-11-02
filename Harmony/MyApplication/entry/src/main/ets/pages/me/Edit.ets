@@ -4,7 +4,7 @@ import { connectUser, User } from '../../model/User'
 import { photoEdit } from '../../utils/photoEdit'
 import { common } from '@kit.AbilityKit'
 import Title from '../component/Title'
-import { BG_PAGE, BORDER_LIGHT, CHIP_RADIUS, INPUT_BG, PRIMARY_END, PRIMARY_START, TEXT_MUTED } from '../../common/UiTokens'
+import { BG_PAGE, BORDER_LIGHT, CHIP_RADIUS, INPUT_BG, TEXT_MUTED } from '../../common/UiTokens'
 
 @Entry
 @Component
@@ -134,10 +134,6 @@ struct Edit {
 
       Button('保存')
         .width('90%')
-        .linearGradient({
-          angle: 135,
-          colors: [[PRIMARY_START, 0], [PRIMARY_END, 1]]
-        })
         .onClick(() => {
           this.save()
         })

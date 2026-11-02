@@ -1,6 +1,6 @@
 import Title from '../component/Title'
 import { Account, findAccount, findAccountByEmail, isEmail } from '../../model/Data'
-import { BG_PAGE, PRIMARY_END, PRIMARY_START } from '../../common/UiTokens'
+import { BG_PAGE } from '../../common/UiTokens'
 
 @Entry
 @ComponentV2
@@ -163,10 +163,6 @@ struct Reg {
 
       Button('注册')
         .width('90%')
-        .linearGradient({
-          angle: 135,
-          colors: [[PRIMARY_START, 0], [PRIMARY_END, 1]]
-        })
         .enabled(this.canSubmit())
         .onClick(() => {
           const msg: string = this.check()
