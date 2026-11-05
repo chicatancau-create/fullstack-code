@@ -3,7 +3,7 @@
 		{
 			"path": "pages/my/my",
 			"style": {
-				"navigationBarTitleText": "我的"
+				"navigationBarTitleText": "个人中心"
 			}
 		},
 		{
@@ -45,7 +45,7 @@
 				"iconPath": "/static/my.png",
 				"selectedIconPath": "/static/my_selected.png",
 				"pagePath": "pages/my/my",
-				"text": "我的"
+				"text": "个人中心"
 			}
 		]
 	}
