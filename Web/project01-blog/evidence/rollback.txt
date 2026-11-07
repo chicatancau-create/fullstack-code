@@ -1,0 +1,3 @@
+current=25fa4f2 previous=e616905
+rollback_status=200
+ROLLBACK PASS

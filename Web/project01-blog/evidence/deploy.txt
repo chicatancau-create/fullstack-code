@@ -1,0 +1,8 @@
+== https home
+HTTP/1.1 200 OK
+strict-transport-security: max-age=31536000; includeSubDomains
+x-content-type-options: nosniff
+== tls
+New, TLSv1.2, Cipher is ECDHE-RSA-AES128-GCM-SHA256
+Protocol: TLSv1.2
+DEPLOY PASS
