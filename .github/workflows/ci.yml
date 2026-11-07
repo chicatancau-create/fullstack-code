@@ -137,7 +137,7 @@ jobs:
         env:
           POSTGRES_USER: study
           POSTGRES_PASSWORD: study-pass
-          POSTGRES_DB: study_lab
+          POSTGRES_DB: study_lab_p05
         ports: ['5432:5432']
         options: >-
           --health-cmd "pg_isready -U study -d study_lab"
