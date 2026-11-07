@@ -221,3 +221,24 @@ jobs:
         run: npm install --no-save --no-package-lock --no-audit --no-fund fastify@5.12.8
       - run: node --test tests/*.test.js
       - run: node scripts/eval.mjs
+
+  e01:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 06-实验代码/E01-c-memory
+    steps:
+      - uses: actions/checkout@v5
+      - run: bash scripts/run_tests.sh
+
+  e02:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 06-实验代码/E02-node-async
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+      - run: bash scripts/run_all.sh
