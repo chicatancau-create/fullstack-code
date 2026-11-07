@@ -50,12 +50,15 @@ mvn spring-boot:run                    # http://127.0.0.1:8798
 - [evidence/http.txt](evidence/http.txt)：health、注册、登录、建组织、建任务、列表、未登录 401。
 - [evidence/jvm.txt](evidence/jvm.txt)：JVM 版本、G1 堆使用、线程快照（含 Hikari 与 MySQL 清理线程）。
 - [evidence/mysql.txt](evidence/mysql.txt)：MySQL 8.4.13、`max_connections=151`、表行数。
+- [evidence/diagnose.txt](evidence/diagnose.txt)：40 并发读 40/40 200；Hikari `max=10`、`idle=10`、采样时 `active=0`；
+  第二个会话行锁等待 2s 超时（ERROR 1205），`performance_schema.data_locks` 显示 `X,REC_NOT_GAP`。
+- [evidence/locks.txt](evidence/locks.txt)：锁等待原始错误。
 - [evidence/run.txt](evidence/run.txt)：本轮时间与汇总。
 
 ## 已知限制
 
 - 未使用 Testcontainers（本机无 Docker）；测试依赖手工启动的 3307 实例。
-- 未做 MySQL 连接池压测、锁等待/死锁注入与 `EXPLAIN` 对比；只有 JVM/连接池运行快照。
+- 未做持续连接池耗尽压测、死锁注入与 `EXPLAIN` 对比；已有单次行锁等待与 Hikari 配置快照。
 - 未迁移邀请、最后 Owner 并发保护、审计、备份恢复；这些仍以 Node/PostgreSQL 版为准。
 - 未实现 Express/Nest 对照实现；[migration-comparison.md](docs/migration-comparison.md) 中的框架对比是分析，不是实测。
 - Windows Git Bash 下用 `curl -d` 传中文 JSON 会被按本地代码页转换并导致 400；冒烟脚本使用 ASCII 字段。

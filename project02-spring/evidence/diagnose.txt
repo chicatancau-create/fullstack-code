@@ -1,0 +1,11 @@
+HTTP statuses: {"200":40}
+hikaricp.active: {"name":"hikaricp.connections.active","description":"Active connections","measurements":[{"statistic":"VALUE","value":0.0}],"availableTags":[{"tag":"pool","values":["HikariPool-1"]}]}
+hikaricp.max: {"name":"hikaricp.connections.max","description":"Max connections","measurements":[{"statistic":"VALUE","value":10.0}],"availableTags":[{"tag":"pool","values":["HikariPool-1"]}]}
+hikaricp.idle: {"name":"hikaricp.connections.idle","description":"Idle connections","measurements":[{"statistic":"VALUE","value":10.0}],"availableTags":[{"tag":"pool","values":["HikariPool-1"]}]}
+second_session_exit=1 (1205=lock wait timeout expected)
+ERROR 1205 (HY000) at line 1: Lock wait timeout exceeded; try restarting transaction
+--- data_locks (root) ---
+OBJECT_SCHEMA	OBJECT_NAME	LOCK_TYPE	LOCK_MODE	LOCK_STATUS
+p02j	workspaces	TABLE	IX	GRANTED
+p02j	workspaces	RECORD	X,REC_NOT_GAP	GRANTED
+DIAGNOSE DONE wid=6

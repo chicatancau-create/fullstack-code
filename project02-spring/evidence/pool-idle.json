@@ -1,0 +1,1 @@
+{"name":"hikaricp.connections.idle","description":"Idle connections","measurements":[{"statistic":"VALUE","value":10.0}],"availableTags":[{"tag":"pool","values":["HikariPool-1"]}]}

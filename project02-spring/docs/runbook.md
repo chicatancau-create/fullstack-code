@@ -31,6 +31,7 @@ java -jar target/project02-spring-1.0.0.jar   # 使用 p02j，端口 8798
 ## 证据采集
 
 `bash scripts/run_project.sh` 会依次执行测试、打包、启动、HTTP 冒烟、JVM/MySQL 诊断并写入 `evidence/`。
+`bash scripts/diagnose.sh` 额外采集 40 并发读、Hikari 指标与 MySQL 行锁等待（ERROR 1205）。
 脚本退出即停止应用；MySQL 保持运行。
 
 ## 故障排查
