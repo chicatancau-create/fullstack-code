@@ -1,0 +1,14 @@
+{
+  "name": "project04-saas",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "项目 04：多租户客户跟进 SaaS（RBAC、席位并发、审计同事务）",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "migrate": "node scripts/migrate.mjs",
+    "test": "node --test tests/*.test.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": { "fastify": "5.12.8", "pg": "8.23.1" }
+}

@@ -1,0 +1,72 @@
+# 项目 04：多租户客户跟进 SaaS
+
+一个小型销售团队的组织、成员、客户、跟进与审计闭环。重点是多租户边界、RBAC、
+席位不变量与审计同事务，而不是页面数量。
+
+## 技术栈
+
+- Node.js 24 + Fastify 5
+- PostgreSQL 18（schema `p04`，真实数据库）
+- node:test + Fastify inject；`pg_dump` / `psql` 备份恢复
+
+## 运行
+
+```bash
+export PGHOST=127.0.0.1 PGUSER=study PGDATABASE=study_lab
+export PGPASSWORD=study-pass          # 仅本地合成密码
+npm ci
+npm run migrate
+npm test
+npm start                             # http://127.0.0.1:8797
+```
+
+一键验证（迁移 → 13 个真实 DB 测试 → 备份恢复）：
+
+```bash
+PGPASSWORD=study-pass bash scripts/run_project.sh
+```
+
+## 已实现
+
+- 注册/登录/登出：scrypt 加盐、不透明令牌只存哈希、12 小时过期。
+- 组织：创建者 owner；free=2 席、team=5 席。
+- 邀请：owner/admin 发起，pending 占用席位；被邀请邮箱接受；撤销/过期/重放有明确结果。
+- 成员：列表、移除；不能移除 owner 或自己。
+- 套餐：owner 变更；成员 + pending 超过新席位时 409（需求变更演练项）。
+- 客户与跟进：租户隔离；客户软删除；删除后不能写跟进。
+- 审计：邀请、接受、撤销、移除成员、套餐、删除客户；同事务；仅 admin+ 可见。
+- 迁移记录、备份恢复到独立库并核对行数。
+
+## 证据（本机真实 PostgreSQL 18.6）
+
+- [evidence/test.txt](evidence/test.txt)：13/13 通过，含并发邀请只成功 1 个、跨租户 404、
+  旧邀请重放 409、审计失败回滚。
+- [evidence/migrate.txt](evidence/migrate.txt)：9 张表（含迁移记录）。
+- [evidence/backup.txt](evidence/backup.txt)：`tenants/memberships/audit` 恢复前后一致。
+- [evidence/run.txt](evidence/run.txt)：本轮时间与 PASS 汇总。
+
+## 文档
+
+- [需求与变更演练](docs/requirements.md)
+- [权限矩阵](docs/permissions.md)
+- [架构与 ER](docs/architecture.md)
+- [追踪表](docs/tracking.md)
+- [数据清单](docs/data-inventory.md)
+- [运行手册](docs/runbook.md)
+- [OpenAPI](docs/openapi.yaml)
+- ADR：[认证](docs/adr/001-auth-sessions.md)、[租户隔离](docs/adr/002-tenant-isolation.md)、
+  [审计事务](docs/adr/003-audit-transaction.md)
+- [Bug 复盘](docs/bugs/001-stale-invite-idempotency.md)、[审查记录](docs/review.md)
+
+## 已知限制（未验证）
+
+- 没有前端；没有邮件发送，邀请 token 只在创建响应出现一次。
+- 没有登录限流、MFA、密码重置、自助删号；不要暴露公网。
+- 没有 Docker/CI/K8s/HTTPS/多实例/监控告警；未部署。
+- 审计与客户列表无分页；`sessions` 过期行无清理任务。
+- 未做深度模块（高并发/Feed/实时/RAG）所需的容量与故障演练；本项目只覆盖 SaaS 主路径。
+- 备份不支持按用户删除；软删除数据仍留在库中。
+
+## AI 辅助范围
+
+AI 参与实现、测试与文档初稿；结论以本仓库脚本实际输出为准。未验证项已在上方列出。
