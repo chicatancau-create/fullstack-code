@@ -2,6 +2,7 @@
 # 回滚演练：从上一提交导出项目，重新安装并启动，验证旧版本可运行。
 set -euo pipefail
 cd "$(dirname "$0")/.."
+repo=$(pwd)
 export PGHOST=${PGHOST:-127.0.0.1}
 export PGPORT=${PGPORT:-5432}
 export PGUSER=${PGUSER:-study}
@@ -26,4 +27,4 @@ done
   echo "current=$current previous=$previous"
   echo "rollback_health=$(curl -sS http://127.0.0.1:8797/health)"
   echo "ROLLBACK PASS"
-} | tee evidence/rollback.txt
+} | tee "$repo/evidence/rollback.txt"
