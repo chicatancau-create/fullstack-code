@@ -28,6 +28,7 @@ fi
 
 node scripts/backup.mjs 2>&1 | tee evidence/backup.txt
 node scripts/trace_check.mjs 2>&1 | tee evidence/trace.txt
+node scripts/jobs_check.mjs 2>&1 | tee evidence/jobs.txt
 
 {
   echo "captured_at: $(date -Is)"
@@ -36,5 +37,6 @@ node scripts/trace_check.mjs 2>&1 | tee evidence/trace.txt
   echo "tests=PASS"
   echo "backup_restore=PASS"
   echo "otel=PASS"
+  echo "jobs=PASS"
   echo "PROJECT04 PASS"
 } | tee evidence/run.txt
