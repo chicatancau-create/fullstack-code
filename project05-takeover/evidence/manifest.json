@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P05",
-  "generated_at": "2026-11-07T14:57:59.137Z",
-  "commit": "3ac07eb289e60f2f7b17c10e401f46fcf7804065",
+  "generated_at": "2026-11-07T19:25:40.002Z",
+  "commit": "0c122401c8c77b477a2677931304d5cd9fd50eb1",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -34,23 +34,23 @@
     },
     {
       "path": "evidence/after-fix.txt",
-      "bytes": 356,
-      "sha256": "3e757256cc7b30529fd95c953994fdfa84f981e1eed3c761151b258f0e24fb44"
+      "bytes": 597,
+      "sha256": "50b56077258f38d11ee2a8b9c6530c9b6ab577b1331939667d5f8545b14b9560"
     },
     {
       "path": "evidence/test.txt",
-      "bytes": 356,
-      "sha256": "77e5928a28e38ca7d0c47f076f57d522b8f25dac9a6f8b5b1b79f3efcfd89a9a"
+      "bytes": 596,
+      "sha256": "485fda258ef9459ee4e3dbb777319abadaf9179969831d2850cebe25a3638322"
     },
     {
       "path": "evidence/run.txt",
       "bytes": 161,
-      "sha256": "ddb99167f527851948b7fe18700b28fa01d645c4644c677620d70a235ef33a44"
+      "sha256": "887bba9b577cbe284f91a0650b9d2a518297eee00f21f21cb0b00d5bba67cbc3"
     }
   ],
   "unverified": [
     "受控演练仓库（本人项目快照注入缺陷），非真实他人代码",
-    "无真实接收人独立复现，不能声称团队交接通过",
-    "仅3个缺陷；未覆盖并发删owner/审计/备份/CI部署"
+    "AI独立复现已做，无真实人类接收人",
+    "仅3个报告缺陷+3个正向/并发回归；未覆盖审计/备份/CI部署"
   ]
 }

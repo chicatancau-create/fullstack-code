@@ -1,17 +1,15 @@
 {
-  "name": "project02-collab",
+  "name": "project05-takeover",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "项目 02：Fastify + PostgreSQL 协作任务平台（租户隔离、最后 Owner、真实 DB 测试）",
+  "description": "项目 05：受控仓库接手演练（失败先行、最小修复、交接）",
   "engines": {
     "node": ">=24"
   },
   "scripts": {
     "migrate": "node scripts/migrate.mjs",
-    "test": "node --test tests/*.test.js",
-    "backup": "node scripts/backup.mjs",
-    "start": "node src/server.js"
+    "test": "node --test tests/*.test.js"
   },
   "dependencies": {
     "fastify": "5.12.8",

@@ -21,25 +21,30 @@
 ## 运行
 
 ```bash
-export PGHOST=127.0.0.1 PGUSER=study PGDATABASE=study_lab PGPASSWORD=study-pass
+export PGHOST=127.0.0.1 PGUSER=study PGDATABASE=study_lab_p05 PGPASSWORD=study-pass
 npm ci
-node scripts/migrate.mjs
+node scripts/migrate.mjs          # 手动运行用；测试会自行 drop/create schema
 node --test tests/regressions.test.js
-bash scripts/run_project.sh     # 迁移 + 测试 + 证据
+bash scripts/run_project.sh     # 默认使用独立库 study_lab_p05
 ```
+
+> 测试库：默认 `study_lab_p05`，测试会 `DROP SCHEMA p02` 后重建；**不要指向共享的 `study_lab`**。
+> 需要先创建库：`createdb -h 127.0.0.1 -U study study_lab_p05`。
 
 ## 修复前后
 
 - 修复前：4 个测试中 **1 pass / 3 fail**（基线通过，三个报告缺陷复现）。
-- 修复后：**4/4 pass**。
+- 修复后：**7/7 pass**（新增正向删除、降级与双 owner 并发用例）。
 - 修复点：恢复会话过期条件、任务列表成员校验、删除成员时的最后 owner 保护（行锁事务内）。
 - 详细根因与取舍见 [docs/fix-log.md](docs/fix-log.md)；交接说明见 [docs/handover.md](docs/handover.md)。
 
 ## 证据
 
 - [evidence/before-fix.txt](evidence/before-fix.txt)：失败测试原始输出。
-- [evidence/after-fix.txt](evidence/after-fix.txt)：修复后全绿。
+- [evidence/after-fix.txt](evidence/after-fix.txt)：修复后全绿（历史 4/4；当前 7/7）。
+- [docs/reproduce-before-fix.md](docs/reproduce-before-fix.md)：在临时副本中回退三处校验以复现 1/3 fail。
 - [evidence/test.txt](evidence/test.txt) 与 [evidence/run.txt](evidence/run.txt)：脚本复跑结果。
+- 重跑 `run_project.sh` 会重写这些证据文件并改变 manifest 哈希；需要重新生成 manifest。
 
 ## 未完成 / 未验证
 

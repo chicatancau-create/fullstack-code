@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 export PGHOST=${PGHOST:-127.0.0.1}
 export PGPORT=${PGPORT:-5432}
 export PGUSER=${PGUSER:-study}
-export PGDATABASE=${PGDATABASE:-study_lab}
+export PGDATABASE=${PGDATABASE:-study_lab_p05}
 if [ -z "${PGPASSWORD:-}" ]; then
   echo "需要 PGPASSWORD（本地合成账号密码）" >&2
   exit 2

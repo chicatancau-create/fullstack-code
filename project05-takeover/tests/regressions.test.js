@@ -5,6 +5,10 @@ import assert from 'node:assert/strict';
 import { buildApp } from '../src/app.js';
 import { createPool } from '../src/db.mjs';
 
+if (!process.env.PGDATABASE || process.env.PGDATABASE === 'study_lab') {
+  throw new Error('测试必须使用独立库：PGDATABASE=study_lab_p05（测试会 DROP SCHEMA p02）');
+}
+
 const pool = createPool();
 let app;
 
@@ -60,6 +64,59 @@ test('回归：最后一名 owner 不能被移除', async () => {
   const ws = await workspace(alice.token, 'alpha');
   const removed = await app.inject({ method: 'DELETE', url: `/workspaces/${ws.id}/members/${alice.id}`, headers: auth(alice.token) });
   assert.equal(removed.statusCode, 409);
+  const owners = await pool.query("SELECT count(*)::int AS n FROM p02.members WHERE workspace_id = $1 AND role = 'owner'", [ws.id]);
+  assert.equal(owners.rows[0].n, 1);
+});
+
+
+async function addMember(token, workspaceId, email) {
+  const response = await app.inject({ method: 'POST', url: `/workspaces/${workspaceId}/members`, headers: auth(token), payload: { email } });
+  assert.equal(response.statusCode, 201, response.body);
+}
+
+async function setRole(token, workspaceId, userId, role) {
+  return app.inject({ method: 'PATCH', url: `/workspaces/${workspaceId}/members/${userId}`, headers: auth(token), payload: { role } });
+}
+
+test('正向：owner 可以移除普通成员，成员列表同步减少', async () => {
+  const alice = await user('alice@example.com');
+  const bob = await user('bob@example.com');
+  const ws = await workspace(alice.token, 'alpha');
+  await addMember(alice.token, ws.id, 'bob@example.com');
+  const removed = await app.inject({ method: 'DELETE', url: `/workspaces/${ws.id}/members/${bob.id}`, headers: auth(alice.token) });
+  assert.equal(removed.statusCode, 204);
+  const members = await pool.query("SELECT count(*)::int AS n FROM p02.members WHERE workspace_id = $1", [ws.id]);
+  assert.equal(members.rows[0].n, 1);
+});
+
+test('最后 owner 同时保护自删与降级；双 owner 时允许降级', async () => {
+  const alice = await user('alice@example.com');
+  const bob = await user('bob@example.com');
+  const ws = await workspace(alice.token, 'alpha');
+  const demoteSelf = await setRole(alice.token, ws.id, alice.id, 'member');
+  assert.equal(demoteSelf.statusCode, 409);
+  await addMember(alice.token, ws.id, 'bob@example.com');
+  assert.equal((await setRole(alice.token, ws.id, bob.id, 'owner')).statusCode, 200);
+  assert.equal((await setRole(alice.token, ws.id, alice.id, 'member')).statusCode, 200);
+  const demoteLast = await setRole(bob.token, ws.id, bob.id, 'member');
+  assert.equal(demoteLast.statusCode, 409);
+  const owners = await pool.query("SELECT count(*)::int AS n FROM p02.members WHERE workspace_id = $1 AND role = 'owner'", [ws.id]);
+  assert.equal(owners.rows[0].n, 1);
+});
+
+test('并发互删双 owner 最终仍保留 1 个 owner', async () => {
+  const alice = await user('alice@example.com');
+  const bob = await user('bob@example.com');
+  const ws = await workspace(alice.token, 'alpha');
+  await addMember(alice.token, ws.id, 'bob@example.com');
+  assert.equal((await setRole(alice.token, ws.id, bob.id, 'owner')).statusCode, 200);
+  const [r1, r2] = await Promise.all([
+    app.inject({ method: 'DELETE', url: `/workspaces/${ws.id}/members/${bob.id}`, headers: auth(alice.token) }),
+    app.inject({ method: 'DELETE', url: `/workspaces/${ws.id}/members/${alice.id}`, headers: auth(bob.token) }),
+  ]);
+  const statuses = [r1.statusCode, r2.statusCode];
+  assert.ok(statuses.includes(204));
+  assert.ok(statuses.includes(409) || statuses.includes(404));
   const owners = await pool.query("SELECT count(*)::int AS n FROM p02.members WHERE workspace_id = $1 AND role = 'owner'", [ws.id]);
   assert.equal(owners.rows[0].n, 1);
 });

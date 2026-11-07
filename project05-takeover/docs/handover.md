@@ -6,7 +6,7 @@
 src/app.js          Fastify 应用：认证、工作区、成员、任务
 src/db.mjs          pg Pool（PGPASSWORD 必填）
 migrations/001_init.sql  p02 schema：users/sessions/workspaces/members/tasks
-tests/regressions.test.js 接手后新增的回归测试（4 个）
+tests/regressions.test.js 接手后新增的回归测试（7 个）
 scripts/migrate.mjs 执行迁移
 ```
 
@@ -14,7 +14,8 @@ scripts/migrate.mjs 执行迁移
 
 - 依赖：Node 24、PostgreSQL 18（本机 `D:/PostgreSQL/18`）。
 - 启动：快照没有 server 入口；用 `buildApp({ pool })` 由调用方启动，测试即示例。
-- 测试：`node --test tests/regressions.test.js`（会自动 drop/create p02 schema）。
+- 测试：`PGDATABASE=study_lab_p05 node --test tests/regressions.test.js`（会自动 drop/create p02 schema；
+  不要指向共享 study_lab）。`node scripts/migrate.mjs` 仅用于手动启动前建表，测试自身会重建 schema。
 - 停止：测试结束即退出；没有常驻进程。
 
 ## 接手发现
