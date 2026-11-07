@@ -142,7 +142,12 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U study -d study_lab"
           --health-interval 5s --health-timeout 5s --health-retries 20
-    env: *pg
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: study
+      PGPASSWORD: study-pass
+      PGDATABASE: study_lab_p05
     defaults:
       run:
         working-directory: project05-takeover
