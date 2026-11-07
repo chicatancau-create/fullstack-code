@@ -4,7 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "description": "项目 01：React/TS 个人博客（Markdown 安全、搜索、可访问性、组件测试、E2E）",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -29,6 +31,7 @@
     "jsdom": "31.0.0",
     "typescript": "7.0.2",
     "vite": "8.3.6",
-    "vitest": "5.1.0"
+    "vitest": "5.1.0",
+    "axe-core": "4.14.0"
   }
 }

@@ -1,10 +1,10 @@
 
  RUN  v5.1.0 E:/fullstack-code/Web/project01-blog
 
- ✓ tests/app.test.tsx (7 tests) 123ms
+ ✓ tests/app.test.tsx (7 tests) 138ms
 
  Test Files  1 passed (1)
       Tests  7 passed (7)
-   Start at  21:27:28
-   Duration  1.10s (environment 54%, import 16%, setup 13%, tests 13%, transform 4%)
+   Start at  21:31:57
+   Duration  1.25s (environment 51%, import 13%, setup 13%, tests 12%, transform 10%)
 

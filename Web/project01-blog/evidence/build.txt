@@ -7,4 +7,4 @@ dist/index.html                   0.49 kB │ gzip:   0.38 kB
 dist/assets/index-CtFStOb2.css    2.30 kB │ gzip:   1.01 kB
 dist/assets/index-0EHiNwJy.js   382.97 kB │ gzip: 120.91 kB
 
-✓ built in 178ms
+✓ built in 240ms

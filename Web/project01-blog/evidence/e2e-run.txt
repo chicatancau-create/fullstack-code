@@ -4,4 +4,7 @@ first_tab=跳到主要内容
 skip_focus=main
 search=1 result
 navigate=/posts/http-cache
+axe_home=0 violations passes=22
+axe_post=0 violations passes=17
+mobile_overflow=0 zoom_overflow=0
 E2E PASS
