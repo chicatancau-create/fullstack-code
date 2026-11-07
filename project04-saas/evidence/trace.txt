@@ -1,0 +1,15 @@
+spans=25 http=4 pg=21
+pg.connect trace=73eb9fa5dda41e0d67b6e993597bcfc6 parent=-
+pg-pool.connect trace=73eb9fa5dda41e0d67b6e993597bcfc6 parent=-
+pg.query:INSERT study_lab trace=73eb9fa5dda41e0d67b6e993597bcfc6 parent=-
+POST trace=73eb9fa5dda41e0d67b6e993597bcfc6 parent=-
+pg-pool.connect trace=21900d7ca320e6967cc65bfcef88bc60 parent=-
+pg.query:SELECT study_lab trace=21900d7ca320e6967cc65bfcef88bc60 parent=-
+pg-pool.connect trace=21900d7ca320e6967cc65bfcef88bc60 parent=-
+pg.query:INSERT study_lab trace=21900d7ca320e6967cc65bfcef88bc60 parent=-
+POST trace=21900d7ca320e6967cc65bfcef88bc60 parent=-
+pg-pool.connect trace=c7d11c0bada7caddebad4f0352fd0c29 parent=-
+pg.query:SELECT study_lab trace=c7d11c0bada7caddebad4f0352fd0c29 parent=-
+pg-pool.connect trace=c7d11c0bada7caddebad4f0352fd0c29 parent=-
+trace_ids=73eb9fa5dda41e0d67b6e993597bcfc6,21900d7ca320e6967cc65bfcef88bc60,c7d11c0bada7caddebad4f0352fd0c29,a2c1fef69e0c44eea84d7d29f1bfc58f
+OTEL PASS

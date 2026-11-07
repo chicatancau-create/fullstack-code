@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 8qgNuIWy4bNMAloxA9vVusY8S9LrLTy6D6AxB2M5z0oqTYg9FiQhwwD8XktKLCM
+\restrict DUdPKhvEpxCPYchowVaLR3zLAkxd6ege4hAgBb379rzc8gjs74Q7fbaKSfUM0Ui
 
 -- Dumped from database version 18.6
 -- Dumped by pg_dump version 18.6
@@ -333,8 +333,8 @@ ALTER TABLE ONLY p04.users ALTER COLUMN id SET DEFAULT nextval('p04.users_id_seq
 --
 
 COPY p04.audit_events (id, tenant_id, actor_id, action, target, metadata, created_at) FROM stdin;
-1	1	1	tenant.create	tenant:1	{"plan": "team"}	2026-11-07 22:07:17.210988+08
-3	1	1	client.delete	client:1	{}	2026-11-07 22:07:17.220003+08
+1	1	1	tenant.create	tenant:1	{"plan": "team"}	2026-11-07 23:27:00.440542+08
+3	1	1	client.delete	client:1	{}	2026-11-07 23:27:00.454387+08
 \.
 
 
@@ -343,7 +343,7 @@ COPY p04.audit_events (id, tenant_id, actor_id, action, target, metadata, create
 --
 
 COPY p04.clients (id, tenant_id, name, note, deleted_at, created_at) FROM stdin;
-1	1	待删客户		2026-11-07 22:07:17.220003+08	2026-11-07 22:07:17.2137+08
+1	1	待删客户		2026-11-07 23:27:00.454387+08	2026-11-07 23:27:00.444664+08
 \.
 
 
@@ -368,7 +368,7 @@ COPY p04.invitations (id, tenant_id, email, role, token_hash, status, expires_at
 --
 
 COPY p04.memberships (tenant_id, user_id, role, created_at) FROM stdin;
-1	1	owner	2026-11-07 22:07:17.210988+08
+1	1	owner	2026-11-07 23:27:00.440542+08
 \.
 
 
@@ -386,7 +386,7 @@ COPY p04.schema_migrations (filename, applied_at) FROM stdin;
 --
 
 COPY p04.sessions (token_hash, user_id, expires_at, created_at) FROM stdin;
-032c3b35c83be1576e2a6a710aa71eadb0749cc83395136f6d5444455abc9b28	1	2026-11-08 10:07:17.208+08	2026-11-07 22:07:17.20896+08
+1b3b4977ac30937e0a88a721450ec21625a0493614df45080a427a7147804d4c	1	2026-11-08 11:27:00.436+08	2026-11-07 23:27:00.43782+08
 \.
 
 
@@ -395,7 +395,7 @@ COPY p04.sessions (token_hash, user_id, expires_at, created_at) FROM stdin;
 --
 
 COPY p04.tenants (id, name, plan, seat_limit, created_at) FROM stdin;
-1	团队	team	5	2026-11-07 22:07:17.210988+08
+1	团队	team	5	2026-11-07 23:27:00.440542+08
 \.
 
 
@@ -404,7 +404,7 @@ COPY p04.tenants (id, name, plan, seat_limit, created_at) FROM stdin;
 --
 
 COPY p04.users (id, email, name, password_hash, created_at) FROM stdin;
-1	owner@example.com	测试用户	a4170fe172311fecb7ab505d34dbb2b7:2a243c9653a6a8907805523dc7c0dcce47e29e1af6d133678a712ebc5939edbe49ac2ca78740557f0827993957a4ae07f0e99d55e89ba00f6f44a1523557b5a0	2026-11-07 22:07:17.185739+08
+1	owner@example.com	测试用户	c1efd0797734aa81b4fc432c0991b44f:4714b53263dbf18639d889aaadd6e9e3d973aee1f41e25f63640ccd63a97a907920112a63364d2fefa217d82e24c9b2b3d0ab2ee2636c9fc3d9c132e77fed149	2026-11-07 23:27:00.405187+08
 \.
 
 
@@ -651,5 +651,5 @@ ALTER TABLE ONLY p04.sessions
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 8qgNuIWy4bNMAloxA9vVusY8S9LrLTy6D6AxB2M5z0oqTYg9FiQhwwD8XktKLCM
+\unrestrict DUdPKhvEpxCPYchowVaLR3zLAkxd6ege4hAgBb379rzc8gjs74Q7fbaKSfUM0Ui
 

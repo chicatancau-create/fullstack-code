@@ -1,4 +1,4 @@
-dump bytes=16147 file=E:\fullstack-code\project04-saas\evidence\p04-backup.sql
+dump bytes=16149 file=E:\fullstack-code\project04-saas\evidence\p04-backup.sql
 source  tenants=1 memberships=1 audit=2
 restore tenants=1 memberships=1 audit=2
 RESTORE OK
