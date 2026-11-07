@@ -182,7 +182,7 @@ jobs:
           java-version: '25'
           cache: maven
       - name: create test database
-        run: mysql -h127.0.0.1 -P3307 -uroot -proot-pass -e "CREATE DATABASE IF NOT EXISTS p02j_test"
+        run: mysql -h127.0.0.1 -P3307 -uroot -proot-pass -e "CREATE DATABASE IF NOT EXISTS p02j_test; GRANT ALL PRIVILEGES ON p02j_test.* TO 'study'@'%'; FLUSH PRIVILEGES;"
       - name: test
         env:
           DB_URL: jdbc:mysql://127.0.0.1:3307/p02j_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
@@ -217,6 +217,6 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: project06-ai-min/package-lock.json
-      - run: npm ci --no-audit --no-fund
+      - run: npm install --no-audit --no-fund
       - run: npm test
       - run: node scripts/eval.mjs
