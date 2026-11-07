@@ -1,0 +1,12 @@
+HIT  q=退款多久到账 tenant=A top=a1,a3
+HIT  q=电子发票怎么开 tenant=A top=a2
+HIT  q=取消已支付订单 tenant=A top=a3,a1,a2
+HIT  q=顺丰物流单号 tenant=A top=a4
+HIT  q=积分抵扣规则 tenant=A top=a5
+HIT  q=企业月结账期 tenant=B top=b1,b5,b6
+HIT  q=批量上传 CSV tenant=B top=b2
+HIT  q=子账号权限 tenant=B top=b5
+HIT  q=对公转账核销 tenant=B top=b4
+HIT  q=合同续约提醒 tenant=B top=b3
+recall@3=100% precision@3=82% cross_tenant_leaks=0
+RAG RETRIEVAL PASS

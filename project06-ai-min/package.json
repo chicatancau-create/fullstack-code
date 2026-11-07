@@ -12,6 +12,8 @@
     "eval": "node scripts/eval.mjs",
     "real": "node scripts/real_model_check.mjs",
     "real:app": "node scripts/real_app_check.mjs",
+    "rag:retrieval": "node rag/eval.mjs",
+    "rag:answer": "node rag/answer.mjs",
     "start": "node src/server.js"
   },
   "dependencies": {

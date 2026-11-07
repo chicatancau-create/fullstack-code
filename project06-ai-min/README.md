@@ -30,6 +30,14 @@ export LLM_BASE_URL=https://your-endpoint LLM_API_KEY=... LLM_MODEL=...
 npm start                      # 127.0.0.1:8800
 ```
 
+## RAG 基线（BM25，非 embedding）
+
+- 12 条合成语料，租户 A/B；BM25 检索 + 租户过滤，`rag/eval.mjs`：**recall@3=100%、precision@3=82%、跨租户泄漏=0**。
+- 本地 0.5B 回答 3 条可答问题，模型本身**不输出 citations**；用“检索结果引用回填 + 无检索则拒答”
+  守卫后，引用/拒答正确 4/4（3 条回填、1 条 no_retrieval 拒答）。
+- 未实现 embedding/重排/多跳；语料与查询为合成数据，指标不能外推到真实知识库。
+- 证据：`evidence/rag.txt`、`evidence/rag-answer.txt`。
+
 ## 本地真实模型验证（0.5B，CPU）
 
 本机无 API key，使用 `node-llama-cpp` + Qwen2.5-0.5B-Instruct Q4（469MB，模型文件不入库）：
