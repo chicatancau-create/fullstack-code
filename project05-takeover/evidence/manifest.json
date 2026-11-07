@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P05",
-  "generated_at": "2026-11-07T19:25:40.002Z",
-  "commit": "0c122401c8c77b477a2677931304d5cd9fd50eb1",
+  "generated_at": "2026-11-07T19:31:39.331Z",
+  "commit": "e9daff1be94f8ca5da4df6c14732509c0da2debe",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -51,6 +51,6 @@
   "unverified": [
     "受控演练仓库（本人项目快照注入缺陷），非真实他人代码",
     "AI独立复现已做，无真实人类接收人",
-    "仅3个报告缺陷+3个正向/并发回归；未覆盖审计/备份/CI部署"
+    "仅3个报告缺陷+3个正向/并发回归；未覆盖审计/备份/部署"
   ]
 }
