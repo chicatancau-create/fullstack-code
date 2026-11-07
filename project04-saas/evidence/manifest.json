@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P04",
-  "generated_at": "2026-11-07T15:29:38.075Z",
-  "commit": "d31de7e0a511297f488ef6cd76e6a8e6eeb4bf1b",
+  "generated_at": "2026-11-07T17:09:40.986Z",
+  "commit": "9da57055335e15fe85b2633abe99c91b9dd65354",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -21,6 +21,10 @@
     },
     {
       "cmd": "bash scripts/rollback_check.sh",
+      "exit": 0
+    },
+    {
+      "cmd": "qemu-system-x86_64 TCG VM cloud-init docker/k3s",
       "exit": 0
     }
   ],
@@ -79,12 +83,32 @@
       "path": "evidence/run.txt",
       "bytes": 133,
       "sha256": "f92e613bdc718f11e48faafe577b1ee4241f8c3cbe1bcdac3692747f2e1e4ecf"
+    },
+    {
+      "path": "deploy/evidence/docker-k8s.txt",
+      "bytes": 2203,
+      "sha256": "2d0ea0642a11a2d55a01395ef8d22a3cfba644b4f2cbad850165eb2808141708"
+    },
+    {
+      "path": "deploy/k8s-web.yaml",
+      "bytes": 1060,
+      "sha256": "9430a18dab9cc594036117ffb9a0f6a19cf9ec36bbbeb0bd96bcf83441c26d26"
+    },
+    {
+      "path": "deploy/cloud-init-user-data.yaml",
+      "bytes": 4480,
+      "sha256": "8e1a9bba196a5e857bb02672f5a0abe9820864864f6bd9ee1d4cf1355f06c4ff"
+    },
+    {
+      "path": "deploy/cloud-init-meta-data.yaml",
+      "bytes": 52,
+      "sha256": "f5c0d61f6bdc8bc275c64822cf495735f94ddac9a1cf7a2882ca3a9eba4e72b8"
     }
   ],
   "unverified": [
+    "Docker/Compose成功；K3s单节点Pod Running与自愈成功",
+    "K8s滚动更新在TCG下超时；rollout undo因无revision未验证",
     "本地自签名HTTPS，不是公网/域名部署",
-    "OTel仅InMemory导出，无collector/告警/长期存储",
-    "无Docker/CI/K8s；回滚仅应用代码",
-    "后台任务单机，无多节点时钟/队列集群"
+    "OTel仅InMemory导出；后台任务单机"
   ]
 }
