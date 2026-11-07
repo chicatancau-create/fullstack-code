@@ -1,7 +1,8 @@
-captured_at: 2026-11-07T23:27:04+08:00
+captured_at: 2026-11-07T23:29:31+08:00
 node: v24.15.0
 migrate=PASS
 tests=PASS
 backup_restore=PASS
 otel=PASS
+jobs=PASS
 PROJECT04 PASS

@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P04",
-  "generated_at": "2026-11-07T15:27:31.542Z",
-  "commit": "f6aa5b46eb01d7bd4ed165fcc4fdb526e3380be1",
+  "generated_at": "2026-11-07T15:29:38.075Z",
+  "commit": "d31de7e0a511297f488ef6cd76e6a8e6eeb4bf1b",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -32,23 +32,28 @@
     },
     {
       "path": "evidence/migrate.txt",
-      "bytes": 107,
-      "sha256": "eb3d78ebea52c0cf731c2732f035b6aef309c44fe2fcfcb7c93c976bee3c9d53"
+      "bytes": 124,
+      "sha256": "9363c1ca3421d944f1eeaedfd3f3347c7d056a58c7543c769b4711690db4d955"
     },
     {
       "path": "evidence/test.txt",
-      "bytes": 1163,
-      "sha256": "84e8531b56ce4e6baf70d86fff0f7cdac976e415f5f11ece703651bebee2c480"
+      "bytes": 1161,
+      "sha256": "cf3daaf923469f36ebc2830a0b5a80fb1624625bf37f4c071bbd234e9cab7206"
     },
     {
       "path": "evidence/backup.txt",
       "bytes": 174,
-      "sha256": "5aa11ecc8fa4676e0134561ed0d8032ed764bff0c393dbf39178d4a9d4958e1a"
+      "sha256": "aac56fd79762f22e00be94f7af7bc32f1b025744741fe132977f511df64ee6a9"
     },
     {
       "path": "evidence/trace.txt",
       "bytes": 955,
-      "sha256": "0fdb4e55269fa98cd359ccd0513f24f2fcc8149653c50770af6ce519b903bc80"
+      "sha256": "d174dfa27cb8e2726abf563811f921b1e0713e42bfcde5313011ae4596ad8f2b"
+    },
+    {
+      "path": "evidence/jobs.txt",
+      "bytes": 149,
+      "sha256": "fb189e15428d2a741799d2d3ca2012a38a3f7dfb2310dc69b01fef9dcba0a320"
     },
     {
       "path": "evidence/deploy.txt",
@@ -72,14 +77,14 @@
     },
     {
       "path": "evidence/run.txt",
-      "bytes": 123,
-      "sha256": "47086d84f475b8e281c4197a80d40067b465ffd598ab1bb77420a9c3e136e9ed"
+      "bytes": 133,
+      "sha256": "f92e613bdc718f11e48faafe577b1ee4241f8c3cbe1bcdac3692747f2e1e4ecf"
     }
   ],
   "unverified": [
     "本地自签名HTTPS，不是公网/域名部署",
-    "OTel仅InMemory导出与单次trace，无collector/告警/长期存储",
-    "无Docker/CI/K8s；回滚仅应用代码，数据回滚依赖backup恢复",
-    "无真实邮件/限流/MFA/深度模块"
+    "OTel仅InMemory导出，无collector/告警/长期存储",
+    "无Docker/CI/K8s；回滚仅应用代码",
+    "后台任务单机，无多节点时钟/队列集群"
   ]
 }

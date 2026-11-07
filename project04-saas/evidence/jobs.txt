@@ -1,0 +1,4 @@
+jobs=200 done=200 results=200 duplicates=0
+drain_ms=192 jobs_per_sec=1041.7
+failure_status=failed attempts=3 recovered=1 crash_status=done
+JOBS PASS
