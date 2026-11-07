@@ -1,15 +1,15 @@
 spans=25 http=4 pg=21
-pg.connect trace=b0d1b2d5bcf1150e5c1b76a013aec1e6 parent=-
-pg-pool.connect trace=b0d1b2d5bcf1150e5c1b76a013aec1e6 parent=-
-pg.query:INSERT study_lab trace=b0d1b2d5bcf1150e5c1b76a013aec1e6 parent=-
-POST trace=b0d1b2d5bcf1150e5c1b76a013aec1e6 parent=-
-pg-pool.connect trace=577e41b0683c1aa12dd8d4255dc29830 parent=-
-pg.query:SELECT study_lab trace=577e41b0683c1aa12dd8d4255dc29830 parent=-
-pg-pool.connect trace=577e41b0683c1aa12dd8d4255dc29830 parent=-
-pg.query:INSERT study_lab trace=577e41b0683c1aa12dd8d4255dc29830 parent=-
-POST trace=577e41b0683c1aa12dd8d4255dc29830 parent=-
-pg-pool.connect trace=7f1a28c022eaf5ef28dbf6ea71571cf6 parent=-
-pg.query:SELECT study_lab trace=7f1a28c022eaf5ef28dbf6ea71571cf6 parent=-
-pg-pool.connect trace=7f1a28c022eaf5ef28dbf6ea71571cf6 parent=-
-trace_ids=b0d1b2d5bcf1150e5c1b76a013aec1e6,577e41b0683c1aa12dd8d4255dc29830,7f1a28c022eaf5ef28dbf6ea71571cf6,922883836cd42844c1cb007e92c1ca7f
+pg.connect trace=620434cf4d12cd330b01844868a9505d parent=-
+pg-pool.connect trace=620434cf4d12cd330b01844868a9505d parent=-
+pg.query:INSERT study_lab trace=620434cf4d12cd330b01844868a9505d parent=-
+POST trace=620434cf4d12cd330b01844868a9505d parent=-
+pg-pool.connect trace=516bf4f76bdfc31fc3dd39f2d59ad4fb parent=-
+pg.query:SELECT study_lab trace=516bf4f76bdfc31fc3dd39f2d59ad4fb parent=-
+pg-pool.connect trace=516bf4f76bdfc31fc3dd39f2d59ad4fb parent=-
+pg.query:INSERT study_lab trace=516bf4f76bdfc31fc3dd39f2d59ad4fb parent=-
+POST trace=516bf4f76bdfc31fc3dd39f2d59ad4fb parent=-
+pg-pool.connect trace=14200974880de640a5e06073121f647f parent=-
+pg.query:SELECT study_lab trace=14200974880de640a5e06073121f647f parent=-
+pg-pool.connect trace=14200974880de640a5e06073121f647f parent=-
+trace_ids=620434cf4d12cd330b01844868a9505d,516bf4f76bdfc31fc3dd39f2d59ad4fb,14200974880de640a5e06073121f647f,4564a583f82e6402063bcd7633f4919b
 OTEL PASS

@@ -80,7 +80,27 @@ export function buildApp({ pool, logger = false } = {}) {
 
   const auth = { preHandler: authenticate };
 
+  const httpCounters = new Map();
+  app.addHook('onResponse', async (request, reply) => {
+    const key = `${request.method}|${reply.statusCode}`;
+    httpCounters.set(key, (httpCounters.get(key) || 0) + 1);
+  });
+
   app.get('/health', async () => ({ status: 'ok' }));
+
+  app.get('/metrics', async (request, reply) => {
+    const jobs = (await pool.query(`SELECT
+      (SELECT count(*)::int FROM p04.jobs WHERE status = 'pending') AS pending,
+      (SELECT count(*)::int FROM p04.jobs WHERE status = 'failed') AS failed`)).rows[0];
+    const lines = ['# HELP p04_http_requests_total HTTP requests by method and status', '# TYPE p04_http_requests_total counter'];
+    for (const [key, value] of httpCounters) {
+      const [method, status] = key.split('|');
+      lines.push(`p04_http_requests_total{method="${method}",status="${status}"} ${value}`);
+    }
+    lines.push('# HELP p04_jobs_pending Pending background jobs', '# TYPE p04_jobs_pending gauge', `p04_jobs_pending ${jobs.pending}`);
+    lines.push('# HELP p04_jobs_failed Failed background jobs', '# TYPE p04_jobs_failed gauge', `p04_jobs_failed ${jobs.failed}`);
+    reply.type('text/plain; version=0.0.4').send(lines.join('\n') + '\n');
+  });
 
   app.post('/auth/register', async (request, reply) => {
     const { email, password, name } = request.body || {};
