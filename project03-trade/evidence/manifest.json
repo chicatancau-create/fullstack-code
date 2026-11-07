@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "experiment": "P03",
+  "generated_at": "2026-11-07T14:02:27.780Z",
+  "commit": "f11be1974ac87b52082592b0f9643cdebef2a97d",
+  "runtime": {
+    "platform": "win32 x64",
+    "os_release": null,
+    "node": "v24.15.0",
+    "gcc": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r7) 15.2.0",
+    "gdb": "GNU gdb (GDB for MinGW-W64 x86_64, built by Brecht Sanders, r7) 17.1"
+  },
+  "commands": [
+    {
+      "cmd": "PGPASSWORD=<local-test-password> bash scripts/run_project.sh",
+      "exit": 0
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/toolchain.txt",
+      "bytes": 24,
+      "sha256": "d72d32fb565c56d0975c38559f4194eb80b1e226fc2f341c023c21420f8d6d01"
+    },
+    {
+      "path": "evidence/migrate.txt",
+      "bytes": 73,
+      "sha256": "4db0a86c8d61e7468ad59196cd7acc33453181763d0c2c7994300d19ddfbfb9e"
+    },
+    {
+      "path": "evidence/test.txt",
+      "bytes": 1214,
+      "sha256": "f5393e7653bc13758ffd90a05385437b41950526ec5fc3c43616230677154d80"
+    },
+    {
+      "path": "evidence/load.txt",
+      "bytes": 214,
+      "sha256": "c1aef0cec6808fe165194822a7794a8dbcbd04854f8f7b5149aed7f652fba5bb"
+    },
+    {
+      "path": "evidence/backup.txt",
+      "bytes": 155,
+      "sha256": "d79f68295e14364148d734184478ca634f0f7581ec1552e1260efaf6d575b564"
+    },
+    {
+      "path": "evidence/run.txt",
+      "bytes": 123,
+      "sha256": "4ec6813a0adae926be1f1335d1eafcc0a309c94e2721f80fa5c7dfddc78b9eb3"
+    },
+    {
+      "path": "evidence/bug-001-failure.txt",
+      "bytes": 639,
+      "sha256": "ee7dba58312633308be02956c7c8225831ce1b26087a5cd88772d042632336c4"
+    }
+  ],
+  "unverified": [
+    "真实支付网关未接入，回调用本地 HMAC 模拟",
+    "未实现多商品订单、超时自动取消、退款与对账",
+    "未做 PITR；备份恢复仅验证到独立数据库行数一致"
+  ]
+}
