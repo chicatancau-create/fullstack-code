@@ -1,0 +1,6 @@
+captured_at: 2026-11-07T21:24:54+08:00
+typecheck: 0 errors
+test:  Test Files  1 passed (1)       Tests  7 passed (7) 
+build: ✓ built in 359ms
+e2e: E2E PASS
+gate_failures: 0

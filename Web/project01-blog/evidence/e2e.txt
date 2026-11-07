@@ -1,0 +1,7 @@
+heading=学习笔记
+cards=3
+first_tab=跳到主要内容
+skip_focus=main
+search=1 result
+navigate=/posts/http-cache
+E2E PASS
