@@ -217,6 +217,7 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: project06-ai-min/package-lock.json
-      - run: npm install --no-audit --no-fund
-      - run: npm test
+      - name: install mock test dependency
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fastify@5.12.8
+      - run: node --test tests/*.test.js
       - run: node scripts/eval.mjs
