@@ -1,0 +1,50 @@
+name: ci
+
+on:
+  push:
+    paths:
+      - 'project04-saas/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    paths:
+      - 'project04-saas/**'
+
+jobs:
+  project04:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: study
+          POSTGRES_PASSWORD: study-pass
+          POSTGRES_DB: study_lab
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U study -d study_lab"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: study
+      PGPASSWORD: study-pass
+      PGDATABASE: study_lab
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: project04-saas/package-lock.json
+      - name: install
+        working-directory: project04-saas
+        run: npm ci --no-audit --no-fund
+      - name: migrate
+        working-directory: project04-saas
+        run: npm run migrate
+      - name: test
+        working-directory: project04-saas
+        run: npm test
