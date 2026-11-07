@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "experiment": "P01",
+  "generated_at": "2026-11-07T13:25:47.911Z",
+  "commit": "5d36003c24f0350fa78312e615cae71251f85ef1",
+  "runtime": {
+    "platform": "win32 x64",
+    "os_release": null,
+    "node": "v24.15.0",
+    "gcc": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r7) 15.2.0",
+    "gdb": "GNU gdb (GDB for MinGW-W64 x86_64, built by Brecht Sanders, r7) 17.1"
+  },
+  "commands": [
+    {
+      "cmd": "bash scripts/run_project.sh",
+      "exit": 0
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/typecheck.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "evidence/test.txt",
+      "bytes": 250,
+      "sha256": "a8ef6738ecd7a1075b1c54afc49c3ba7c788627545111efe217bcd86a0317247"
+    },
+    {
+      "path": "evidence/build.txt",
+      "bytes": 352,
+      "sha256": "f60b4cc80d71340694e9b830564b8cf46bee44905d283153f916eeabe2d30f7c"
+    },
+    {
+      "path": "evidence/e2e.txt",
+      "bytes": 126,
+      "sha256": "6bab8cb8ba4c258aef79a373eba02c56ee24cc650fdf27d9565409036bf369fd"
+    },
+    {
+      "path": "evidence/e2e-run.txt",
+      "bytes": 126,
+      "sha256": "6bab8cb8ba4c258aef79a373eba02c56ee24cc650fdf27d9565409036bf369fd"
+    },
+    {
+      "path": "evidence/run.txt",
+      "bytes": 175,
+      "sha256": "de1b4332e343812b20c083954a2adb2d43e8d78fbdff33b4a61c6554299c2f63"
+    },
+    {
+      "path": "evidence/e2e-post.png",
+      "bytes": 32152,
+      "sha256": "618d606176efc6de95c27ed282ab982a005b8813e6b01b6cb4089f5b2e7c1e89"
+    }
+  ],
+  "unverified": [
+    "未部署；无 Firefox/Safari/真实手机/读屏；无后端/SSR"
+  ]
+}
