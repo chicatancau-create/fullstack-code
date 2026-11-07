@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "B5-01",
-  "generated_at": "2026-11-07T15:23:46.303Z",
-  "commit": "30428b1a6883df977e909e8f20c98291aed9682a",
+  "generated_at": "2026-11-07T19:45:49.049Z",
+  "commit": "371c2695585b5b2ed0fd0b61a2965ef8169a5984",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -28,43 +28,43 @@
     },
     {
       "path": "evidence/test.txt",
-      "bytes": 5726,
-      "sha256": "a0dc25bce9e8cccddfb536fe95efbd8419b09a56b42e60e75fa29fe5c5ba3910"
+      "bytes": 9037,
+      "sha256": "1d84426fa5dd978eee3775b8ccfe94fa2c9e73a0aa79a570b77d4d1a745f813a"
     },
     {
       "path": "evidence/package.txt",
-      "bytes": 1951,
-      "sha256": "367e8a49d6e5c4bfca730596a79b89e6e2a461c58a5bcfff406a7b8d247389e5"
+      "bytes": 1860,
+      "sha256": "b1d31c3d420b9931b6d9637f2ca3ce40de0a2ac324bd5203ed2c248730da1f0e"
     },
     {
       "path": "evidence/http.txt",
-      "bytes": 279,
-      "sha256": "09f20da7b820f36c6634c10632d58bd9f579df3832d4e30a67d79972c37a07ab"
+      "bytes": 280,
+      "sha256": "125a5cf1568ea6067f70204d10bb03fef813a85e78988cfebc380510bcbbe62a"
     },
     {
       "path": "evidence/backup.txt",
-      "bytes": 223,
-      "sha256": "1366517b7870926b74d92da4f17116e904c1a4416564e9193507c56c963d50ec"
+      "bytes": 225,
+      "sha256": "262014c0fdf3ac0a09843a88a979705d3a1d6ba86e643bc6ad7e2d8930c6e7b4"
     },
     {
       "path": "evidence/jvm.txt",
-      "bytes": 3419,
-      "sha256": "3f898c6ec9547e8cedc2306b7b5cff06cbb3b271e34f82af8c422aaa10885323"
+      "bytes": 3413,
+      "sha256": "c23a9865e4ac3e5ddcaa1300a460eb6a539583d9b96e8475f1e6452707dbcc8a"
     },
     {
       "path": "evidence/mysql.txt",
       "bytes": 168,
-      "sha256": "dc41cd342bc2aaf5e03f5bb3ba395433cbe25d3001d550175fbd979d242dcfbb"
+      "sha256": "bb6ae3ea05d6c85813f9b560ac10ac3745ad8f3a607f4d6dffe3bc5a1b23fa4a"
     },
     {
       "path": "evidence/app.log",
       "bytes": 3498,
-      "sha256": "68604c4023232ea6b5e70fd98e4e40fe6489702a2823ead467f78fd0ee1e16c1"
+      "sha256": "9775dd6cc5adf626d138931b0366465b31d5b3bfdc234331b15d7c0d3f7c9e02"
     },
     {
       "path": "evidence/run.txt",
       "bytes": 242,
-      "sha256": "cfab759a2fb881c48cabccabd375c44af7522f4fa64ae036f8c5795a059530db"
+      "sha256": "e63a1113d0e8011edf1aeac7ed3298d81e6ba73b04d4bb66125aaf1b90cf81c7"
     },
     {
       "path": "evidence/diagnose.txt",
@@ -105,11 +105,16 @@
       "path": "evidence/security.txt",
       "bytes": 1153,
       "sha256": "cc5ef6fa619b398a3109da88b72f2efb8ff1cae8df8957ff881a538b42c7c5e0"
+    },
+    {
+      "path": "evidence/diagnostics-surefire.xml",
+      "bytes": 27576,
+      "sha256": "1c8646bc0d0876c1d5efa592e310ba4fd875630e2de0c6c8b0fe6f557c04b6de"
     }
   ],
   "unverified": [
     "未用 Testcontainers/Docker；测试依赖手工启动的 3307 MySQL",
     "角色由业务SQL判定，未使用方法级@PreAuthorize",
-    "仅单次行锁等待与 Hikari 配置快照；无持续池耗尽、死锁注入、EXPLAIN 对比"
+    "无 EXPLAIN 对比/复制/PITR"
   ]
 }

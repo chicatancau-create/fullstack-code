@@ -55,13 +55,14 @@ mvn spring-boot:run                    # http://127.0.0.1:8798
 - [evidence/diagnose.txt](evidence/diagnose.txt)：40 并发读 40/40 200；Hikari `max=10`、`idle=10`、采样时 `active=0`；
   第二个会话行锁等待 2s 超时（ERROR 1205），`performance_schema.data_locks` 显示 `X,REC_NOT_GAP`。
 - [evidence/locks.txt](evidence/locks.txt)：锁等待原始错误。
+- [evidence/diagnostics-surefire.xml](evidence/diagnostics-surefire.xml)：死锁 1213 与单连接池耗尽恢复两条测试的原始记录。
 - [evidence/run.txt](evidence/run.txt)：本轮时间与汇总。
 
 ## 已知限制
 
 - Spring Security 仅用于无状态过滤链、CSRF 关闭与入口点；角色仍由业务 SQL 判定，未使用方法级 `@PreAuthorize`。
 - 未使用 Testcontainers（本机无 Docker）；测试依赖手工启动的 3307 实例。
-- 未做持续连接池耗尽压测、死锁注入与 `EXPLAIN` 对比；已有单次行锁等待与 Hikari 配置快照。
+- 已做死锁注入（`ERROR 1213`，一方回滚）与单连接池耗尽后恢复；未做 `EXPLAIN` 对比与生产级持续压测。
 - 审计写入覆盖工作区创建、成员添加/移除、邀请创建/接受；备份恢复已验证到独立库。
 - 角色仍由业务 SQL 判定，未使用方法级 `@PreAuthorize`。
 - 未实现 Express/Nest 对照实现；[migration-comparison.md](docs/migration-comparison.md) 中的框架对比是分析，不是实测。

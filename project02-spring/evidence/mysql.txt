@@ -4,6 +4,6 @@ mysql_version
 Variable_name	Value
 max_connections	151
 users
-14
+17
 tasks
-4
+7

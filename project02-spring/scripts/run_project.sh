@@ -13,6 +13,7 @@ echo "java $(java -version 2>&1 | head -1)" | tee evidence/toolchain.txt
 echo "maven $(mvn -version 2>&1 | head -1)" | tee -a evidence/toolchain.txt
 
 mvn -B -ntp test 2>&1 | tee evidence/test.txt
+cp target/surefire-reports/TEST-dev.study.collab.DiagnosticsTest.xml evidence/diagnostics-surefire.xml
 mvn -B -ntp -DskipTests package 2>&1 | tee evidence/package.txt
 
 java -jar target/project02-spring-1.0.0.jar > evidence/app.log 2>&1 &
