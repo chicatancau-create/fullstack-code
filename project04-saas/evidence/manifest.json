@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P04",
-  "generated_at": "2026-11-07T18:38:42.005Z",
-  "commit": "22de0f388be8c52a1c24d6b56c49b5cbb0de6b16",
+  "generated_at": "2026-11-07T18:53:23.506Z",
+  "commit": "39934799e3cdc7669c61cfdcb11e8a3e56aa7efd",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -24,11 +24,15 @@
       "exit": 0
     },
     {
-      "cmd": "QEMU K8s run9: pods Running + rollout restart + undo",
+      "cmd": "QEMU K8s run9/10: pods+rollout+undo+resources",
       "exit": 0
     },
     {
-      "cmd": "QEMU Docker/Compose run6: container + compose HTML",
+      "cmd": "QEMU Docker/Compose run6",
+      "exit": 0
+    },
+    {
+      "cmd": "Prometheus 3.5.0 scrape+rules",
       "exit": 0
     }
   ],
@@ -67,6 +71,11 @@
       "path": "evidence/alerts.txt",
       "bytes": 128,
       "sha256": "e9df54affd4bf5651ed9f999dc9ccd9533864ca71d7cae295fa07e1ce613efcb"
+    },
+    {
+      "path": "evidence/prometheus.txt",
+      "bytes": 90,
+      "sha256": "8ca82ca467a7128f566202874891dd8baeea2c73bd2e64211085d403fd8064a2"
     },
     {
       "path": "evidence/deploy.txt",
@@ -117,11 +126,16 @@
       "path": "deploy/alert-rules.yml",
       "bytes": 518,
       "sha256": "2a6d6705619b6da03d497020a11db11531e9cc6d0bf9550f2fff2b8dde8e1d27"
+    },
+    {
+      "path": "deploy/alert-rules.local.yml",
+      "bytes": 521,
+      "sha256": "3f0ab7e316e9c22e2400b67cadad07b19a7fb5e39f15219ff9822715b911f1e6"
     }
   ],
   "unverified": [
     "K8s单节点TCG；Docker/Compose与rollout undo成功；早期失败运行见证据",
-    "无Ingress/多节点/Prometheus实例/公网",
-    "本地自签名HTTPS；OTel仅InMemory；后台任务单机"
+    "Prometheus有实例/规则，无Alertmanager通知链路",
+    "无Ingress/多节点/公网；本地自签名HTTPS；OTel仅InMemory"
   ]
 }
