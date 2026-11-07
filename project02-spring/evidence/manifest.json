@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "experiment": "B5-01",
+  "generated_at": "2026-11-07T14:23:13.807Z",
+  "commit": "9fc15cad95a1b9715f347838998d94ad49f7e1d6",
+  "runtime": {
+    "platform": "win32 x64",
+    "os_release": null,
+    "node": "v24.15.0",
+    "gcc": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r7) 15.2.0",
+    "gdb": "GNU gdb (GDB for MinGW-W64 x86_64, built by Brecht Sanders, r7) 17.1"
+  },
+  "commands": [
+    {
+      "cmd": "bash scripts/run_project.sh",
+      "exit": 0
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/toolchain.txt",
+      "bytes": 111,
+      "sha256": "40abe4ef445120d9577752287f556def61484e5bac0ea4fec1a83e23d1c504d8"
+    },
+    {
+      "path": "evidence/test.txt",
+      "bytes": 5020,
+      "sha256": "578167c6b8b54c9d70e6f4860e1423414ab22b376417bb7648a5098978354437"
+    },
+    {
+      "path": "evidence/package.txt",
+      "bytes": 1860,
+      "sha256": "0c332ab384d86268b8ead145cee7468b0a33776c1c481b4362a14e50c8ff7d40"
+    },
+    {
+      "path": "evidence/http.txt",
+      "bytes": 278,
+      "sha256": "13757d6586176a71bdc3a04f3ce256c7157ee5588a821422d2ee1d00d5dea7c1"
+    },
+    {
+      "path": "evidence/jvm.txt",
+      "bytes": 3428,
+      "sha256": "371add96fada734e7b5e83c23cb405d237708fc367bfa6168050bef96b0cee96"
+    },
+    {
+      "path": "evidence/mysql.txt",
+      "bytes": 167,
+      "sha256": "3a5a2335733786bfb609038970424237b5f55ed22babc8c5354e30910f3c268e"
+    },
+    {
+      "path": "evidence/app.log",
+      "bytes": 2791,
+      "sha256": "110dcf7121f5496bb8da85eaa90633782fe08fb1a714e3d1e32b93e544dbc7e6"
+    },
+    {
+      "path": "evidence/run.txt",
+      "bytes": 222,
+      "sha256": "0f597eeb2b4a79ed3597dbbf1d1b1e420b07bd3d7946df15a8eee19fdad8aec9"
+    }
+  ],
+  "unverified": [
+    "未用 Testcontainers/Docker；测试依赖手工启动的 3307 MySQL",
+    "未迁移邀请/最后Owner并发保护/审计/备份恢复",
+    "Express/Nest 对照仅为分析，未实现",
+    "未做连接池/锁等待压测、MySQL复制与PITR"
+  ]
+}
