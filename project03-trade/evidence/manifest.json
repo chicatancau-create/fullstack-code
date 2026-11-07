@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P03",
-  "generated_at": "2026-11-07T14:02:27.780Z",
-  "commit": "f11be1974ac87b52082592b0f9643cdebef2a97d",
+  "generated_at": "2026-11-07T14:38:50.829Z",
+  "commit": "1b611099b77926dfbad1034805d99e1efa5215a4",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -24,28 +24,33 @@
     },
     {
       "path": "evidence/migrate.txt",
-      "bytes": 73,
-      "sha256": "4db0a86c8d61e7468ad59196cd7acc33453181763d0c2c7994300d19ddfbfb9e"
+      "bytes": 94,
+      "sha256": "855d392c04cb15c16c2357b043b21387b5180aff51f6bd2bc663bf675793e5a7"
     },
     {
       "path": "evidence/test.txt",
-      "bytes": 1214,
-      "sha256": "f5393e7653bc13758ffd90a05385437b41950526ec5fc3c43616230677154d80"
+      "bytes": 1211,
+      "sha256": "18f6f2d0c9d31eb5eb03c4f2bc93027f99fda7a2822403d96a5ddd40c18233c0"
     },
     {
       "path": "evidence/load.txt",
       "bytes": 214,
-      "sha256": "c1aef0cec6808fe165194822a7794a8dbcbd04854f8f7b5149aed7f652fba5bb"
+      "sha256": "405097f1efdf3aaef60d937cda7e3ad7ef31dc5931859af09bda2a4088703f47"
+    },
+    {
+      "path": "evidence/mq.txt",
+      "bytes": 230,
+      "sha256": "9db4d53804055cb8f818d3363cf7366bcbf41fbed82b114736e1713939d6dae4"
     },
     {
       "path": "evidence/backup.txt",
-      "bytes": 155,
-      "sha256": "d79f68295e14364148d734184478ca634f0f7581ec1552e1260efaf6d575b564"
+      "bytes": 151,
+      "sha256": "6ad79747c341f0f0fdf5b00ff48f1bfb78647cc49df5ce03ef4a697671dff6fe"
     },
     {
       "path": "evidence/run.txt",
-      "bytes": 123,
-      "sha256": "4ec6813a0adae926be1f1335d1eafcc0a309c94e2721f80fa5c7dfddc78b9eb3"
+      "bytes": 131,
+      "sha256": "abfc9136803f1ae2ad23369a63675d435c0570a5d7d69c2b6002c98dd741038b"
     },
     {
       "path": "evidence/bug-001-failure.txt",
@@ -56,6 +61,7 @@
   "unverified": [
     "真实支付网关未接入，回调用本地 HMAC 模拟",
     "未实现多商品订单、超时自动取消、退款与对账",
+    "MQ 单节点单消费者；未验证发布崩溃窗口/消费中崩溃/积压告警/DLQ重放",
     "未做 PITR；备份恢复仅验证到独立数据库行数一致"
   ]
 }
