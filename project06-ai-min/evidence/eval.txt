@@ -1,0 +1,7 @@
+PASS valid question status=200
+PASS tool lookup status=200
+PASS refuse this status=200
+PASS retry please status=200
+PASS bad output status=502
+golden_set=5 pass=5 rate=100%
+EVAL PASS

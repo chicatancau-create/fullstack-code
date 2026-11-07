@@ -1,0 +1,20 @@
+
+> project06-ai-min@1.0.0 test
+> node --test tests/*.test.js
+
+✔ health 与 prompt 版本 (74.8426ms)
+✔ 结构化输出与成本记录 (16.0928ms)
+✔ 429 重试后成功 (111.5303ms)
+✔ 超时重试后成功 (265.6383ms)
+✔ 工具调用后二次请求并返回工具结果 (3.8944ms)
+✔ 拒答不重试 (3.5627ms)
+✔ 非法模型输出返回 502 (3.0568ms)
+✔ 缺少密钥返回 503，参数非法返回 400 (7.4057ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 763.0832

@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "experiment": "B6-02",
+  "generated_at": "2026-11-07T15:12:36.502Z",
+  "commit": "a7f023ffb57bc8bf6a6153a47fc64bc9633850b3",
+  "runtime": {
+    "platform": "win32 x64",
+    "os_release": null,
+    "node": "v24.15.0",
+    "gcc": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r7) 15.2.0",
+    "gdb": "GNU gdb (GDB for MinGW-W64 x86_64, built by Brecht Sanders, r7) 17.1"
+  },
+  "commands": [
+    {
+      "cmd": "bash scripts/run_project.sh",
+      "exit": 0
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/toolchain.txt",
+      "bytes": 14,
+      "sha256": "b661e13d6d4e856e49448f4367b79618b771c98e599aacc51751ece63f9106f9"
+    },
+    {
+      "path": "evidence/install.txt",
+      "bytes": 25,
+      "sha256": "fa6a4451ed8e566bf0d8767f7f2372c327917ea461ffedeb375065dd65f02031"
+    },
+    {
+      "path": "evidence/test.txt",
+      "bytes": 541,
+      "sha256": "a9cbbbfcc38a2e41d64715f93bbbe110f3197f6e4c10144bc89eabd34aaf56ba"
+    },
+    {
+      "path": "evidence/eval.txt",
+      "bytes": 183,
+      "sha256": "daf8d63cbf042db0e0d8b6a8a1f3d5ab11626dc8607ff45d37e0733d2ee68332"
+    },
+    {
+      "path": "evidence/run.txt",
+      "bytes": 127,
+      "sha256": "004bb20237b5aa1adc453b7d0d84432fe4f40d9da41ad8a04a2f46a1c60a9070"
+    }
+  ],
+  "unverified": [
+    "本机无真实LLM端点；测试与eval全部针对本地mock",
+    "无RAG/Embedding/重排/跨租户检索/提示注入防护",
+    "无Docker/CI/K8s/OTel/告警/部署",
+    "golden set仅5条且与mock同源"
+  ]
+}

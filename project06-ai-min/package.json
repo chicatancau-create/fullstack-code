@@ -1,0 +1,14 @@
+{
+  "name": "project06-ai-min",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "最小 LLM 应用：结构化输出、工具调用、重试、拒答、成本与评估（本地 mock 验证，未接真实模型）",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "eval": "node scripts/eval.mjs",
+    "start": "node src/server.js"
+  },
+  "dependencies": { "fastify": "5.12.8" }
+}
