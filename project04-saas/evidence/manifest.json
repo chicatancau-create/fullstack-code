@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P04",
-  "generated_at": "2026-11-07T18:18:08.181Z",
-  "commit": "f7eb7254db45700147063d63c832bb60918655a6",
+  "generated_at": "2026-11-07T18:38:42.005Z",
+  "commit": "22de0f388be8c52a1c24d6b56c49b5cbb0de6b16",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -24,7 +24,11 @@
       "exit": 0
     },
     {
-      "cmd": "qemu-system-x86_64 TCG VM cloud-init docker/k3s",
+      "cmd": "QEMU K8s run9: pods Running + rollout restart + undo",
+      "exit": 0
+    },
+    {
+      "cmd": "QEMU Docker/Compose run6: container + compose HTML",
       "exit": 0
     }
   ],
@@ -91,13 +95,13 @@
     },
     {
       "path": "deploy/evidence/docker-k8s.txt",
-      "bytes": 4904,
-      "sha256": "11a9235f92111318a980081db3f77916044778ca09fa492e8e004a520b993180"
+      "bytes": 5557,
+      "sha256": "d0099b0d03750c5ad98d10594a454a3749f2f5efd4fa361e0ee0e0e911bd5234"
     },
     {
       "path": "deploy/k8s-web.yaml",
-      "bytes": 1060,
-      "sha256": "9430a18dab9cc594036117ffb9a0f6a19cf9ec36bbbeb0bd96bcf83441c26d26"
+      "bytes": 1232,
+      "sha256": "d21638b085b02add868030052d4ae8c0742ea1858b338ae4d8aa0013d5c0bd9a"
     },
     {
       "path": "deploy/cloud-init-user-data.yaml",
@@ -116,8 +120,8 @@
     }
   ],
   "unverified": [
-    "Docker/Compose、K8s Pod Running、rollout restart/undo通过；单节点TCG",
-    "无CI/Ingress/多节点/Prometheus实例/公网",
+    "K8s单节点TCG；Docker/Compose与rollout undo成功；早期失败运行见证据",
+    "无Ingress/多节点/Prometheus实例/公网",
     "本地自签名HTTPS；OTel仅InMemory；后台任务单机"
   ]
 }
