@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "B6-02",
-  "generated_at": "2026-11-07T15:34:52.550Z",
-  "commit": "1fc9f702bd5a5980688217c613f68198d88c2314",
+  "generated_at": "2026-11-07T15:41:37.678Z",
+  "commit": "aea6e7b739743d5c00a3146246824987b63af7ef",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -21,6 +21,14 @@
     },
     {
       "cmd": "node scripts/real_app_check.mjs",
+      "exit": 0
+    },
+    {
+      "cmd": "node rag/eval.mjs",
+      "exit": 0
+    },
+    {
+      "cmd": "node rag/answer.mjs",
       "exit": 0
     }
   ],
@@ -56,15 +64,24 @@
       "sha256": "b856ec9723a30ae9ae8c37b5ab1449837798ed4f755020274364ae07487b971f"
     },
     {
+      "path": "evidence/rag.txt",
+      "bytes": 506,
+      "sha256": "818fc4df3058208523f4fdcf13270d6cf33adf8d42aa087253d8729dc13b855b"
+    },
+    {
+      "path": "evidence/rag-answer.txt",
+      "bytes": 806,
+      "sha256": "6f2d13f4be66fb32b490e620fb014b1ef80b8fc56ed63618b077d4f267872b3c"
+    },
+    {
       "path": "evidence/run.txt",
       "bytes": 127,
       "sha256": "4464b9f29d04b085f86cac96f298d882147db52d57ebf2e4bf5ede40b129ead0"
     }
   ],
   "unverified": [
-    "本地0.5B CPU模型，非生产模型",
-    "原始输出0/4严格JSON；grammar下4/4结构合法但语义/tool_call/注入仍有问题",
-    "无RAG/Embedding/重排/跨租户检索/内容防护",
-    "无Docker/CI/K8s/OTel/告警/部署"
+    "BM25非embedding；无重排/多跳；合成语料",
+    "本地0.5B非生产模型；模型不主动引用，引用为回填",
+    "无RAG越权/提示注入/人工抽检"
   ]
 }
