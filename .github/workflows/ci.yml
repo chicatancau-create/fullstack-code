@@ -2,14 +2,100 @@ name: ci
 
 on:
   push:
-    paths:
-      - 'project04-saas/**'
-      - '.github/workflows/ci.yml'
   pull_request:
-    paths:
-      - 'project04-saas/**'
 
 jobs:
+  project01:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Web/project01-blog
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: Web/project01-blog/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  project02:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: study
+          POSTGRES_PASSWORD: study-pass
+          POSTGRES_DB: study_lab
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U study -d study_lab"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env: &pg
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: study
+      PGPASSWORD: study-pass
+      PGDATABASE: study_lab
+    defaults:
+      run:
+        working-directory: project02-collab
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: project02-collab/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: node scripts/migrate.mjs
+      - run: node --test tests/*.test.js
+
+  project03:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: study
+          POSTGRES_PASSWORD: study-pass
+          POSTGRES_DB: study_lab
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U study -d study_lab"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      rabbitmq:
+        image: rabbitmq:4
+        ports: ['5672:5672']
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: study
+      PGPASSWORD: study-pass
+      PGDATABASE: study_lab
+      AMQP_URL: amqp://guest:guest@127.0.0.1:5672
+    defaults:
+      run:
+        working-directory: project03-trade
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: project03-trade/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: node scripts/migrate.mjs
+      - run: node --test tests/*.test.js
+      - run: node scripts/mq_check.mjs
+
   project04:
     runs-on: ubuntu-latest
     services:
@@ -19,19 +105,19 @@ jobs:
           POSTGRES_USER: study
           POSTGRES_PASSWORD: study-pass
           POSTGRES_DB: study_lab
-        ports:
-          - 5432:5432
+        ports: ['5432:5432']
         options: >-
           --health-cmd "pg_isready -U study -d study_lab"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
+          --health-interval 5s --health-timeout 5s --health-retries 20
     env:
       PGHOST: 127.0.0.1
       PGPORT: 5432
       PGUSER: study
       PGPASSWORD: study-pass
       PGDATABASE: study_lab
+    defaults:
+      run:
+        working-directory: project04-saas
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -39,12 +125,98 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: project04-saas/package-lock.json
-      - name: install
-        working-directory: project04-saas
-        run: npm ci --no-audit --no-fund
-      - name: migrate
-        working-directory: project04-saas
-        run: npm run migrate
+      - run: npm ci --no-audit --no-fund
+      - run: npm run migrate
+      - run: npm test
+
+  project05:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: study
+          POSTGRES_PASSWORD: study-pass
+          POSTGRES_DB: study_lab
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U study -d study_lab"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env: *pg
+    defaults:
+      run:
+        working-directory: project05-takeover
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: project05-takeover/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: node scripts/migrate.mjs
+      - run: node --test tests/regressions.test.js
+
+  spring:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root-pass
+          MYSQL_DATABASE: p02j
+          MYSQL_USER: study
+          MYSQL_PASSWORD: study-pass
+        ports: ['3307:3306']
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -proot-pass"
+          --health-interval 5s --health-timeout 5s --health-retries 30
+    defaults:
+      run:
+        working-directory: project02-spring
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - name: create test database
+        run: mysql -h127.0.0.1 -P3307 -uroot -proot-pass -e "CREATE DATABASE IF NOT EXISTS p02j_test"
       - name: test
-        working-directory: project04-saas
-        run: npm test
+        env:
+          DB_URL: jdbc:mysql://127.0.0.1:3307/p02j_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+          DB_USER: study
+          DB_PASSWORD: study-pass
+        run: mvn -B -ntp test
+
+  frameworks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: project02-frameworks
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: project02-frameworks/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run test:all
+
+  ai:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: project06-ai-min
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: project06-ai-min/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: node scripts/eval.mjs
