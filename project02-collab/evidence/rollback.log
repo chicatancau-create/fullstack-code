@@ -1,0 +1,3 @@
+current=c342cfa previous=615b003
+rollback_status=401 (old version has no /health, /workspaces 401 proves auth chain)
+ROLLBACK PASS
