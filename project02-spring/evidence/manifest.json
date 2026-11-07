@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "B5-01",
-  "generated_at": "2026-11-07T14:23:13.807Z",
-  "commit": "9fc15cad95a1b9715f347838998d94ad49f7e1d6",
+  "generated_at": "2026-11-07T14:52:49.171Z",
+  "commit": "69bca28669f2d0d63837ee25ad0671e4d132b9b8",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -13,6 +13,10 @@
   "commands": [
     {
       "cmd": "bash scripts/run_project.sh",
+      "exit": 0
+    },
+    {
+      "cmd": "bash scripts/diagnose.sh",
       "exit": 0
     }
   ],
@@ -56,12 +60,47 @@
       "path": "evidence/run.txt",
       "bytes": 222,
       "sha256": "0f597eeb2b4a79ed3597dbbf1d1b1e420b07bd3d7946df15a8eee19fdad8aec9"
+    },
+    {
+      "path": "evidence/diagnose.txt",
+      "bytes": 943,
+      "sha256": "8590bd040e27feb3b4f96d2d1d1294d2355868f997fc05cdf020b336bcaaaf62"
+    },
+    {
+      "path": "evidence/pool-active.json",
+      "bytes": 183,
+      "sha256": "a58bde9a62331f319c84db9c123fa308da21c615ce7292cf28d3f1908aa59d3f"
+    },
+    {
+      "path": "evidence/pool-max.json",
+      "bytes": 178,
+      "sha256": "33c0e43de685f32d9af5822426e23eb5a410a56f9548e2800797a51339a78828"
+    },
+    {
+      "path": "evidence/pool-idle.json",
+      "bytes": 180,
+      "sha256": "077d7c65bce212461eaf3a500b81ffae506d49d609ac0dab43159183e6af8966"
+    },
+    {
+      "path": "evidence/locks.txt",
+      "bytes": 86,
+      "sha256": "5814539e1dd021876a8222555661eb9692e8428d84f09fe5202a1dd402747ccb"
+    },
+    {
+      "path": "evidence/diag-app.log",
+      "bytes": 2951,
+      "sha256": "7d9231e82d89f7095093d034cfb755116789693305025f692cab3db1fbac8842"
+    },
+    {
+      "path": "evidence/package-diag.txt",
+      "bytes": 1860,
+      "sha256": "da230c0aba5ad25943416dcdeef9a286c14cd12992884090530fecd6ae1755ea"
     }
   ],
   "unverified": [
     "未用 Testcontainers/Docker；测试依赖手工启动的 3307 MySQL",
     "未迁移邀请/最后Owner并发保护/审计/备份恢复",
-    "Express/Nest 对照仅为分析，未实现",
-    "未做连接池/锁等待压测、MySQL复制与PITR"
+    "Express/Nest 对照另见 project02-frameworks",
+    "仅单次行锁等待与 Hikari 配置快照；无持续池耗尽、死锁注入、EXPLAIN 对比"
   ]
 }
