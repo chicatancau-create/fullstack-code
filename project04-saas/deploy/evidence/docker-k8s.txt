@@ -59,3 +59,15 @@ Status: Downloaded newer image for nginx:1.27-alpine
 curl: (56) Recv failure: Connection reset by peer
 [INFO]  Using v1.37.2+k3s1 as release
 [ERROR]  Download failed
+
+=== run9: focused K8s rolling update + undo
+deployment "web" successfully rolled out
+web-844b8d48b8-6jnbr   1/1     Running   0          35s   10.42.0.2   k8s-lab   <none>           <none>
+web-844b8d48b8-rrsp2   1/1     Running   0          35s   10.42.0.7   k8s-lab   <none>           <none>
+deployment.apps/web restarted
+deployment "web" successfully rolled out
+deployment.apps/web rolled back
+deployment "web" successfully rolled out
+web-844b8d48b8-csj9m   1/1     Running       0          31s    10.42.0.11   k8s-lab   <none>           <none>
+web-844b8d48b8-r8sww   1/1     Running       0          70s    10.42.0.10   k8s-lab   <none>           <none>
+=== K8S DONE ===

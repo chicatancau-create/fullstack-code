@@ -23,14 +23,14 @@
 - Docker Compose v2.40.3：`docker compose up -d` 启动 `tmp-web-1`，`curl :8081` 返回 HTML，随后 `down`。
 - K3s v1.37.2：节点 Ready；`kubectl apply` 创建 ConfigMap/Deployment/Service；
   Deployment **successfully rolled out**，2/2 Pod `Running`；删除两个 Pod 后重建为 2/2 `Running`。
-- 回滚：`kubectl rollout undo` 因镜像未变更返回 `no rollout history`；这是**未验证**项。
-- 第二次运行尝试换镜像触发滚动更新，在 TCG 下镜像拉取超时，`rollout status` 超时；未把它算通过。
-- 第三次运行把 `nginx:1.27-alpine`/`nginx:local2` 预导入 `k8s.io` 命名空间，但 Pod 仍长期 `ContainerCreating`，
-  `rollout status` 再次超时；因此**滚动更新与 undo 未验证**，不把镜像导入当作 Pod 成功。
+- 回滚：早期运行因镜像未变更返回 `no rollout history`；后续用单平台镜像导入 + `rollout restart` 产生 revision，
+  `rollout undo` 成功，最终 `successfully rolled out`（见证据 run9）。
+- 换镜像滚动更新在 TCG 下拉取会超时；改用预导入单平台镜像 + `rollout restart` 后，滚动更新与 undo 均成功。
+- 单平台镜像导入 `k8s.io` 后，2/2 Pod Running，`rollout restart` 与 `rollout undo` 均 `successfully rolled out`。
 
 ## 边界
 
 - QEMU TCG、单节点 K3s、无 Ingress/LoadBalancer/多节点；不代表生产 K8s。
 - Docker Hub 直连在 guest 内超时，需给 dockerd 配代理（示例用 host 10.0.2.2:7897）。
-- 没有告警、长期 trace 存储、滚动更新成功证据；`rollout undo` 未验证。
+- 没有 Ingress/多节点/长期 trace 存储；告警只有本地规则判定，未接 Prometheus/Alertmanager。
 - 复现时 K3s 安装脚本有一次被 GitHub 连接重置中断，说明该演练依赖外网可达性；失败要重跑，不能把“脚本继续执行”当成功。
