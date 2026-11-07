@@ -1,0 +1,9 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+mysql_version
+8.4.13
+Variable_name	Value
+max_connections	151
+users
+7
+tasks
+1

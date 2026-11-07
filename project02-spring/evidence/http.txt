@@ -1,0 +1,6 @@
+health: {"status":"ok"}
+{"email":"java-owner-1794061326@example.com","id":7}
+workspace: {"role":"owner","id":2,"name":"Java Migration"}
+task: {"status":"todo","id":1,"title":"contract-task"}
+tasks: {"tasks":[{"id":1,"title":"contract-task","status":"todo"}]}
+unauth_status: 401

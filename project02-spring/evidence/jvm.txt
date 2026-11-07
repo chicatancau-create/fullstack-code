@@ -1,0 +1,28 @@
+jps: 52828 target/project02-spring-1.0.0.jar
+52828:
+Java HotSpot(TM) 64-Bit Server VM version 25.0.2+10-LTS-69
+JDK 25.0.2
+52828:
+garbage-first heap   total reserved 8175616K, committed 69632K, used 59454K [0x000000060d000000, 0x0000000800000000)
+ region size 4096K, 11 young (45056K), 1 survivors (4096K)
+"Reference Handler" #16 [46784] daemon prio=10 os_prio=2 cpu=0.00ms elapsed=4.62s tid=0x0000008019e361f0 nid=46784 waiting on condition  [0x000000801c98f000]
+"Finalizer" #17 [10096] daemon prio=8 os_prio=1 cpu=0.00ms elapsed=4.62s tid=0x0000008019e369b0 nid=10096 in Object.wait()  [0x000000801ca8f000]
+"Signal Dispatcher" #18 [12896] daemon prio=9 os_prio=2 cpu=0.00ms elapsed=4.62s tid=0x0000008019e39120 nid=12896 waiting on condition  [0x0000000000000000]
+"Attach Listener" #19 [22472] daemon prio=5 os_prio=2 cpu=0.00ms elapsed=4.62s tid=0x0000008019e3af70 nid=22472 waiting on condition  [0x0000000000000000]
+"Service Thread" #20 [40944] daemon prio=9 os_prio=0 cpu=0.00ms elapsed=4.62s tid=0x0000008019e3c8b0 nid=40944 runnable  [0x0000000000000000]
+"Monitor Deflation Thread" #21 [46072] daemon prio=9 os_prio=0 cpu=0.00ms elapsed=4.62s tid=0x0000008019e3e0e0 nid=46072 runnable  [0x0000000000000000]
+"C2 CompilerThread0" #22 [61600] daemon prio=9 os_prio=2 cpu=1484.38ms elapsed=4.62s tid=0x0000008019e428f0 nid=61600 waiting on condition  [0x0000000000000000]
+"C1 CompilerThread0" #32 [63272] daemon prio=9 os_prio=2 cpu=328.12ms elapsed=4.62s tid=0x0000008019e43100 nid=63272 waiting on condition  [0x0000000000000000]
+"Notification Thread" #37 [5248] daemon prio=9 os_prio=0 cpu=0.00ms elapsed=4.61s tid=0x000000801c37cea0 nid=5248 runnable  [0x0000000000000000]
+"Common-Cleaner" #38 [10868] daemon prio=8 os_prio=1 cpu=0.00ms elapsed=4.61s tid=0x000000801c38d6a0 nid=10868 in Object.wait()  [0x00000080212fe000]
+"Cleaner-0" #39 [57456] daemon prio=8 os_prio=1 cpu=15.62ms elapsed=4.57s tid=0x000000801c688b60 nid=57456 in Object.wait()  [0x0000008021cff000]
+"mysql-cj-abandoned-connection-cleanup" #64 [32360] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=3.04s tid=0x0000008022ab74d0 nid=32360 in Object.wait()  [0x000000802783f000]
+"HikariPool-1:housekeeper" #67 [60300] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=2.86s tid=0x00000080229bfb00 nid=60300 waiting on condition  [0x0000008028c0e000]
+"Catalina-utility-1" #68 [32824] prio=1 os_prio=-2 cpu=0.00ms elapsed=2.79s tid=0x0000008026ff5f00 nid=32824 waiting on condition  [0x0000008028d0f000]
+"Catalina-utility-2" #69 [52160] prio=1 os_prio=-2 cpu=0.00ms elapsed=2.79s tid=0x0000008026ff6ea0 nid=52160 waiting on condition  [0x0000008028e0e000]
+"container-0" #70 [52864] prio=5 os_prio=0 cpu=0.00ms elapsed=2.78s tid=0x0000008026ff7670 nid=52864 waiting on condition  [0x0000008028f0f000]
+"HikariPool-1:connection-adder" #74 [38968] daemon prio=5 os_prio=0 cpu=46.88ms elapsed=2.76s tid=0x0000008023e43ab0 nid=38968 waiting on condition  [0x000000802930f000]
+"http-nio-8798-exec-1" #77 [27412] daemon prio=5 os_prio=0 cpu=93.75ms elapsed=2.44s tid=0x0000008023e48100 nid=27412 waiting on condition  [0x000000802960f000]
+"http-nio-8798-exec-2" #78 [14372] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=2.44s tid=0x0000008023e44a50 nid=14372 waiting on condition  [0x000000802970f000]
+"http-nio-8798-exec-3" #79 [60908] daemon prio=5 os_prio=0 cpu=0.00ms elapsed=2.44s tid=0x0000008023e47930 nid=60908 waiting on condition  [0x000000802980e000]
+jvm_pid=52828
