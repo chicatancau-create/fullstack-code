@@ -1,0 +1,68 @@
+✖ 回归：过期会话必须被拒绝 (182.5131ms)
+✖ 回归：非成员不能读取其他工作区任务 (125.964ms)
+✖ 回归：最后一名 owner 不能被移除 (75.5027ms)
+✔ 基线：成员仍可读取本工作区任务 (75.8311ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 1
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 710.3907
+
+✖ failing tests:
+
+test at tests\regressions.test.js:42:1
+✖ 回归：过期会话必须被拒绝 (182.5131ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  200 !== 401
+  
+      at TestContext.<anonymous> (file:///E:/fullstack-code/project05-takeover/tests/regressions.test.js:46:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 200,
+    expected: 401,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\regressions.test.js:49:1
+✖ 回归：非成员不能读取其他工作区任务 (125.964ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  200 !== 404
+  
+      at TestContext.<anonymous> (file:///E:/fullstack-code/project05-takeover/tests/regressions.test.js:55:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 200,
+    expected: 404,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\regressions.test.js:58:1
+✖ 回归：最后一名 owner 不能被移除 (75.5027ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  204 !== 409
+  
+      at TestContext.<anonymous> (file:///E:/fullstack-code/project05-takeover/tests/regressions.test.js:62:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 204,
+    expected: 409,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

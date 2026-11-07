@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "experiment": "P05",
+  "generated_at": "2026-11-07T14:40:58.705Z",
+  "commit": "c896f51f8fd64a079a83316b3c666b45b73b85db",
+  "runtime": {
+    "platform": "win32 x64",
+    "os_release": null,
+    "node": "v24.15.0",
+    "gcc": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r7) 15.2.0",
+    "gdb": "GNU gdb (GDB for MinGW-W64 x86_64, built by Brecht Sanders, r7) 17.1"
+  },
+  "commands": [
+    {
+      "cmd": "PGPASSWORD=<local-test-password> bash scripts/run_project.sh",
+      "exit": 0
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/toolchain.txt",
+      "bytes": 14,
+      "sha256": "b661e13d6d4e856e49448f4367b79618b771c98e599aacc51751ece63f9106f9"
+    },
+    {
+      "path": "evidence/migrate.txt",
+      "bytes": 56,
+      "sha256": "ab9d8a4d9a1422bf5c1976bffb31d65e0ef2290f9308aba770de1eeca63e0c91"
+    },
+    {
+      "path": "evidence/before-fix.txt",
+      "bytes": 2421,
+      "sha256": "ae0a1746b2856943e9105dde3f6247e88c8e81184782ffbe0c430b937fd77bf4"
+    },
+    {
+      "path": "evidence/after-fix.txt",
+      "bytes": 356,
+      "sha256": "3e757256cc7b30529fd95c953994fdfa84f981e1eed3c761151b258f0e24fb44"
+    },
+    {
+      "path": "evidence/test.txt",
+      "bytes": 356,
+      "sha256": "77e5928a28e38ca7d0c47f076f57d522b8f25dac9a6f8b5b1b79f3efcfd89a9a"
+    },
+    {
+      "path": "evidence/run.txt",
+      "bytes": 161,
+      "sha256": "ddb99167f527851948b7fe18700b28fa01d645c4644c677620d70a235ef33a44"
+    }
+  ],
+  "unverified": [
+    "受控演练仓库（本人项目快照注入缺陷），非真实他人代码",
+    "无真实接收人独立复现，不能声称团队交接通过",
+    "仅3个缺陷；未覆盖并发删owner/审计/备份/CI部署"
+  ]
+}

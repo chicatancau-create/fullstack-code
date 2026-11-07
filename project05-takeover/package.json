@@ -1,0 +1,20 @@
+{
+  "name": "project02-collab",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "项目 02：Fastify + PostgreSQL 协作任务平台（租户隔离、最后 Owner、真实 DB 测试）",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "migrate": "node scripts/migrate.mjs",
+    "test": "node --test tests/*.test.js",
+    "backup": "node scripts/backup.mjs",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "fastify": "5.12.8",
+    "pg": "8.23.1"
+  }
+}

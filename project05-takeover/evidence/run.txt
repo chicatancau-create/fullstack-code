@@ -1,0 +1,5 @@
+captured_at: 2026-11-07T22:40:53+08:00
+tests=ℹ tests 4 ℹ pass 4 ℹ fail 0 
+before_fix=ℹ pass 1 ℹ fail 3 
+after_fix=ℹ pass 4 ℹ fail 0 
+TAKEOVER PASS
