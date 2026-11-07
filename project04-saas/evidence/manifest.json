@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P04",
-  "generated_at": "2026-11-07T19:03:58.301Z",
-  "commit": "79ecd5af548cd666ac05b316fdde470cb579f380",
+  "generated_at": "2026-11-07T19:35:19.974Z",
+  "commit": "e8781bd2c3c28a91777ff22a00d240f91fecba83",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -79,8 +79,8 @@
     },
     {
       "path": "evidence/alertmanager.txt",
-      "bytes": 64,
-      "sha256": "44be348079e2f9d666537cca6182e3567fb23e3590b37cc7b409387750dbb137"
+      "bytes": 212,
+      "sha256": "24da696c995a8cc91ddc885a6cd1aad6a264cf96354485da394bd1d2e89da761"
     },
     {
       "path": "evidence/deploy.txt",
