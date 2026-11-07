@@ -8,7 +8,7 @@
 - `cloud-init-user-data.yaml`：安装 Docker、Compose、K3s，部署 web 工作负载，做 Pod 故障与回滚。
 - `cloud-init-meta-data.yaml`：NoCloud instance-id。
 - `k8s-web.yaml`：Deployment（2 副本、readiness/liveness、ConfigMap）+ NodePort Service。
-- `evidence/docker-k8s.txt`：两次运行的筛选原始输出。
+- `evidence/docker-k8s.txt`：多次运行的筛选原始输出（含失败与成功）。
 
 ## 复现（摘要）
 
