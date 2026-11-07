@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P04",
-  "generated_at": "2026-11-07T14:09:01.326Z",
-  "commit": "7c2869b3bd750153425cac47f5f2de34e23ef0c3",
+  "generated_at": "2026-11-07T15:27:31.542Z",
+  "commit": "f6aa5b46eb01d7bd4ed165fcc4fdb526e3380be1",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -12,7 +12,15 @@
   },
   "commands": [
     {
-      "cmd": "PGPASSWORD=<local-test-password> bash scripts/run_project.sh",
+      "cmd": "bash scripts/run_project.sh",
+      "exit": 0
+    },
+    {
+      "cmd": "bash scripts/deploy_local.sh",
+      "exit": 0
+    },
+    {
+      "cmd": "bash scripts/rollback_check.sh",
       "exit": 0
     }
   ],
@@ -29,23 +37,49 @@
     },
     {
       "path": "evidence/test.txt",
-      "bytes": 1162,
-      "sha256": "98cc6a27dd3fc78a2917845d608d3f7ca4d9a0d1dd00e513a2341557bf34bee4"
+      "bytes": 1163,
+      "sha256": "84e8531b56ce4e6baf70d86fff0f7cdac976e415f5f11ece703651bebee2c480"
     },
     {
       "path": "evidence/backup.txt",
       "bytes": 174,
-      "sha256": "aa4f7d7d474490d1fdcbaf6f5cc63795618720bd13725763f2b67074a3fcf047"
+      "sha256": "5aa11ecc8fa4676e0134561ed0d8032ed764bff0c393dbf39178d4a9d4958e1a"
+    },
+    {
+      "path": "evidence/trace.txt",
+      "bytes": 955,
+      "sha256": "0fdb4e55269fa98cd359ccd0513f24f2fcc8149653c50770af6ce519b903bc80"
+    },
+    {
+      "path": "evidence/deploy.txt",
+      "bytes": 718,
+      "sha256": "66d6c7ac19085b33bfa60f100b5d7d13074256b39194dfb2173c0825d099e7d3"
+    },
+    {
+      "path": "evidence/rollback.txt",
+      "bytes": 79,
+      "sha256": "0c42cffb2ba357ff69188e29905534919c6c27423729de2a919bf11f887691f2"
+    },
+    {
+      "path": "evidence/https-app.log",
+      "bytes": 1053,
+      "sha256": "74fb6a2c234076f9f8167dda57d8825a35d6375a2e959936187e3dfdb7178e02"
+    },
+    {
+      "path": "evidence/https-gateway.log",
+      "bytes": 48,
+      "sha256": "f58fa8434737b6a6a1ae18b30a09d280afb4d8514e52fffa6360d1140cdd6216"
     },
     {
       "path": "evidence/run.txt",
-      "bytes": 113,
-      "sha256": "8b1c4171caee1182f901ed02b458746c947a34546bbf41c36c5cadf8d0d4c806"
+      "bytes": 123,
+      "sha256": "47086d84f475b8e281c4197a80d40067b465ffd598ab1bb77420a9c3e136e9ed"
     }
   ],
   "unverified": [
-    "无前端、邮件、限流、MFA、Docker/CI/K8s/HTTPS/监控",
-    "未做深度模块（容量/两类故障/恢复演练）",
-    "未部署；备份不支持按用户删除"
+    "本地自签名HTTPS，不是公网/域名部署",
+    "OTel仅InMemory导出与单次trace，无collector/告警/长期存储",
+    "无Docker/CI/K8s；回滚仅应用代码，数据回滚依赖backup恢复",
+    "无真实邮件/限流/MFA/深度模块"
   ]
 }
