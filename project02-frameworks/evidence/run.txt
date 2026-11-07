@@ -1,0 +1,4 @@
+captured_at: 2026-11-07T22:31:13+08:00
+contract=express+nest
+tests=ℹ tests 2 ℹ pass 2 ℹ fail 0 
+FRAMEWORKS PASS

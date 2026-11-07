@@ -1,0 +1,22 @@
+
+> project02-frameworks@1.0.0 test:all
+> npm run build && npm test
+
+
+> project02-frameworks@1.0.0 build
+> tsc -p tsconfig.json
+
+
+> project02-frameworks@1.0.0 test
+> node --test tests/*.test.mjs
+
+✔ Express 5 满足共享契约 (52.3589ms)
+✔ NestJS 12 满足共享契约 (113.7769ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 675.7683

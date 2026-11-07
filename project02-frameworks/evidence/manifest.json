@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "experiment": "B5-03",
+  "generated_at": "2026-11-07T14:31:28.173Z",
+  "commit": "1e829dd9b44ef05a65c860bbc05acac4ea8c8805",
+  "runtime": {
+    "platform": "win32 x64",
+    "os_release": null,
+    "node": "v24.15.0",
+    "gcc": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r7) 15.2.0",
+    "gdb": "GNU gdb (GDB for MinGW-W64 x86_64, built by Brecht Sanders, r7) 17.1"
+  },
+  "commands": [
+    {
+      "cmd": "bash scripts/run_project.sh",
+      "exit": 0
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/versions.txt",
+      "bytes": 83,
+      "sha256": "0b53d433cc42983c76489858d59549bc4ba0ffd1419d05055c8d51887c7d14fe"
+    },
+    {
+      "path": "evidence/test.txt",
+      "bytes": 399,
+      "sha256": "fe8964e11db19e8220351fd0430e6567ef9ea3bc6e472fdd91940053f3cb43d8"
+    },
+    {
+      "path": "evidence/boot.txt",
+      "bytes": 501,
+      "sha256": "b28b0b488455976b077a424f32202b0e48454284f974807deab0659761243d1a"
+    },
+    {
+      "path": "evidence/run.txt",
+      "bytes": 118,
+      "sha256": "2362015fd64c220a3fa3fd1bcc8f4f4f6184f0dd128f00e994c1c59b6018f632"
+    }
+  ],
+  "unverified": [
+    "仅生命周期/错误链；未接数据库/认证/限流",
+    "未做吞吐/并发/冷启动/内存测量",
+    "未验证 Nest Fastify adapter 与守卫/拦截器全链路"
+  ]
+}
