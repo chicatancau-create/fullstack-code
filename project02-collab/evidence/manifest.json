@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P02",
-  "generated_at": "2026-11-07T13:46:49.251Z",
-  "commit": "1a2839d54a2b11248fae2cd5e185d005ba6dce0f",
+  "generated_at": "2026-11-07T15:47:22.659Z",
+  "commit": "e616905512ebcd0ec0571d7ed9a303c314434466",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -29,21 +29,57 @@
     },
     {
       "path": "evidence/test.txt",
-      "bytes": 572,
-      "sha256": "9c4db871773eaedc238115c8b4e6f8e2a63d70cb84bf477e9730a0a264556f04"
+      "bytes": 573,
+      "sha256": "6f16d26ff2c306fe3c1af45306e9c180c43b9023d3e7c1c5403a081798b7ce0e"
     },
     {
       "path": "evidence/backup.txt",
       "bytes": 46,
-      "sha256": "ea07d6b80c6eefcc89d7b6c0e6c02af78a0c566296a084d0b4ab228845f10532"
+      "sha256": "135645537a53e60a24eafe5cfcd2624d5fe16ff7231685c932308808503f20ce"
+    },
+    {
+      "path": "evidence/p02-dump.sql",
+      "bytes": 8148,
+      "sha256": "2649b6b92a46689334eb8fb8c349332ee679ecbb5f6ebd8824141787422120f6"
+    },
+    {
+      "path": "evidence/deploy.txt",
+      "bytes": 483,
+      "sha256": "4879432cc24478d97b19322132cd524477703f46a39d35c1e667f78b6b0f344e"
+    },
+    {
+      "path": "evidence/rollback.txt",
+      "bytes": 131,
+      "sha256": "6a3f96f7bae723626d4b52d23caf947a938d5bb64481186444ed9a6f18c1742d"
+    },
+    {
+      "path": "evidence/deploy.log",
+      "bytes": 483,
+      "sha256": "4879432cc24478d97b19322132cd524477703f46a39d35c1e667f78b6b0f344e"
+    },
+    {
+      "path": "evidence/rollback.log",
+      "bytes": 131,
+      "sha256": "6a3f96f7bae723626d4b52d23caf947a938d5bb64481186444ed9a6f18c1742d"
     },
     {
       "path": "evidence/run.txt",
       "bytes": 183,
-      "sha256": "bb5cf9907ae0a94d7c5665465ffe5544b8b9025f672a7b75e535b8df36b1cd1a"
+      "sha256": "75a38a281314d4dd87137f9dc75b2a7bce6b03c6439424b20a42d0ae49a4b17b"
+    },
+    {
+      "path": "evidence/https-app.log",
+      "bytes": 884,
+      "sha256": "1c495ad7c57214fa39db26ccae97d760c5efbc4afbaa0e9ecf678d01cfb77e25"
+    },
+    {
+      "path": "evidence/https-gateway.log",
+      "bytes": 48,
+      "sha256": "a0f1cf9088e2b7f6f078876ed5d9d86ccdd880917cd211354351847d42c2ab60"
     }
   ],
   "unverified": [
-    "未部署；无前端/限流/MFA/监控/RTO；单机 PG"
+    "本地自签名HTTPS，不是公网部署",
+    "回滚只验证旧版本可启动（旧版无/health，用401证明链路）"
   ]
 }
