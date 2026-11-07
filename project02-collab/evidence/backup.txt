@@ -1,0 +1,2 @@
+dump_bytes=8145 users=2 tables=5
+RESTORE PASS

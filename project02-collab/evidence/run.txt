@@ -1,0 +1,5 @@
+captured_at: 2026-11-07T21:46:37+08:00
+migrate: migrated tables=members,sessions,tasks,users,workspaces
+test: ℹ tests 7 ℹ pass 7 ℹ fail 0 
+backup: RESTORE PASS
+gate_failures: 0

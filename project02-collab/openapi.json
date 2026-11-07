@@ -1,0 +1,19 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Project 02 Collab API", "version": "1.0.0" },
+  "servers": [{ "url": "http://127.0.0.1:8795" }],
+  "components": {
+    "securitySchemes": { "bearer": { "type": "http", "scheme": "bearer" } }
+  },
+  "security": [{ "bearer": [] }],
+  "paths": {
+    "/auth/register": { "post": { "summary": "注册", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["email", "password"], "properties": { "email": { "type": "string" }, "password": { "type": "string", "minLength": 8 } } } } } }, "responses": { "201": { "description": "created" }, "409": { "description": "email exists" } } } },
+    "/auth/login": { "post": { "summary": "登录", "responses": { "200": { "description": "token" }, "401": { "description": "bad credentials" } } } },
+    "/workspaces": { "get": { "summary": "我的工作区" }, "post": { "summary": "创建工作区（创建者成为 owner）", "responses": { "201": { "description": "created" }, "409": { "description": "slug exists" } } } },
+    "/workspaces/{id}": { "get": { "summary": "工作区详情（仅成员）", "responses": { "404": { "description": "not found or not member" } } } },
+    "/workspaces/{id}/members": { "post": { "summary": "添加成员（owner）" } },
+    "/workspaces/{id}/members/{userId}": { "delete": { "summary": "移除成员（owner；最后 owner 返回 409）" }, "patch": { "summary": "改角色（最后 owner 降级返回 409）" } },
+    "/workspaces/{id}/tasks": { "get": { "summary": "任务列表（成员）" }, "post": { "summary": "创建任务（标题在工作区内唯一）", "responses": { "201": { "description": "created" }, "409": { "description": "duplicate title" } } } },
+    "/tasks/{taskId}": { "patch": { "summary": "改状态（成员；跨租户 404）" } }
+  }
+}
