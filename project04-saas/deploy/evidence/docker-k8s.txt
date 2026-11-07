@@ -71,3 +71,14 @@ deployment "web" successfully rolled out
 web-844b8d48b8-csj9m   1/1     Running       0          31s    10.42.0.11   k8s-lab   <none>           <none>
 web-844b8d48b8-r8sww   1/1     Running       0          70s    10.42.0.10   k8s-lab   <none>           <none>
 === K8S DONE ===
+
+=== run10: resources requests/limits + rollout/undo
+deployment "web" successfully rolled out
+web-5c6d7f8447-6ktk5   1/1     Running   0          46s   10.42.0.2   k8s-lab   <none>           <none>
+web-5c6d7f8447-clxp9   1/1     Running   0          46s   10.42.0.7   k8s-lab   <none>           <none>
+deployment "web" successfully rolled out
+deployment.apps/web rolled back
+deployment "web" successfully rolled out
+web-5c6d7f8447-rl24v   1/1     Running       0          31s    10.42.0.11   k8s-lab   <none>           <none>
+web-5c6d7f8447-t5jg9   1/1     Running       0          51s    10.42.0.10   k8s-lab   <none>           <none>
+=== K8S DONE ===
