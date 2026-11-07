@@ -1,0 +1,33 @@
+# Docker / Kubernetes 隔离 VM 演练（2026-11-07）
+
+用 QEMU 11.1.0 + Ubuntu 24.04 cloud image 在**本机隔离 VM**中验证容器与 K8s；
+不改主机、不需要 WSL/重启。QEMU 走 TCG 软件模拟，性能不代表真实集群。
+
+## 文件
+
+- `cloud-init-user-data.yaml`：安装 Docker、Compose、K3s，部署 web 工作负载，做 Pod 故障与回滚。
+- `cloud-init-meta-data.yaml`：NoCloud instance-id。
+- `k8s-web.yaml`：Deployment（2 副本、readiness/liveness、ConfigMap）+ NodePort Service。
+- `evidence/docker-k8s.txt`：两次运行的筛选原始输出。
+
+## 复现（摘要）
+
+1. 下载 Ubuntu cloud image，`qemu-img create -b` 生成 12G 覆盖盘。
+2. 用 pycdlib 把 `user-data`/`meta-data` 打成卷标 `cidata` 的 ISO。
+3. 启动：`qemu-system-x86_64 -accel tcg,thread=multi -m 3072 -smp 2 -drive file=disk.qcow2,if=virtio -drive file=seed.iso,media=cdrom -netdev user,id=n0 -device virtio-net-pci,netdev=n0 -nographic -no-reboot`。
+4. cloud-init 从 `/dev/sr0` 读取配置并执行，串口输出即证据。
+
+## 实测结果
+
+- Docker Engine 29.1.3：`nginx:1.27-alpine` 拉取、容器 `Up`、`curl :8080` 返回 HTML。
+- Docker Compose v2.40.3：`docker compose up -d` 启动 `tmp-web-1`，`curl :8081` 返回 HTML，随后 `down`。
+- K3s v1.37.2：节点 Ready；`kubectl apply` 创建 ConfigMap/Deployment/Service；
+  Deployment **successfully rolled out**，2/2 Pod `Running`；删除两个 Pod 后重建为 2/2 `Running`。
+- 回滚：`kubectl rollout undo` 因镜像未变更返回 `no rollout history`；这是**未验证**项。
+- 第二次运行尝试换镜像触发滚动更新，在 TCG 下镜像拉取超时，`rollout status` 超时；未把它算通过。
+
+## 边界
+
+- QEMU TCG、单节点 K3s、无 Ingress/LoadBalancer/多节点；不代表生产 K8s。
+- Docker Hub 直连在 guest 内超时，需给 dockerd 配代理（示例用 host 10.0.2.2:7897）。
+- 没有告警、长期 trace 存储、滚动更新成功证据；`rollout undo` 未验证。
