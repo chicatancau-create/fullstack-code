@@ -55,6 +55,37 @@ arr[idx] = 123; // idx == len
 越界地址落在 \`PAGE_NOACCESS\`，gdb 输出 \`tests/fault_guard.c:78\`。
 `,
   },
+  {
+    slug: 'sql-index',
+    title: 'SQL 索引：最左前缀',
+    date: '2026-11-06',
+    tags: ['SQL', '数据库'],
+    summary: '复合索引的列顺序为什么必须跟查询模式走。',
+    content: `# 最左前缀
+
+复合索引 \`(tenant, status, created_at)\` 能服务：
+
+- \`WHERE tenant=? AND status=?\`
+- \`ORDER BY created_at\`
+
+但只查 \`status\` 通常用不上。用 \`EXPLAIN\` 看计划，不要凭感觉加索引。
+`,
+  },
+  {
+    slug: 'cors-preflight',
+    title: 'CORS 预检：OPTIONS 先到',
+    date: '2026-11-07',
+    tags: ['网络', '浏览器'],
+    summary: '非简单跨源请求为什么先发一次 OPTIONS。',
+    content: `# 预检请求
+
+带自定义头或非简单方法的跨源请求，浏览器会先发 \`OPTIONS\`。
+
+- 预检失败：业务请求不会发出
+- 预检成功：浏览器才发真实请求
+- CORS 不是授权：服务端仍要做身份与对象级校验
+`,
+  },
 ];
 
 export function findPost(slug: string): Post | undefined {

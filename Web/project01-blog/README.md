@@ -9,7 +9,7 @@
 
 - 主路径：首页浏览 → 搜索 → 打开详情 → 返回。
 - 非目标：登录/评论/后台编辑/数据库/SSR；这些留给后续项目。
-- 内容：3 篇本地 Markdown；没有外部 CMS。
+- 内容：5 篇本地 Markdown；没有外部 CMS。
 
 ## 2. 运行与验证
 
@@ -55,7 +55,7 @@ flowchart LR
 | 类型检查 | 0 error | `evidence/typecheck.txt` |
 | 组件测试 | 7/7 通过 | `evidence/test.txt` |
 | 生产构建 | `vite build` 成功；JS 382.13 kB / gzip 120.33 kB | `evidence/build.txt` |
-| E2E（headless Edge） | 首页 3 卡、跳转链接聚焦 main、搜索 1 条、进入详情 | `evidence/e2e.txt`、`e2e-post.png` |
+| E2E（headless Edge） | 首页 5 卡、跳转链接聚焦 main、搜索 1 条、进入详情 | `evidence/e2e.txt`、`e2e-post.png` |
 | manifest | SHA-256 校验 | `evidence/manifest.json` |
 
 ## 5. 范围与边界
@@ -77,4 +77,4 @@ flowchart LR
 
 ## 7. 已知限制
 
-构建产物约 382 kB（gzip 120 kB），主要来自 React/路由/Markdown；没有做代码分割/懒加载。若作为真实产品，应按路由拆分并测 LCP/INP。本仓库只证明功能与测试闭环，不宣称性能最优。
+构建产物约 382 kB（gzip 120 kB），主要来自 React/路由/Markdown；没有做代码分割/懒加载。若作为真实产品，应按路由拆分并测 LCP/INP。本仓库只证明功能与测试闭环，不宣称性能最优。

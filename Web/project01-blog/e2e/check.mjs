@@ -37,7 +37,7 @@ try {
   const heading = await page.eval("document.querySelector('h1')?.textContent");
   if (heading !== '学习笔记') throw new Error(`首页标题错误: ${heading}`);
   const count = await page.eval("document.querySelectorAll('.post-list li').length");
-  if (count !== 3) throw new Error(`列表数量错误: ${count}`);
+  if (count !== 5) throw new Error(`列表数量错误: ${count}`);
 
   await page.key('Tab');
   const first = await page.eval("document.activeElement?.textContent");

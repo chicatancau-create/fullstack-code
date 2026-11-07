@@ -1,5 +1,5 @@
 heading=学习笔记
-cards=3
+cards=5
 first_tab=跳到主要内容
 skip_focus=main
 search=1 result

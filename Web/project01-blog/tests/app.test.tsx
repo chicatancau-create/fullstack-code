@@ -19,11 +19,11 @@ function renderAt(path: string) {
 }
 
 describe('项目 01 博客', () => {
-  it('首页列出三篇笔记', () => {
+  it('首页列出五篇笔记', () => {
     const { container } = renderAt('/');
     expect(screen.getByRole('heading', { level: 1, name: '学习笔记' })).toBeInTheDocument();
-    expect(container.querySelectorAll('.post-list li')).toHaveLength(3);
-    expect(screen.getByText('3 篇笔记')).toBeInTheDocument();
+    expect(container.querySelectorAll('.post-list li')).toHaveLength(5);
+    expect(screen.getByText('5 篇笔记')).toBeInTheDocument();
   });
 
   it('搜索过滤并把 q 写入 URL', async () => {
