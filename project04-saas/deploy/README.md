@@ -25,6 +25,8 @@
   Deployment **successfully rolled out**，2/2 Pod `Running`；删除两个 Pod 后重建为 2/2 `Running`。
 - 回滚：`kubectl rollout undo` 因镜像未变更返回 `no rollout history`；这是**未验证**项。
 - 第二次运行尝试换镜像触发滚动更新，在 TCG 下镜像拉取超时，`rollout status` 超时；未把它算通过。
+- 第三次运行把 `nginx:1.27-alpine`/`nginx:local2` 预导入 `k8s.io` 命名空间，但 Pod 仍长期 `ContainerCreating`，
+  `rollout status` 再次超时；因此**滚动更新与 undo 未验证**，不把镜像导入当作 Pod 成功。
 
 ## 边界
 

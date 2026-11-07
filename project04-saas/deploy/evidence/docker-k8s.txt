@@ -32,3 +32,19 @@ web-6cbd997c66-sx2xr   0/1     ContainerCreating   0          4m4s   <none>   k8
 web-6cbd997c66-8btzx   0/1     ContainerCreating   0          41s   <none>   k8s-lab   <none>           <none>
 web-6cbd997c66-9jq4k   0/1     ContainerCreating   0          40s   <none>   k8s-lab   <none>           <none>
 deployment.apps/web image updated
+
+=== run6: Docker/Compose
+Status: Downloaded newer image for nginx:1.27-alpine
+04acf8bf63e6   nginx:1.27-alpine   "/docker-entrypoint.…"   12 seconds ago   Up 10 seconds   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   web1
+<!DOCTYPE html>
+ [32m✔[0m Container tmp-web-1  [32mStarted[0m                                            [34m2.9s [0m
+[?25h=== COMPOSE CHECK ===
+<!DOCTYPE html>
+=== run6: image import
+docker.io/library/nginx:1.27-alpine                                     application/vnd.oci.image.index.v1+json sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10 20.0 MiB linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/riscv64,linux/s390x io.cri-containerd.image=managed 
+docker.io/library/nginx:local2                                          application/vnd.oci.image.index.v1+json sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10 20.0 MiB linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64/v8,linux/ppc64le,linux/riscv64,linux/s390x io.cri-containerd.image=managed 
+=== run6: K8s still ContainerCreating / timeout
+error: timed out waiting for the condition
+web-6cbd997c66-9vhhp   0/1     ContainerCreating   0          3m56s   <none>   k8s-lab   <none>           <none>
+web-6cbd997c66-d5p7q   0/1     ContainerCreating   0          3m57s   <none>   k8s-lab   <none>           <none>
+web-6cbd997c66-hlgf9   0/1     ContainerCreating   0          42s   <none>   k8s-lab   <none>           <none>
