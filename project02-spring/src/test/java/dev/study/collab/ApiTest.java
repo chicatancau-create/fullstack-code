@@ -14,8 +14,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.Map;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -114,6 +120,71 @@ class ApiTest {
 
         MvcResult list = mvc.perform(get("/workspaces/" + workspaceId + "/tasks").header("Authorization", "Bearer " + bob)).andReturn();
         assertThat(body(list).get("tasks")).hasSize(1);
+    }
+
+    @Test
+    void invitationFlowWritesAuditAndEnforcesEmail() throws Exception {
+        register("owner@example.com");
+        register("bob@example.com");
+        register("alice@example.com");
+        String owner = login("owner@example.com");
+        String bob = login("bob@example.com");
+        String alice = login("alice@example.com");
+        long workspaceId = body(postJson("/workspaces", owner, Map.of("name", "Invite Team"))).get("id").asLong();
+
+        MvcResult invite = postJson("/workspaces/" + workspaceId + "/invitations", owner, Map.of("email", "bob@example.com", "role", "member"));
+        assertThat(invite.getResponse().getStatus()).isEqualTo(201);
+        String inviteToken = body(invite).get("token").asText();
+        MvcResult wrongEmail = postJson("/invitations/accept", alice, Map.of("token", inviteToken));
+        assertThat(wrongEmail.getResponse().getStatus()).isEqualTo(403);
+        MvcResult accepted = postJson("/invitations/accept", bob, Map.of("token", inviteToken));
+        assertThat(accepted.getResponse().getStatus()).isEqualTo(200);
+        assertThat(body(accepted).get("idempotent").asBoolean()).isFalse();
+        MvcResult again = postJson("/invitations/accept", bob, Map.of("token", inviteToken));
+        assertThat(again.getResponse().getStatus()).isEqualTo(200);
+        assertThat(body(again).get("idempotent").asBoolean()).isTrue();
+        MvcResult duplicate = postJson("/workspaces/" + workspaceId + "/invitations", owner, Map.of("email", "bob@example.com", "role", "member"));
+        assertThat(duplicate.getResponse().getStatus()).isEqualTo(409);
+
+        MvcResult audit = mvc.perform(get("/workspaces/" + workspaceId + "/audit").header("Authorization", "Bearer " + owner)).andReturn();
+        assertThat(audit.getResponse().getStatus()).isEqualTo(200);
+        List<String> actions = body(audit).get("events").findValuesAsText("action");
+        assertThat(actions).contains("workspace.create", "invitation.create", "invitation.accept");
+        MvcResult memberAudit = mvc.perform(get("/workspaces/" + workspaceId + "/audit").header("Authorization", "Bearer " + bob)).andReturn();
+        assertThat(memberAudit.getResponse().getStatus()).isEqualTo(403);
+    }
+
+    @Test
+    void lastOwnerIsProtectedAndConcurrentRemovalKeepsOneOwner() throws Exception {
+        register("owner@example.com");
+        register("bob@example.com");
+        String owner = login("owner@example.com");
+        String bob = login("bob@example.com");
+        long workspaceId = body(postJson("/workspaces", owner, Map.of("name", "Owner Team"))).get("id").asLong();
+        long ownerId = jdbc.queryForObject("SELECT id FROM users WHERE email = 'owner@example.com'", Long.class);
+        MvcResult selfRemove = mvc.perform(delete("/workspaces/" + workspaceId + "/members/" + ownerId).header("Authorization", "Bearer " + owner)).andReturn();
+        assertThat(selfRemove.getResponse().getStatus()).isEqualTo(409);
+
+        String inviteToken = body(postJson("/workspaces/" + workspaceId + "/invitations", owner, Map.of("email", "bob@example.com", "role", "owner"))).get("token").asText();
+        assertThat(postJson("/invitations/accept", bob, Map.of("token", inviteToken)).getResponse().getStatus()).isEqualTo(200);
+        long bobId = jdbc.queryForObject("SELECT id FROM users WHERE email = 'bob@example.com'", Long.class);
+
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Callable<Integer> ownerDeletesBob = () -> mvc.perform(delete("/workspaces/" + workspaceId + "/members/" + bobId)
+                    .header("Authorization", "Bearer " + owner)).andReturn().getResponse().getStatus();
+            Callable<Integer> bobDeletesOwner = () -> mvc.perform(delete("/workspaces/" + workspaceId + "/members/" + ownerId)
+                    .header("Authorization", "Bearer " + bob)).andReturn().getResponse().getStatus();
+            Future<Integer> first = pool.submit(ownerDeletesBob);
+            Future<Integer> second = pool.submit(bobDeletesOwner);
+            List<Integer> statuses = List.of(first.get(), second.get());
+            assertThat(statuses).contains(204);
+            assertThat(statuses).containsAnyOf(404, 409);
+        } finally {
+            pool.shutdownNow();
+        }
+        Integer owners = jdbc.queryForObject("SELECT COUNT(*) FROM memberships WHERE workspace_id = ? AND role = 'owner'", Integer.class, workspaceId);
+        assertThat(owners).isEqualTo(1);
     }
 
     @Test

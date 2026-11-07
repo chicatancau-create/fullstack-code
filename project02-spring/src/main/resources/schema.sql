@@ -41,3 +41,32 @@ CREATE TABLE IF NOT EXISTS tasks (
   CONSTRAINT fk_task_ws FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
   CONSTRAINT chk_task_status CHECK (status IN ('todo', 'doing', 'done'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS invitations (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  workspace_id BIGINT NOT NULL,
+  email VARCHAR(190) NOT NULL,
+  role VARCHAR(20) NOT NULL,
+  token_hash CHAR(64) NOT NULL UNIQUE,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending',
+  expires_at TIMESTAMP NOT NULL,
+  created_by BIGINT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  accepted_at TIMESTAMP NULL,
+  CONSTRAINT fk_invite_ws FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
+  CONSTRAINT fk_invite_user FOREIGN KEY (created_by) REFERENCES users(id),
+  CONSTRAINT chk_invite_role CHECK (role IN ('owner', 'member')),
+  CONSTRAINT chk_invite_status CHECK (status IN ('pending', 'accepted', 'revoked'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS audit_events (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  workspace_id BIGINT NOT NULL,
+  actor_id BIGINT NOT NULL,
+  action VARCHAR(80) NOT NULL,
+  target VARCHAR(190) NOT NULL,
+  metadata JSON NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_audit_ws FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
+  CONSTRAINT fk_audit_user FOREIGN KEY (actor_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

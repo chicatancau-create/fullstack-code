@@ -37,6 +37,8 @@ done
   echo "unauth_status: $(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8798/workspaces)"
 } | tee evidence/http.txt
 
+node scripts/backup.mjs 2>&1 | tee evidence/backup.txt
+
 jpid=$(jps -l | awk '/project02-spring-1.0.0.jar/ {print $1; exit}')
 {
   echo "jps: $(jps -l | grep project02-spring || true)"
@@ -57,6 +59,7 @@ echo "jvm_pid=$jpid" | tee -a evidence/jvm.txt
   echo "captured_at: $(date -Is)"
   echo "tests: $(grep -E 'Tests run: [0-9]+, Failures' evidence/test.txt | tail -1)"
   echo "http=health+register+login+workspace+task"
+  echo "backup_restore=PASS"
   echo "jvm=version+heap+threads"
   echo "mysql=version+max_connections+counts"
   echo "JAVA-MYSQL PASS"

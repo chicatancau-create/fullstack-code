@@ -1,0 +1,4 @@
+dump bytes=12497 file=E:\fullstack-code\project02-spring\evidence\p02j-backup.sql
+source  users=14 memberships=9 tasks=4 audit=1 invitations=0
+restore users=14 memberships=9 tasks=4 audit=1 invitations=0
+RESTORE OK

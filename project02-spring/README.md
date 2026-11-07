@@ -21,8 +21,8 @@
 | 任务创建/列表 | 201，租户隔离，标题唯一 | 同左 |
 | 跨租户访问 | 404 | 404 |
 | 重复标题/成员 | 409 | 409 |
-| 最后 Owner 并发保护 | 有（行锁 + 测试） | **未迁移** |
-| 邀请流程 | 有 | **未迁移** |
+| 最后 Owner 并发保护 | 有（行锁 + 测试） | 有（事务模板 + 行锁，并发测试） |
+| 邀请流程 | 有 | 有（token 哈希、邮箱匹配、幂等接受） |
 
 ## 运行
 
@@ -46,7 +46,8 @@ mvn spring-boot:run                    # http://127.0.0.1:8798
 
 ## 证据
 
-- [evidence/test.txt](evidence/test.txt)：`Tests run: 5, Failures: 0, Errors: 0`，真实 MySQL；含 actuator 鉴权测试。
+- [evidence/test.txt](evidence/test.txt)：`Tests run: 7, Failures: 0, Errors: 0`，真实 MySQL；含邀请/审计/最后 Owner 并发。
+- [evidence/backup.txt](evidence/backup.txt)：`mysqldump` 恢复到独立库后行数一致（users/memberships/tasks/audit/invitations）。
 - [evidence/security.txt](evidence/security.txt)：Spring Security 6.5.11（config/core/web）依赖树。
 - [evidence/http.txt](evidence/http.txt)：health、注册、登录、建组织、建任务、列表、未登录 401。
 - [evidence/jvm.txt](evidence/jvm.txt)：JVM 版本、G1 堆使用、线程快照（含 Hikari 与 MySQL 清理线程）。
@@ -61,7 +62,8 @@ mvn spring-boot:run                    # http://127.0.0.1:8798
 - Spring Security 仅用于无状态过滤链、CSRF 关闭与入口点；角色仍由业务 SQL 判定，未使用方法级 `@PreAuthorize`。
 - 未使用 Testcontainers（本机无 Docker）；测试依赖手工启动的 3307 实例。
 - 未做持续连接池耗尽压测、死锁注入与 `EXPLAIN` 对比；已有单次行锁等待与 Hikari 配置快照。
-- 未迁移邀请、最后 Owner 并发保护、审计、备份恢复；这些仍以 Node/PostgreSQL 版为准。
+- 审计写入覆盖工作区创建、成员添加/移除、邀请创建/接受；备份恢复已验证到独立库。
+- 角色仍由业务 SQL 判定，未使用方法级 `@PreAuthorize`。
 - 未实现 Express/Nest 对照实现；[migration-comparison.md](docs/migration-comparison.md) 中的框架对比是分析，不是实测。
 - Windows Git Bash 下用 `curl -d` 传中文 JSON 会被按本地代码页转换并导致 400；冒烟脚本使用 ASCII 字段。
 - 便携 MySQL 不注册服务，重启机器后需手动启动；未做生产部署与备份。
