@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P01",
-  "generated_at": "2026-11-07T13:32:49.131Z",
-  "commit": "7806d674332ae06ee0195df0c2013e91f752cd3c",
+  "generated_at": "2026-11-07T15:51:27.874Z",
+  "commit": "5f6d062d220d5e00ebb653df6cb95f1096323b00",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -13,6 +13,14 @@
   "commands": [
     {
       "cmd": "bash scripts/run_project.sh",
+      "exit": 0
+    },
+    {
+      "cmd": "bash scripts/deploy_local.sh",
+      "exit": 0
+    },
+    {
+      "cmd": "bash scripts/rollback_check.sh",
       "exit": 0
     }
   ],
@@ -38,11 +46,6 @@
       "sha256": "d3eb42992f4fa7cb93ea0b136f15571d8e96b6e011467262899e2dc1ebedfaad"
     },
     {
-      "path": "evidence/e2e-run.txt",
-      "bytes": 224,
-      "sha256": "d3eb42992f4fa7cb93ea0b136f15571d8e96b6e011467262899e2dc1ebedfaad"
-    },
-    {
       "path": "evidence/axe.json",
       "bytes": 157,
       "sha256": "60f893f8e039f1caf1a35ea3ee890934ebf20c01b5cd234622131327ee3b3bda"
@@ -53,12 +56,33 @@
       "sha256": "23da2d37188a73db49ed797c40eb6ab0439c5ed6e3cfe0196709936a0adbbba1"
     },
     {
-      "path": "evidence/e2e-post.png",
-      "bytes": 32152,
-      "sha256": "618d606176efc6de95c27ed282ab982a005b8813e6b01b6cb4089f5b2e7c1e89"
+      "path": "evidence/deploy.txt",
+      "bytes": 214,
+      "sha256": "6d1140d3cbab64cf397b0e02fc1e48d1a270b9f0ca83b4aa82a3b7b9d55ec6f1"
+    },
+    {
+      "path": "evidence/rollback.txt",
+      "bytes": 67,
+      "sha256": "8959a80aa3523cf8c70e6a878a292eb6f4e216eb988e3beb307aacfb58d22311"
+    },
+    {
+      "path": "evidence/deploy-build.log",
+      "bytes": 426,
+      "sha256": "74d2c15feff9bea663c937f1fa0f10b5c20ba29f5a675f508d24250cd81d5db5"
+    },
+    {
+      "path": "evidence/preview.log",
+      "bytes": 77,
+      "sha256": "ae24f783560c59deed04caeff90ef3b84a3c0d3a50ca749550cfeeed2c58dd88"
+    },
+    {
+      "path": "evidence/https-gateway.log",
+      "bytes": 48,
+      "sha256": "7cc41e61d89fc70a7e6537aa8dc396c1704ad64c38f325308da4d77844700187"
     }
   ],
   "unverified": [
-    "未部署；无 Firefox/Safari/真实手机/读屏；无后端/SSR"
+    "本地自签名HTTPS，不是公网/域名部署",
+    "回滚只验证上一提交构建产物可访问"
   ]
 }
