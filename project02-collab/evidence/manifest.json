@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "experiment": "P02",
+  "generated_at": "2026-11-07T13:46:49.251Z",
+  "commit": "1a2839d54a2b11248fae2cd5e185d005ba6dce0f",
+  "runtime": {
+    "platform": "win32 x64",
+    "os_release": null,
+    "node": "v24.15.0",
+    "gcc": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r7) 15.2.0",
+    "gdb": "GNU gdb (GDB for MinGW-W64 x86_64, built by Brecht Sanders, r7) 17.1"
+  },
+  "commands": [
+    {
+      "cmd": "PGPASSWORD=<local-test-password> bash scripts/run_project.sh",
+      "exit": 0
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/syntax.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "evidence/migrate.txt",
+      "bytes": 56,
+      "sha256": "ab9d8a4d9a1422bf5c1976bffb31d65e0ef2290f9308aba770de1eeca63e0c91"
+    },
+    {
+      "path": "evidence/test.txt",
+      "bytes": 572,
+      "sha256": "9c4db871773eaedc238115c8b4e6f8e2a63d70cb84bf477e9730a0a264556f04"
+    },
+    {
+      "path": "evidence/backup.txt",
+      "bytes": 46,
+      "sha256": "ea07d6b80c6eefcc89d7b6c0e6c02af78a0c566296a084d0b4ab228845f10532"
+    },
+    {
+      "path": "evidence/run.txt",
+      "bytes": 183,
+      "sha256": "bb5cf9907ae0a94d7c5665465ffe5544b8b9025f672a7b75e535b8df36b1cd1a"
+    }
+  ],
+  "unverified": [
+    "未部署；无前端/限流/MFA/监控/RTO；单机 PG"
+  ]
+}
