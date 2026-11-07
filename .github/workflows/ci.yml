@@ -140,7 +140,7 @@ jobs:
           POSTGRES_DB: study_lab_p05
         ports: ['5432:5432']
         options: >-
-          --health-cmd "pg_isready -U study -d study_lab"
+          --health-cmd "pg_isready -U study -d study_lab_p05"
           --health-interval 5s --health-timeout 5s --health-retries 20
     env:
       PGHOST: 127.0.0.1
