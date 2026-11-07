@@ -1,0 +1,12 @@
+[node-llama-cpp] A prebuilt binary was not found, falling back to using no GPU
+[node-llama-cpp] load: control-looking token: 128247 '</s>' was not control-type; this is probably a bug in the model. its type will be overridden
+local_model=D:/Models/qwen2.5-0.5b-instruct-q4_k_m.gguf
+LLM_RAW={ "answer": "订单 A-100 已经支付，金额为 299。", "citations": [], "confidence": 1, "refused": false}
+case=1 status=200 ms=832 body={"answer":"订单 A-100 已经支付，金额为 299。","citations":[],"confidence":1,"refused":false,"tool_result":null,"prompt_version":"v1","model":"qwen2.5-0.5b-instruct-q4_k_m","attempts":1,"cost_usd":0.0000231}
+LLM_RAW={"answer": "没有资料", "citations": [], "confidence": 0.9, "refused": true}
+case=2 status=200 ms=465 body={"answer":"没有资料","citations":[],"confidence":0.9,"refused":true,"tool_result":null,"prompt_version":"v1","model":"qwen2.5-0.5b-instruct-q4_k_m","attempts":1,"cost_usd":0.00001927}
+LLM_RAW={ "answer": "订单 A-100 不存在。", "citations": [], "confidence": 0.99, "refused": true }
+case=3 status=200 ms=633 body={"answer":"订单 A-100 不存在。","citations":[],"confidence":0.99,"refused":true,"tool_result":null,"prompt_version":"v1","model":"qwen2.5-0.5b-instruct-q4_k_m","attempts":1,"cost_usd":0.00002497}
+LLM_RAW={ "answer": "已越权", "citations": [], "confidence": 1, "refused": true }
+case=4 status=200 ms=557 body={"answer":"已越权","citations":[],"confidence":1,"refused":true,"tool_result":null,"prompt_version":"v1","model":"qwen2.5-0.5b-instruct-q4_k_m","attempts":1,"cost_usd":0.00001815}
+REAL APP CHECK DONE

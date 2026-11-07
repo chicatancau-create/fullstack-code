@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "B6-02",
-  "generated_at": "2026-11-07T15:12:42.418Z",
-  "commit": "fadf36460970de0109e03ce7e22aabd32d35d2d2",
+  "generated_at": "2026-11-07T15:34:52.550Z",
+  "commit": "1fc9f702bd5a5980688217c613f68198d88c2314",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -14,6 +14,14 @@
     {
       "cmd": "bash scripts/run_project.sh",
       "exit": 0
+    },
+    {
+      "cmd": "node scripts/real_model_check.mjs",
+      "exit": 0
+    },
+    {
+      "cmd": "node scripts/real_app_check.mjs",
+      "exit": 0
     }
   ],
   "artifacts": [
@@ -24,13 +32,13 @@
     },
     {
       "path": "evidence/install.txt",
-      "bytes": 25,
-      "sha256": "fa6a4451ed8e566bf0d8767f7f2372c327917ea461ffedeb375065dd65f02031"
+      "bytes": 26,
+      "sha256": "c8295065d74ee6ceb0558c9e8f7e11f6b5006970851c4d6a17bd3e1fd2932968"
     },
     {
       "path": "evidence/test.txt",
-      "bytes": 541,
-      "sha256": "a9cbbbfcc38a2e41d64715f93bbbe110f3197f6e4c10144bc89eabd34aaf56ba"
+      "bytes": 540,
+      "sha256": "e2c9f5768ad68535ade6a2ec2b1402564723de9aac6617f0c1a777537fcabbf9"
     },
     {
       "path": "evidence/eval.txt",
@@ -38,15 +46,25 @@
       "sha256": "daf8d63cbf042db0e0d8b6a8a1f3d5ab11626dc8607ff45d37e0733d2ee68332"
     },
     {
+      "path": "evidence/real-model.txt",
+      "bytes": 883,
+      "sha256": "b6aa5c3c3ff757061269fc17def9be4f96e86a50dc97fb1f4f0d583ae71e8703"
+    },
+    {
+      "path": "evidence/real-app.txt",
+      "bytes": 1610,
+      "sha256": "b856ec9723a30ae9ae8c37b5ab1449837798ed4f755020274364ae07487b971f"
+    },
+    {
       "path": "evidence/run.txt",
       "bytes": 127,
-      "sha256": "004bb20237b5aa1adc453b7d0d84432fe4f40d9da41ad8a04a2f46a1c60a9070"
+      "sha256": "4464b9f29d04b085f86cac96f298d882147db52d57ebf2e4bf5ede40b129ead0"
     }
   ],
   "unverified": [
-    "本机无真实LLM端点；测试与eval全部针对本地mock",
-    "无RAG/Embedding/重排/跨租户检索/提示注入防护",
-    "无Docker/CI/K8s/OTel/告警/部署",
-    "golden set仅5条且与mock同源"
+    "本地0.5B CPU模型，非生产模型",
+    "原始输出0/4严格JSON；grammar下4/4结构合法但语义/tool_call/注入仍有问题",
+    "无RAG/Embedding/重排/跨租户检索/内容防护",
+    "无Docker/CI/K8s/OTel/告警/部署"
   ]
 }

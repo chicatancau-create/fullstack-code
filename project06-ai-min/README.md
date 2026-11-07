@@ -30,15 +30,32 @@ export LLM_BASE_URL=https://your-endpoint LLM_API_KEY=... LLM_MODEL=...
 npm start                      # 127.0.0.1:8800
 ```
 
+## 本地真实模型验证（0.5B，CPU）
+
+本机无 API key，使用 `node-llama-cpp` + Qwen2.5-0.5B-Instruct Q4（469MB，模型文件不入库）：
+
+```bash
+# 下载到 D:/Models（或设 MODEL_PATH）
+curl -L -o D:/Models/qwen2.5-0.5b-instruct-q4_k_m.gguf   https://hf-mirror.com/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf
+npm run real        # 无语法约束：4 条输出 0/4 是严格 JSON
+npm run real:app    # 本地 server + JSON grammar：4/4 返回 200，耗时 0.4–0.8s/条
+```
+
+- 约束解码（JSON Schema grammar）让 0.5B 输出合法结构；原始模型会输出无引号键或代码围栏，0/4 严格可解析。
+- 真实输出仍暴露问题：tool_call 未生成、无资料问题置信度偏高、提示注入输出“已越权”（仅结构校验，无内容防护）。
+- 模型只在本机 CPU 运行；不是生产模型，不代表真实 LLM 质量。
+
 ## 证据
 
 - `evidence/test.txt`：8/8 通过。
 - `evidence/eval.txt`：golden set 5/5（mock），只验证行为分支，不代表模型质量。
+- `evidence/real-model.txt`：无语法约束的原始输出（0/4 严格 JSON）。
+- `evidence/real-app.txt`：本地 server + grammar 的 4 条真实请求/响应与耗时。
 - `evidence/run.txt`：本轮汇总。
 
 ## 未实现 / 未验证
 
-- 未接真实模型；未测真实结构化输出成功率、拒答率、引用正确率、P95、成本。
+- 已接本地 0.5B 模型做工程验证；未接生产 LLM，未测引用正确率、真实拒答率与生产成本。
 - 无 RAG/Embedding/重排/跨租户检索/提示注入防护；无人工抽检。
 - 无 Docker/Compose、CI、K8s、OTel、告警与部署。
 - 工具只有本地合成订单查询；无权限模型与审计。

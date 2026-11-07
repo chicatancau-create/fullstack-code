@@ -7,8 +7,15 @@ const SYSTEM_PROMPT = '你是订单助手。只输出 JSON：{answer,citations,c
 const ORDERS = { 'A-100': { status: 'paid', amount: 299 }, 'B-200': { status: 'cancelled', amount: 99 } };
 
 function parseModelOutput(text) {
+  const cleaned = String(text).trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
   let value;
-  try { value = JSON.parse(text); } catch { throw new LlmError('invalid_json', 502); }
+  try {
+    value = JSON.parse(cleaned);
+  } catch {
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (!match) throw new LlmError('invalid_json', 502);
+    try { value = JSON.parse(match[0]); } catch { throw new LlmError('invalid_json', 502); }
+  }
   if (!value || typeof value.answer !== 'string' || !Array.isArray(value.citations)) throw new LlmError('invalid_shape', 502);
   if (typeof value.confidence !== 'number' || value.confidence < 0 || value.confidence > 1) throw new LlmError('invalid_confidence', 502);
   if (typeof value.refused !== 'boolean') throw new LlmError('invalid_refusal', 502);
