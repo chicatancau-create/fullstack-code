@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P04",
-  "generated_at": "2026-11-07T17:43:54.438Z",
-  "commit": "58c6bff17fce0e150c7413eee5011f2ba2932ea1",
+  "generated_at": "2026-11-07T18:18:08.181Z",
+  "commit": "f7eb7254db45700147063d63c832bb60918655a6",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -91,8 +91,8 @@
     },
     {
       "path": "deploy/evidence/docker-k8s.txt",
-      "bytes": 4229,
-      "sha256": "b5fd6674cc1a29bac8ec1a8050e779db45c79b009f9c6a6a6f8037d7c269f461"
+      "bytes": 4904,
+      "sha256": "11a9235f92111318a980081db3f77916044778ca09fa492e8e004a520b993180"
     },
     {
       "path": "deploy/k8s-web.yaml",
@@ -116,9 +116,8 @@
     }
   ],
   "unverified": [
-    "Docker/Compose成功；K3s Pod Running/自愈成功；滚动更新/undo未验证",
-    "告警为静态规则+本地判定，无Prometheus/Alertmanager",
-    "本地自签名HTTPS，不是公网/域名部署",
-    "OTel仅InMemory；后台任务单机"
+    "Docker/Compose、K8s Pod Running、rollout restart/undo通过；单节点TCG",
+    "无CI/Ingress/多节点/Prometheus实例/公网",
+    "本地自签名HTTPS；OTel仅InMemory；后台任务单机"
   ]
 }
