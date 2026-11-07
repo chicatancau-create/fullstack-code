@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P04",
-  "generated_at": "2026-11-07T17:25:07.007Z",
-  "commit": "d533ecb3acd2a7651b0a0c2ac994787d67b2fbbb",
+  "generated_at": "2026-11-07T17:42:11.776Z",
+  "commit": "73c2e8e65627af6917bd4941f6f4cef0270669ee",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -86,8 +86,8 @@
     },
     {
       "path": "deploy/evidence/docker-k8s.txt",
-      "bytes": 3703,
-      "sha256": "9f85a966db6ae873d4002cb8f815c68d22872b3171bd68165f5920a226bf56fa"
+      "bytes": 4229,
+      "sha256": "b5fd6674cc1a29bac8ec1a8050e779db45c79b009f9c6a6a6f8037d7c269f461"
     },
     {
       "path": "deploy/k8s-web.yaml",
@@ -107,8 +107,8 @@
   ],
   "unverified": [
     "Docker/Compose成功；K3s单节点Pod Running与自愈成功",
-    "K8s滚动更新/undo未验证（TCG下ContainerCreating超时）",
+    "K8s滚动更新/undo未验证（TCG/网络不稳定）",
     "本地自签名HTTPS，不是公网/域名部署",
-    "OTel仅InMemory导出；后台任务单机"
+    "OTel仅InMemory；后台任务单机"
   ]
 }
