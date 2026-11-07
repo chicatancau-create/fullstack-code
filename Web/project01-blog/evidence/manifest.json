@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P01",
-  "generated_at": "2026-11-07T13:28:21.375Z",
-  "commit": "96e5adfe5dea0d902740b3b3873453a2dba3d0a1",
+  "generated_at": "2026-11-07T13:32:49.131Z",
+  "commit": "7806d674332ae06ee0195df0c2013e91f752cd3c",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -24,28 +24,33 @@
     },
     {
       "path": "evidence/test.txt",
-      "bytes": 253,
-      "sha256": "91047dcc4d8440b380ba2b9726a2697549d5d734c3cd1ac18dd654ecf0b814ca"
+      "bytes": 254,
+      "sha256": "1887a6d5da02d62907e45d792dcf73acdeb2a01369cda9a686f9d394ab6fd8fc"
     },
     {
       "path": "evidence/build.txt",
       "bytes": 352,
-      "sha256": "e009b2636da02e707d9fd1600b720b28800eb7b31365ea675872ffe835035ed5"
+      "sha256": "dc9dad6713f125a16d6aeb2fcec23c517d4d6e1493504299699d6089d65f6a2d"
     },
     {
       "path": "evidence/e2e.txt",
-      "bytes": 126,
-      "sha256": "d6711426308d89796fe563b0cdaf69dcbd7941ce6a3fa27340c0adc74a46d9e5"
+      "bytes": 224,
+      "sha256": "d3eb42992f4fa7cb93ea0b136f15571d8e96b6e011467262899e2dc1ebedfaad"
     },
     {
       "path": "evidence/e2e-run.txt",
-      "bytes": 126,
-      "sha256": "d6711426308d89796fe563b0cdaf69dcbd7941ce6a3fa27340c0adc74a46d9e5"
+      "bytes": 224,
+      "sha256": "d3eb42992f4fa7cb93ea0b136f15571d8e96b6e011467262899e2dc1ebedfaad"
+    },
+    {
+      "path": "evidence/axe.json",
+      "bytes": 157,
+      "sha256": "60f893f8e039f1caf1a35ea3ee890934ebf20c01b5cd234622131327ee3b3bda"
     },
     {
       "path": "evidence/run.txt",
       "bytes": 175,
-      "sha256": "0ece8df02beebc778ccaa5af6fd9b1dfe4ef965752e13a797c68ca35255d4d68"
+      "sha256": "23da2d37188a73db49ed797c40eb6ab0439c5ed6e3cfe0196709936a0adbbba1"
     },
     {
       "path": "evidence/e2e-post.png",
