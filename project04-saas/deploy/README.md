@@ -33,3 +33,4 @@
 - QEMU TCG、单节点 K3s、无 Ingress/LoadBalancer/多节点；不代表生产 K8s。
 - Docker Hub 直连在 guest 内超时，需给 dockerd 配代理（示例用 host 10.0.2.2:7897）。
 - 没有告警、长期 trace 存储、滚动更新成功证据；`rollout undo` 未验证。
+- 复现时 K3s 安装脚本有一次被 GitHub 连接重置中断，说明该演练依赖外网可达性；失败要重跑，不能把“脚本继续执行”当成功。

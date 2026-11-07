@@ -48,3 +48,14 @@ error: timed out waiting for the condition
 web-6cbd997c66-9vhhp   0/1     ContainerCreating   0          3m56s   <none>   k8s-lab   <none>           <none>
 web-6cbd997c66-d5p7q   0/1     ContainerCreating   0          3m57s   <none>   k8s-lab   <none>           <none>
 web-6cbd997c66-hlgf9   0/1     ContainerCreating   0          42s   <none>   k8s-lab   <none>           <none>
+
+=== run7: Docker/Compose + K3s network failure
+Status: Downloaded newer image for nginx:1.27-alpine
+4178fc4b374a   nginx:1.27-alpine   "/docker-entrypoint.…"   12 seconds ago   Up 10 seconds   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   web1
+<!DOCTYPE html>
+ [32m✔[0m Container tmp-web-1  [32mStarted[0m                                            [34m3.9s [0m
+[?25h=== COMPOSE CHECK ===
+<!DOCTYPE html>
+curl: (56) Recv failure: Connection reset by peer
+[INFO]  Using v1.37.2+k3s1 as release
+[ERROR]  Download failed
