@@ -1,1 +1,1 @@
-p03 tables=inventory,order_items,orders,payment_events,schema_migrations
+p03 tables=inventory,notifications,order_items,orders,outbox,payment_events,schema_migrations

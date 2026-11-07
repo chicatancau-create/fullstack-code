@@ -148,6 +148,11 @@ export function buildApp({ pool, logger = false } = {}) {
       const row = order.rows[0];
       if (result === 'success' && row.status === 'created') {
         await client.query("UPDATE p03.orders SET status = 'paid', paid_at = now() WHERE id = $1", [orderId]);
+        await client.query(
+          `INSERT INTO p03.outbox (event_id, type, payload)
+           VALUES ($1, 'order.paid', $2::jsonb) ON CONFLICT (event_id) DO NOTHING`,
+          [eventId, JSON.stringify({ event_id: eventId, order_id: orderId, user_id: row.user_id, amount: row.amount })],
+        );
         await client.query('UPDATE p03.payment_events SET applied = true, note = $2 WHERE event_id = $1', [eventId, 'paid']);
         await client.query('COMMIT');
         return { duplicate: false, applied: true, status: 'paid' };

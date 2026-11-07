@@ -30,6 +30,7 @@ if [ "$tests_rc" -ne 0 ]; then
 fi
 
 node scripts/load.mjs 2>&1 | tee evidence/load.txt
+node scripts/mq_check.mjs 2>&1 | tee evidence/mq.txt
 node scripts/backup.mjs 2>&1 | tee evidence/backup.txt
 
 {
@@ -38,6 +39,7 @@ node scripts/backup.mjs 2>&1 | tee evidence/backup.txt
   echo "migrate=PASS"
   echo "tests=PASS"
   echo "load=PASS"
+  echo "mq=PASS"
   echo "backup_restore=PASS"
   echo "PROJECT03 PASS"
 } | tee evidence/run.txt

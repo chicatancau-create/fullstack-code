@@ -23,7 +23,7 @@ after(async () => {
 });
 
 beforeEach(async () => {
-  await pool.query('TRUNCATE p03.payment_events, p03.order_items, p03.orders RESTART IDENTITY CASCADE');
+  await pool.query('TRUNCATE p03.notifications, p03.outbox, p03.payment_events, p03.order_items, p03.orders RESTART IDENTITY CASCADE');
   await pool.query('TRUNCATE p03.inventory');
   await pool.query(
     `INSERT INTO p03.inventory (sku, title, unit_price, stock) VALUES

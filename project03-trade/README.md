@@ -48,6 +48,15 @@ Demo 中用户身份由网关头模拟，生产必须从认证令牌解析。
 
 - [ADR 001：库存行锁 + 条件更新](docs/adr/001-inventory-locking.md)
 - [ADR 002：支付回调 event_id 去重 + 状态机](docs/adr/002-payment-idempotency.md)
+- [ADR 003：事务内 Outbox + 消费端 Inbox 去重](docs/adr/003-outbox-inbox.md)
+
+## 支付事件（真实 RabbitMQ）
+
+- 支付成功与 `p03.outbox` 写入在同一数据库事务；发布器投递 durable exchange `p03.events`。
+- 消费端以 `event_id` 为 `p03.notifications` 主键，重复投递只产生一条通知。
+- 处理失败 `nack(requeue=false)`，经 `p03.dlx` 进入 `p03.dlq`。
+- 已验证：重复投递不重复写、30 条积压可排空、DLQ 收到 1 条、outbox sent 与通知对账 missing=0。
+- 证据：[evidence/mq.txt](evidence/mq.txt)。
 
 ## 数据模型
 
@@ -65,6 +74,7 @@ Demo 中用户身份由网关头模拟，生产必须从认证令牌解析。
   P50 32.2ms / P95 96.3ms / P99 634.3ms；最终库存 0、订单 150。
 - [evidence/migrate.txt](evidence/migrate.txt)、[evidence/backup.txt](evidence/backup.txt)：迁移与备份恢复行数一致。
 - [evidence/bug-001-failure.txt](evidence/bug-001-failure.txt)：修复前的超时原始输出。
+- [evidence/mq.txt](evidence/mq.txt)：真实 RabbitMQ 的 outbox/幂等/DLQ/积压/对账结果。
 - [docs/bugs/001-pool-starvation.md](docs/bugs/001-pool-starvation.md)：真实 Bug 复盘。
 
 ## 已知限制（未验证）
@@ -72,6 +82,7 @@ Demo 中用户身份由网关头模拟，生产必须从认证令牌解析。
 - 只支持单 SKU 订单；多商品、优惠、税费未实现。
 - 没有真实支付网关，回调由测试用 HMAC 签名模拟；未验证网关重试节奏与原始报文验签。
 - 没有订单超时自动取消、退款与对账。
+- MQ 只验证单节点、单消费者；未验证发布器崩溃窗口、消费者处理中崩溃重投、DLQ 重放、积压告警与多实例竞争。
 - 压测是单机、回环网络、合成数据；数字不代表生产容量。
 - 备份恢复验证到独立数据库 `p03_restore_check`，未做时间点恢复（PITR）。
 
