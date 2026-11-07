@@ -1,5 +1,5 @@
-captured_at: 2026-11-07T22:22:21+08:00
-tests: [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+captured_at: 2026-11-07T23:03:17+08:00
+tests: [INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0
 http=health+register+login+workspace+task
 jvm=version+heap+threads
 mysql=version+max_connections+counts

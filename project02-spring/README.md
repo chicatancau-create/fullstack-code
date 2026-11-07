@@ -6,7 +6,7 @@
 ## 技术栈（实测）
 
 - JDK 25.0.2、Maven 3.9.16
-- Spring Boot 3.5.16（Spring MVC + JdbcTemplate + HikariCP）
+- Spring Boot 3.5.16（Spring MVC + Spring Security 6.5.11 + JdbcTemplate + HikariCP）
 - MySQL 8.4.13 LTS，便携版运行在 `127.0.0.1:3307`，无 Windows 服务、无开机自启
 - JUnit 5 + MockMvc；真实 MySQL，无 H2/内存替身
 
@@ -46,7 +46,8 @@ mvn spring-boot:run                    # http://127.0.0.1:8798
 
 ## 证据
 
-- [evidence/test.txt](evidence/test.txt)：`Tests run: 4, Failures: 0, Errors: 0`，真实 MySQL。
+- [evidence/test.txt](evidence/test.txt)：`Tests run: 5, Failures: 0, Errors: 0`，真实 MySQL；含 actuator 鉴权测试。
+- [evidence/security.txt](evidence/security.txt)：Spring Security 6.5.11（config/core/web）依赖树。
 - [evidence/http.txt](evidence/http.txt)：health、注册、登录、建组织、建任务、列表、未登录 401。
 - [evidence/jvm.txt](evidence/jvm.txt)：JVM 版本、G1 堆使用、线程快照（含 Hikari 与 MySQL 清理线程）。
 - [evidence/mysql.txt](evidence/mysql.txt)：MySQL 8.4.13、`max_connections=151`、表行数。
@@ -57,6 +58,7 @@ mvn spring-boot:run                    # http://127.0.0.1:8798
 
 ## 已知限制
 
+- Spring Security 仅用于无状态过滤链、CSRF 关闭与入口点；角色仍由业务 SQL 判定，未使用方法级 `@PreAuthorize`。
 - 未使用 Testcontainers（本机无 Docker）；测试依赖手工启动的 3307 实例。
 - 未做持续连接池耗尽压测、死锁注入与 `EXPLAIN` 对比；已有单次行锁等待与 Hikari 配置快照。
 - 未迁移邀请、最后 Owner 并发保护、审计、备份恢复；这些仍以 Node/PostgreSQL 版为准。

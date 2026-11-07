@@ -117,6 +117,15 @@ class ApiTest {
     }
 
     @Test
+    void actuatorRequiresAuthenticationExceptHealth() throws Exception {
+        mvc.perform(get("/actuator/health")).andExpect(status().isOk());
+        mvc.perform(get("/actuator/metrics")).andExpect(status().isUnauthorized());
+        register("owner@example.com");
+        String token = login("owner@example.com");
+        mvc.perform(get("/actuator/metrics").header("Authorization", "Bearer " + token)).andExpect(status().isOk());
+    }
+
+    @Test
     void logoutInvalidatesSession() throws Exception {
         register("owner@example.com");
         String token = login("owner@example.com");

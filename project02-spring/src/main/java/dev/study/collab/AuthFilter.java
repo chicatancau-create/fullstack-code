@@ -11,13 +11,13 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-@Component
 public class AuthFilter extends OncePerRequestFilter {
     public static final String USER_ID = "authUserId";
-    private static final List<String> PUBLIC = List.of("/health", "/auth/register", "/auth/login");
+    private static final List<String> PUBLIC = List.of("/health", "/actuator/health", "/auth/register", "/auth/login");
     private final JdbcTemplate jdbc;
 
     public AuthFilter(JdbcTemplate jdbc) {
@@ -57,6 +57,8 @@ public class AuthFilter extends OncePerRequestFilter {
             return;
         }
         request.setAttribute(USER_ID, userId);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(String.valueOf(userId), null, List.of()));
         chain.doFilter(request, response);
     }
 }

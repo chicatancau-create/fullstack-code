@@ -22,6 +22,7 @@
 [INFO] Tests are skipped.
 [INFO] 
 [INFO] --- jar:3.4.2:jar (default-jar) @ project02-spring ---
+[INFO] Building jar: E:\fullstack-code\project02-spring\target\project02-spring-1.0.0.jar
 [INFO] 
 [INFO] --- spring-boot:3.5.16:repackage (repackage) @ project02-spring ---
 [INFO] Replacing main artifact E:\fullstack-code\project02-spring\target\project02-spring-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
@@ -29,6 +30,6 @@
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  1.540 s
-[INFO] Finished at: 2026-11-07T22:22:16+08:00
+[INFO] Total time:  2.324 s
+[INFO] Finished at: 2026-11-07T23:03:11+08:00
 [INFO] ------------------------------------------------------------------------
