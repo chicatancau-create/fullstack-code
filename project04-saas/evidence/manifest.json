@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "experiment": "P04",
+  "generated_at": "2026-11-07T14:09:01.326Z",
+  "commit": "7c2869b3bd750153425cac47f5f2de34e23ef0c3",
+  "runtime": {
+    "platform": "win32 x64",
+    "os_release": null,
+    "node": "v24.15.0",
+    "gcc": "gcc (MinGW-W64 x86_64-ucrt-posix-seh, built by Brecht Sanders, r7) 15.2.0",
+    "gdb": "GNU gdb (GDB for MinGW-W64 x86_64, built by Brecht Sanders, r7) 17.1"
+  },
+  "commands": [
+    {
+      "cmd": "PGPASSWORD=<local-test-password> bash scripts/run_project.sh",
+      "exit": 0
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/toolchain.txt",
+      "bytes": 24,
+      "sha256": "d72d32fb565c56d0975c38559f4194eb80b1e226fc2f341c023c21420f8d6d01"
+    },
+    {
+      "path": "evidence/migrate.txt",
+      "bytes": 107,
+      "sha256": "eb3d78ebea52c0cf731c2732f035b6aef309c44fe2fcfcb7c93c976bee3c9d53"
+    },
+    {
+      "path": "evidence/test.txt",
+      "bytes": 1162,
+      "sha256": "98cc6a27dd3fc78a2917845d608d3f7ca4d9a0d1dd00e513a2341557bf34bee4"
+    },
+    {
+      "path": "evidence/backup.txt",
+      "bytes": 174,
+      "sha256": "aa4f7d7d474490d1fdcbaf6f5cc63795618720bd13725763f2b67074a3fcf047"
+    },
+    {
+      "path": "evidence/run.txt",
+      "bytes": 113,
+      "sha256": "8b1c4171caee1182f901ed02b458746c947a34546bbf41c36c5cadf8d0d4c806"
+    }
+  ],
+  "unverified": [
+    "无前端、邮件、限流、MFA、Docker/CI/K8s/HTTPS/监控",
+    "未做深度模块（容量/两类故障/恢复演练）",
+    "未部署；备份不支持按用户删除"
+  ]
+}
