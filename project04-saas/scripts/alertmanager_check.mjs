@@ -80,8 +80,16 @@ try {
   await wait('http://127.0.0.1:9093/-/ready', 'alertmanager');
   for (let i = 0; i < 40 && received.length === 0; i++) await new Promise((r) => setTimeout(r, 500));
   const names = received.flatMap((p) => (p.alerts || []).map((a) => a.labels.alertname));
-  console.log(`webhook_payloads=${received.length}`);
+  const first = received[0] || {};
+  console.log(`webhook_payloads=${received.length} receiver=${first.receiver || '-'} status=${first.status || '-'}`);
   console.log(`alerts_received=${names.join(',') || 'none'}`);
+  const versionLine = await new Promise((resolve) => {
+    const p = spawn(alertmanager, ['--version']);
+    let out = '';
+    p.stdout.on('data', (d) => { out += d; });
+    p.on('exit', () => resolve(out.trim().split(/\r?\n/)[0]));
+  });
+  console.log(`alertmanager_version=${versionLine}`);
   if (received.length === 0) throw new Error('no webhook delivery');
   if (!names.includes('JobBacklog')) throw new Error('JobBacklog not delivered');
   console.log('ALERTMANAGER PASS');
