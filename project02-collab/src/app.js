@@ -91,6 +91,8 @@ export function buildApp({ pool, logger = false } = {}) {
     return reply.code(204).send();
   });
 
+  app.get('/health', async () => ({ status: 'ok' }));
+
   app.get('/me', { preHandler: requireUser }, async (request) => request.user);
 
   app.post('/workspaces', { preHandler: requireUser }, async (request, reply) => {
