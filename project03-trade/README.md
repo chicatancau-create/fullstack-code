@@ -12,7 +12,7 @@
 
 ## 运行
 
-需要本地 PostgreSQL，并设置合成账号密码：
+需要本地 PostgreSQL 与 RabbitMQ（`127.0.0.1:5672`，guest/guest，合成数据），并设置 PostgreSQL 合成账号密码：
 
 ```bash
 export PGHOST=127.0.0.1 PGUSER=study PGDATABASE=study_lab

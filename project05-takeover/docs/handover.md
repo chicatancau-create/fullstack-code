@@ -13,7 +13,7 @@ scripts/migrate.mjs 执行迁移
 ## 运行与停止
 
 - 依赖：Node 24、PostgreSQL 18（本机 `D:/PostgreSQL/18`）。
-- 启动：`node src/server.js`? 快照没有 server 文件；用 `buildApp` 由测试/调用方启动。
+- 启动：快照没有 server 入口；用 `buildApp({ pool })` 由调用方启动，测试即示例。
 - 测试：`node --test tests/regressions.test.js`（会自动 drop/create p02 schema）。
 - 停止：测试结束即退出；没有常驻进程。
 
