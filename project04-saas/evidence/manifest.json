@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P04",
-  "generated_at": "2026-11-07T18:53:23.506Z",
-  "commit": "39934799e3cdc7669c61cfdcb11e8a3e56aa7efd",
+  "generated_at": "2026-11-07T19:03:58.301Z",
+  "commit": "79ecd5af548cd666ac05b316fdde470cb579f380",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -32,7 +32,7 @@
       "exit": 0
     },
     {
-      "cmd": "Prometheus 3.5.0 scrape+rules",
+      "cmd": "Prometheus 3.5.0 + Alertmanager 0.28.1 webhook",
       "exit": 0
     }
   ],
@@ -76,6 +76,11 @@
       "path": "evidence/prometheus.txt",
       "bytes": 90,
       "sha256": "8ca82ca467a7128f566202874891dd8baeea2c73bd2e64211085d403fd8064a2"
+    },
+    {
+      "path": "evidence/alertmanager.txt",
+      "bytes": 64,
+      "sha256": "44be348079e2f9d666537cca6182e3567fb23e3590b37cc7b409387750dbb137"
     },
     {
       "path": "evidence/deploy.txt",
@@ -134,8 +139,8 @@
     }
   ],
   "unverified": [
-    "K8s单节点TCG；Docker/Compose与rollout undo成功；早期失败运行见证据",
-    "Prometheus有实例/规则，无Alertmanager通知链路",
+    "K8s单节点TCG；Docker/Compose与rollout undo成功",
+    "告警已到本地webhook，未接外部通知渠道",
     "无Ingress/多节点/公网；本地自签名HTTPS；OTel仅InMemory"
   ]
 }
