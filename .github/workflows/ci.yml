@@ -5,6 +5,30 @@ on:
   pull_request:
 
 jobs:
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+      - run: node scripts/manifest.mjs verify evidence/manifest.json
+        working-directory: Web/project01-blog
+      - run: node scripts/manifest.mjs verify evidence/manifest.json
+        working-directory: project02-collab
+      - run: node scripts/manifest.mjs verify evidence/manifest.json
+        working-directory: project02-spring
+      - run: node scripts/manifest.mjs verify evidence/manifest.json
+        working-directory: project02-frameworks
+      - run: node scripts/manifest.mjs verify evidence/manifest.json
+        working-directory: project03-trade
+      - run: node scripts/manifest.mjs verify evidence/manifest.json
+        working-directory: project04-saas
+      - run: node scripts/manifest.mjs verify evidence/manifest.json
+        working-directory: project05-takeover
+      - run: node scripts/manifest.mjs verify evidence/manifest.json
+        working-directory: project06-ai-min
+
   project01:
     runs-on: ubuntu-latest
     defaults:
