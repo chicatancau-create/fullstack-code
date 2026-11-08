@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P01",
-  "generated_at": "2026-11-08T05:21:44.973Z",
-  "commit": "b6e22d19fec9d13269e99f3820482eef8c93bfaa",
+  "generated_at": "2026-11-08T05:23:46.578Z",
+  "commit": "774bed026e53bf9d215d5e43008a7da611959cb0",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -28,7 +28,7 @@
       "exit": 0
     },
     {
-      "cmd": "GitHub Pages public HTTPS 200 + deep link",
+      "cmd": "GitHub Pages root 200 + 404.html deep-link fallback",
       "exit": 0
     }
   ],
@@ -100,12 +100,12 @@
     },
     {
       "path": "evidence/public-deep-link.txt",
-      "bytes": 194,
-      "sha256": "2fc79e6dee1053e01a89152493b02f80cbdea8c629b2ad18949f723f680ed1b6"
+      "bytes": 393,
+      "sha256": "1a573c7123666ae23a8ed72482df08c64ebfc605011ebaf7c860140bc146f158"
     }
   ],
   "unverified": [
-    "GitHub Pages无自定义域名；Quick Tunnel为临时",
+    "GitHub Pages无自定义域名；深链接HTTP状态为404由静态回退渲染；Quick Tunnel为临时",
     "回滚只验证上一提交构建产物可访问"
   ]
 }

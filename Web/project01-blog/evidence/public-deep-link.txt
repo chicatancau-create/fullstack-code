@@ -2,4 +2,6 @@ captured_at: 2026-11-08
 url: https://chicatancau-create.github.io/learning-blog-demo/posts/http-cache
 browser: headless Edge via CDP
 heading=HTTP 缓存：max-age 与 ETag
-PUBLIC DEEP LINK PASS
+PUBLIC DEEP LINK CONTENT PASS
+
+note: GitHub Pages serves 404.html for unknown paths, so the HTTP status is 404 even though the SPA renders the route. Root URL is 200. This is a static-host fallback, not a server rewrite.

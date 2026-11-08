@@ -56,7 +56,7 @@ flowchart LR
 | 组件测试 | 7/7 通过 | `evidence/test.txt` |
 | 生产构建 | `vite build` 成功；JS 382.13 kB / gzip 120.33 kB | `evidence/build.txt` |
 | E2E（headless Edge） | 首页 5 卡、跳转链接聚焦 main、搜索 1 条、进入详情 | `evidence/e2e.txt`、`e2e-post.png` |
-| 公网 HTTPS（持久） | GitHub Pages 返回 200，静态资源 200；深链接渲染正确 | `evidence/public-pages.txt`、`public-deep-link.txt` |
+| 公网 HTTPS（持久） | GitHub Pages 根路径 200、静态资源 200；深链接由 404.html 回退渲染（HTTP 状态仍为 404） | `evidence/public-pages.txt`、`public-deep-link.txt` |
 | 公网 HTTPS（临时） | Quick Tunnel 返回 200，TLS 校验通过 | `evidence/public-https.txt` |
 | manifest | SHA-256 校验 | `evidence/manifest.json` |
 
