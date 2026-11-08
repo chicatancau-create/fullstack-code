@@ -30,9 +30,10 @@
 
 ## 边界
 
-- QEMU TCG、单节点 K3s；Ingress 已用 Traefik 验证，无多节点/LoadBalancer/公网；不代表生产 K8s。
+- QEMU TCG、K3s 两节点（server + agent 容器在同一 VM）；Ingress 已用 Traefik 验证；无多机/HA/LoadBalancer/公网；不代表生产 K8s。
 - Docker Hub 直连在 guest 内超时，需给 dockerd 配代理（示例用 host 10.0.2.2:7897）。
-- 单节点 Ingress 已用 Traefik 验证：`Host: web.local` 经 Ingress 返回 nginx 页面（见 `evidence/ingress.txt`、`k8s-ingress.yaml`）；没有多节点/长期 trace 存储。
+- 单节点 Ingress 已用 Traefik 验证：`Host: web.local` 经 Ingress 返回 nginx 页面（见 `evidence/ingress.txt`、`k8s-ingress.yaml`）。
+- 两节点：`agent-1` 以特权容器加入 `k8s-lab`，`agent-pause` Pod 调度到 `agent-1` 并 Running；见 `evidence/multinode.txt`。仍不是多机/HA。
 - 告警用 Prometheus 3.5.0 + Alertmanager 0.28.1 本地 webhook 演练（见 `evidence/prometheus.txt`、`evidence/alertmanager.txt`），未接常驻监控/外部通知渠道。
 - 2026-11-08 首轮 cloud-init Ingress 失败（`runcmd` 未执行，记录见 `evidence/ingress-attempt-2026-11-08.txt`）；随后通过串口登录手动安装 K3s/Traefik 并完成 Ingress 验证。
 - 复现时 K3s 安装脚本有一次被 GitHub 连接重置中断，说明该演练依赖外网可达性；失败要重跑，不能把“脚本继续执行”当成功。
