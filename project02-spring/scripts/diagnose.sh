@@ -53,4 +53,15 @@ set -e
   "$MYSQL_BIN/mysql" --protocol=tcp -h127.0.0.1 -P3307 -uroot -e "SELECT OBJECT_SCHEMA, OBJECT_NAME, LOCK_TYPE, LOCK_MODE, LOCK_STATUS FROM performance_schema.data_locks LIMIT 10;" 2>&1 || true
 } >> evidence/diagnose.txt
 wait "$locker" 2>/dev/null || true
+
+MYSQL_PWD=study-pass "$MYSQL_BIN/mysql" --protocol=tcp -h127.0.0.1 -P3307 -ustudy -e "
+  SET SESSION cte_max_recursion_depth = 6000;
+  START TRANSACTION;
+  INSERT INTO p02j.tasks (workspace_id, title)
+  WITH RECURSIVE seq AS (SELECT 1 n UNION ALL SELECT n + 1 FROM seq WHERE n < 5000)
+  SELECT $wid, CONCAT('explain-', n) FROM seq;
+  EXPLAIN SELECT id, title, status FROM p02j.tasks WHERE workspace_id = $wid AND status = 'todo' ORDER BY id;
+  EXPLAIN SELECT id, title, status FROM p02j.tasks IGNORE INDEX (uq_task_title) WHERE workspace_id = $wid AND status = 'todo' ORDER BY id;
+  ROLLBACK;
+" > evidence/explain.txt 2>&1
 echo "DIAGNOSE DONE wid=$wid" >> evidence/diagnose.txt

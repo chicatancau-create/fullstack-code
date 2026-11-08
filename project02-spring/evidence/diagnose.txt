@@ -8,4 +8,4 @@ ERROR 1205 (HY000) at line 1: Lock wait timeout exceeded; try restarting transac
 OBJECT_SCHEMA	OBJECT_NAME	LOCK_TYPE	LOCK_MODE	LOCK_STATUS
 p02j	workspaces	TABLE	IX	GRANTED
 p02j	workspaces	RECORD	X,REC_NOT_GAP	GRANTED
-DIAGNOSE DONE wid=6
+DIAGNOSE DONE wid=13

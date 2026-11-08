@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "B5-01",
-  "generated_at": "2026-11-07T19:47:07.347Z",
-  "commit": "340cf9ec83530960d08433a20ebf3b20b3ecafb5",
+  "generated_at": "2026-11-08T02:17:23.736Z",
+  "commit": "5837231d151576b4ae390d0825a3ccbf28aee091",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -68,8 +68,8 @@
     },
     {
       "path": "evidence/diagnose.txt",
-      "bytes": 943,
-      "sha256": "8590bd040e27feb3b4f96d2d1d1294d2355868f997fc05cdf020b336bcaaaf62"
+      "bytes": 944,
+      "sha256": "82f1ae6a6a357050ce6be91d455b4e1a5cadeea0e074f838d37c5d27bd498d58"
     },
     {
       "path": "evidence/pool-active.json",
@@ -92,14 +92,19 @@
       "sha256": "5814539e1dd021876a8222555661eb9692e8428d84f09fe5202a1dd402747ccb"
     },
     {
+      "path": "evidence/explain.txt",
+      "bytes": 345,
+      "sha256": "ba6c9cbbde0fa6983107a1c50c38878be40ef5ca8efeae41a69dbcf7d1e8a6d1"
+    },
+    {
       "path": "evidence/diag-app.log",
-      "bytes": 2951,
-      "sha256": "7d9231e82d89f7095093d034cfb755116789693305025f692cab3db1fbac8842"
+      "bytes": 3498,
+      "sha256": "5cda0bb6922eca2769899484e6d000218a3a4790b9afca9795ef47ca6d2375d7"
     },
     {
       "path": "evidence/package-diag.txt",
       "bytes": 1860,
-      "sha256": "da230c0aba5ad25943416dcdeef9a286c14cd12992884090530fecd6ae1755ea"
+      "sha256": "d0141ef2a6cac9e0410517e20aaf11f114eca5e8d7f1dfdf0c1bc47dbe37866d"
     },
     {
       "path": "evidence/security.txt",
@@ -115,6 +120,6 @@
   "unverified": [
     "未用 Testcontainers/Docker；测试依赖手工启动的 3307 MySQL",
     "角色由业务SQL判定，未使用方法级@PreAuthorize",
-    "无 EXPLAIN 对比/复制/PITR"
+    "无复制/PITR；EXPLAIN 仅单条查询对照"
   ]
 }

@@ -1,0 +1,4 @@
+id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	tasks	NULL	ref	uq_task_title	uq_task_title	8	const	2502	10.00	Using where; Using filesort
+id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	tasks	NULL	index	NULL	PRIMARY	8	NULL	5004	1.00	Using where
