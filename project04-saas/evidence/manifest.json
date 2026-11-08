@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P04",
-  "generated_at": "2026-11-07T19:35:19.974Z",
-  "commit": "e8781bd2c3c28a91777ff22a00d240f91fecba83",
+  "generated_at": "2026-11-08T02:51:00.374Z",
+  "commit": "05719caddbbf38caf2895d40643163f6712ca83b",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -33,6 +33,10 @@
     },
     {
       "cmd": "Prometheus 3.5.0 + Alertmanager 0.28.1 webhook",
+      "exit": 0
+    },
+    {
+      "cmd": "QEMU K3s 1.37.2 Traefik Ingress: web.local -> nginx",
       "exit": 0
     }
   ],
@@ -113,9 +117,24 @@
       "sha256": "d0099b0d03750c5ad98d10594a454a3749f2f5efd4fa361e0ee0e0e911bd5234"
     },
     {
+      "path": "deploy/evidence/ingress.txt",
+      "bytes": 779,
+      "sha256": "b6ff87d863972c73fa30110613141850c463c8b8bcc597f9e9992a69a2434419"
+    },
+    {
+      "path": "deploy/evidence/ingress-attempt-2026-11-08.txt",
+      "bytes": 596,
+      "sha256": "a71ed6d142d89702d863d2762eaacc0c2619f9e776f2b36216cda0ecbff3743c"
+    },
+    {
       "path": "deploy/k8s-web.yaml",
       "bytes": 1232,
       "sha256": "d21638b085b02add868030052d4ae8c0742ea1858b338ae4d8aa0013d5c0bd9a"
+    },
+    {
+      "path": "deploy/k8s-ingress.yaml",
+      "bytes": 303,
+      "sha256": "1413d6ca3ec0dfdc70317d69835e826593efd135e296843d02a46d096f14fcf9"
     },
     {
       "path": "deploy/cloud-init-user-data.yaml",
@@ -139,8 +158,8 @@
     }
   ],
   "unverified": [
-    "K8s单节点TCG；Docker/Compose与rollout undo成功",
+    "K8s单节点TCG；Docker/Compose/rollout undo/Ingress成功；无多节点/公网",
     "告警已到本地webhook，未接外部通知渠道",
-    "无Ingress/多节点/公网；本地自签名HTTPS；OTel仅InMemory"
+    "无Ingress多节点/公网；本地自签名HTTPS；OTel仅InMemory"
   ]
 }
