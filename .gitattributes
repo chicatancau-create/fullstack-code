@@ -4,3 +4,5 @@
 **/evidence/*.log text eol=lf
 **/evidence/*.sql text eol=lf
 **/deploy/*.yaml text eol=lf
+**/deploy/*.yml text eol=lf
+**/migrations/*.sql text eol=lf
