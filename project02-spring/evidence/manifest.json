@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "B5-01",
-  "generated_at": "2026-11-08T02:17:48.075Z",
-  "commit": "5e4bb7a901ea16c1214d70cdcefe69a2bf472306",
+  "generated_at": "2026-11-08T02:56:50.878Z",
+  "commit": "befe95bd4cd64cb8f6654e2a83c90820fd3baa55",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -17,6 +17,10 @@
     },
     {
       "cmd": "bash scripts/diagnose.sh",
+      "exit": 0
+    },
+    {
+      "cmd": "GitHub Actions Docker: Testcontainers MySQL 10/10",
       "exit": 0
     }
   ],
@@ -115,10 +119,15 @@
       "path": "evidence/diagnostics-surefire.xml",
       "bytes": 27576,
       "sha256": "1c8646bc0d0876c1d5efa592e310ba4fd875630e2de0c6c8b0fe6f557c04b6de"
+    },
+    {
+      "path": "evidence/testcontainers-ci.txt",
+      "bytes": 413,
+      "sha256": "f766ceb9a695c0ee257cd516d103f3becad3e15d83d4bf4b1e5db250f262d599"
     }
   ],
   "unverified": [
-    "未用 Testcontainers/Docker；测试依赖手工启动的 3307 MySQL",
+    "本机无Docker，本地9个测试+1个Testcontainers跳过；CI 10/10",
     "角色由业务SQL判定，未使用方法级@PreAuthorize",
     "无复制/PITR；EXPLAIN 仅单条查询对照"
   ]

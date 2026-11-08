@@ -1,0 +1,9 @@
+captured_at: 2026-11-08
+ci_run: 42440414960 (spring job, success)
+testcontainers: 1.21.4
+docker: local Unix socket (unix:///var/run/docker.sock), server API 1.48
+
+[INFO] Running dev.study.collab.MySqlContainerTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.857 s -- in dev.study.collab.MySqlContainerTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS

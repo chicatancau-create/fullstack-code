@@ -57,12 +57,13 @@ mvn spring-boot:run                    # http://127.0.0.1:8798
 - [evidence/locks.txt](evidence/locks.txt)：锁等待原始错误。
 - [evidence/explain.txt](evidence/explain.txt)：5000 行事务内对照，命中 `uq_task_title`（rows 2502）vs 忽略索引全扫描（rows 5004）。
 - [evidence/diagnostics-surefire.xml](evidence/diagnostics-surefire.xml)：死锁 1213 与单连接池耗尽恢复两条测试的原始记录。
+- [evidence/testcontainers-ci.txt](evidence/testcontainers-ci.txt)：CI 中 Testcontainers MySQL 冒烟（10/10，0 skipped）。
 - [evidence/run.txt](evidence/run.txt)：本轮时间与汇总。
 
 ## 已知限制
 
 - Spring Security 仅用于无状态过滤链、CSRF 关闭与入口点；角色仍由业务 SQL 判定，未使用方法级 `@PreAuthorize`。
-- 未使用 Testcontainers（本机无 Docker）；测试依赖手工启动的 3307 实例。
+- 本机无 Docker：本地 9 个测试依赖手工启动的 3307 实例，Testcontainers 测试本地跳过；GitHub Actions 的 Docker 环境会运行 `MySqlContainerTest`（CI 10/10，0 skipped）。
 - 已做死锁注入（`ERROR 1213`，一方回滚）、单连接池耗尽后恢复与单条查询 EXPLAIN 对照；未做生产级持续压测与更大数据量。
 - 审计写入覆盖工作区创建、成员添加/移除、邀请创建/接受；备份恢复已验证到独立库。
 - 角色仍由业务 SQL 判定，未使用方法级 `@PreAuthorize`。
