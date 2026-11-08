@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P03",
-  "generated_at": "2026-11-07T15:36:03.074Z",
-  "commit": "677087d47204e1872c96f6ab1a7f7561c471829a",
+  "generated_at": "2026-11-08T06:03:20.837Z",
+  "commit": "b991695007f234bb7a860b71d5f4daa392432d67",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -57,8 +57,8 @@
     },
     {
       "path": "evidence/deploy.txt",
-      "bytes": 483,
-      "sha256": "557b1e238477578428e146b45d0042e17e98a9842a5ab88c52179e0f2cd07069"
+      "bytes": 473,
+      "sha256": "69d1ad52309002205e349c1a4bef92ee48e8b9274628c88e4ab06b76fbc2b1d4"
     },
     {
       "path": "evidence/rollback.txt",

@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P02",
-  "generated_at": "2026-11-07T15:47:22.659Z",
-  "commit": "e616905512ebcd0ec0571d7ed9a303c314434466",
+  "generated_at": "2026-11-08T06:03:20.394Z",
+  "commit": "b991695007f234bb7a860b71d5f4daa392432d67",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -44,8 +44,8 @@
     },
     {
       "path": "evidence/deploy.txt",
-      "bytes": 483,
-      "sha256": "4879432cc24478d97b19322132cd524477703f46a39d35c1e667f78b6b0f344e"
+      "bytes": 473,
+      "sha256": "43d1a62edc38e950c77215b3a3dba072955d9835af0f92d674b2716bf2d0dfdd"
     },
     {
       "path": "evidence/rollback.txt",
@@ -54,8 +54,8 @@
     },
     {
       "path": "evidence/deploy.log",
-      "bytes": 483,
-      "sha256": "4879432cc24478d97b19322132cd524477703f46a39d35c1e667f78b6b0f344e"
+      "bytes": 473,
+      "sha256": "43d1a62edc38e950c77215b3a3dba072955d9835af0f92d674b2716bf2d0dfdd"
     },
     {
       "path": "evidence/rollback.log",
