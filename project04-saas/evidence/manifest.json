@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P04",
-  "generated_at": "2026-11-08T03:31:26.160Z",
-  "commit": "09fbdacbaf69429b0a21b83ddc494b45eeb8ada9",
+  "generated_at": "2026-11-08T04:19:15.135Z",
+  "commit": "612b9cef6b5866fa2b60be7d4c5c7f42e8708ab1",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -41,6 +41,10 @@
     },
     {
       "cmd": "QEMU K3s two nodes: server + agent container, pod on agent-1",
+      "exit": 0
+    },
+    {
+      "cmd": "ntfy.sh public topic external alert delivery",
       "exit": 0
     }
   ],
@@ -89,6 +93,11 @@
       "path": "evidence/alertmanager.txt",
       "bytes": 212,
       "sha256": "24da696c995a8cc91ddc885a6cd1aad6a264cf96354485da394bd1d2e89da761"
+    },
+    {
+      "path": "evidence/alertmanager-external.txt",
+      "bytes": 311,
+      "sha256": "fa85966510439257b38d8a5376d87295c6c95137f867a8d169f5c71c7ab05549"
     },
     {
       "path": "evidence/deploy.txt",
@@ -168,7 +177,7 @@
   ],
   "unverified": [
     "K8s两节点在同一QEMU VM（非多机/HA）；Docker/Compose/rollout undo/Ingress成功",
-    "告警已到本地webhook，未接外部通知渠道",
-    "无多机/HA/公网；本地自签名HTTPS；OTel仅InMemory"
+    "外部渠道为ntfy.sh公共topic（合成告警），不是Slack/邮件/PagerDuty；无凭据",
+    "无多机/HA/公网入口；本地自签名HTTPS；OTel仅InMemory"
   ]
 }
