@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P01",
-  "generated_at": "2026-11-08T05:24:10.629Z",
-  "commit": "dba0aa9bb10da57aac9b874280bc3325cb6dbb11",
+  "generated_at": "2026-11-08T05:31:15.883Z",
+  "commit": "9da0ac4c18d478d15d23ad22b59ebdacd49db95e",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -102,6 +102,11 @@
       "path": "evidence/public-deep-link.txt",
       "bytes": 393,
       "sha256": "1a573c7123666ae23a8ed72482df08c64ebfc605011ebaf7c860140bc146f158"
+    },
+    {
+      "path": "evidence/public-pages.png",
+      "bytes": 62401,
+      "sha256": "b5c958e63334f3a54be47dd7f091c74a6a5eeab4d1d8d1e8ba718c2690ed5fb0"
     }
   ],
   "unverified": [
