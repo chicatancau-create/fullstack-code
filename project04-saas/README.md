@@ -62,9 +62,9 @@ PGPASSWORD=study-pass bash scripts/run_project.sh
 
 - 没有前端；没有邮件发送，邀请 token 只在创建响应出现一次。
 - 没有登录限流、MFA、密码重置、自助删号；不要暴露公网。
-- 没有 Docker/CI/K8s/HTTPS/多实例/监控告警；未部署。
+- 已有 Docker/Compose、GitHub Actions、K8s 两节点（同 VM）、Traefik Ingress、本地 HTTPS、Prometheus/Alertmanager 本地+ntfy 外部告警；无多机/HA/公网入口，项目本身未做持久公网部署。
 - 审计与客户列表无分页；`sessions` 过期行无清理任务。
-- 未做深度模块（高并发/Feed/实时/RAG）所需的容量与故障演练；本项目只覆盖 SaaS 主路径。
+- 后台任务深度模块已完成（200 任务/0 重复/崩溃恢复）；Feed/实时/RAG 的容量与故障演练未做。
 - 备份不支持按用户删除；软删除数据仍留在库中。
 
 ## AI 辅助范围

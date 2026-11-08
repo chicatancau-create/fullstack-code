@@ -34,7 +34,7 @@ bash scripts/run_project.sh     # 默认使用独立库 study_lab_p05
 ## 修复前后
 
 - 修复前：4 个测试中 **1 pass / 3 fail**（基线通过，三个报告缺陷复现）。
-- 修复后：**7/7 pass**（新增正向删除、降级与双 owner 并发用例）。
+- 修复后（当时）：**7/7 pass**（新增正向删除、降级与双 owner 并发用例）；当前含 D88/D89 为 **12/12**。
 - 接手增量：新增批量状态更新与任务事件审计，回归扩到 **12/12**（含 D88/D89 五条）。
 - 修复点：恢复会话过期条件、任务列表成员校验、删除成员时的最后 owner 保护（行锁事务内）。
 - 详细根因与取舍见 [docs/fix-log.md](docs/fix-log.md)；交接说明见 [docs/handover.md](docs/handover.md)。
