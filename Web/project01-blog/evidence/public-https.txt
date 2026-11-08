@@ -1,0 +1,11 @@
+captured_at: 2026-11-08
+provider: Cloudflare Quick Tunnel (cloudflared 2026.10.7)
+url: https://fallen-olive-bruce-reaches.trycloudflare.com
+scope: 临时公网 HTTPS，无自定义域名，tunnel 停止即失效
+
+$ curl -sS -o /dev/null -w '%{http_code} tls=%{ssl_verify_result}' https://fallen-olive-bruce-reaches.trycloudflare.com/
+status=200 tls=0
+title=<title>项目 01：学习笔记博客</title>
+post_status=200
+post_title=<title>项目 01：学习笔记博客</title>
+asset_status=200 content-type=text/javascript

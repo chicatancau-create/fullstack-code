@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P01",
-  "generated_at": "2026-11-07T15:51:27.874Z",
-  "commit": "5f6d062d220d5e00ebb653df6cb95f1096323b00",
+  "generated_at": "2026-11-08T03:13:07.132Z",
+  "commit": "dbf866f850c43923aa995258e566433534a63f25",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -21,6 +21,10 @@
     },
     {
       "cmd": "bash scripts/rollback_check.sh",
+      "exit": 0
+    },
+    {
+      "cmd": "Cloudflare Quick Tunnel public HTTPS 200",
       "exit": 0
     }
   ],
@@ -79,10 +83,15 @@
       "path": "evidence/https-gateway.log",
       "bytes": 48,
       "sha256": "7cc41e61d89fc70a7e6537aa8dc396c1704ad64c38f325308da4d77844700187"
+    },
+    {
+      "path": "evidence/public-https.txt",
+      "bytes": 522,
+      "sha256": "4f655bd428856c12fd767946d8050a1bd1036584435def769abd781f02537a2e"
     }
   ],
   "unverified": [
-    "本地自签名HTTPS，不是公网/域名部署",
+    "临时公网HTTPS（Quick Tunnel），无自定义域名/持久部署",
     "回滚只验证上一提交构建产物可访问"
   ]
 }

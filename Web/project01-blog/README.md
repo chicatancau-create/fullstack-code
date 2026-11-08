@@ -1,7 +1,7 @@
 # 项目 01：学习笔记博客（React/TS）
 
 > 独立代码位置：`E:\fullstack-code\Web\project01-blog`（不在 `02-项目实战` 内塞代码）。
-> 本地可运行；未部署公网。技术栈：React 19 + TypeScript 7 + Vite 8 + React Router 7 + react-markdown 10。
+> 本地可运行；已用 Cloudflare Quick Tunnel 做临时公网 HTTPS 验证（无自定义域名）。技术栈：React 19 + TypeScript 7 + Vite 8 + React Router 7 + react-markdown 10。
 
 ## 1. 用户价值与范围
 
@@ -56,12 +56,13 @@ flowchart LR
 | 组件测试 | 7/7 通过 | `evidence/test.txt` |
 | 生产构建 | `vite build` 成功；JS 382.13 kB / gzip 120.33 kB | `evidence/build.txt` |
 | E2E（headless Edge） | 首页 5 卡、跳转链接聚焦 main、搜索 1 条、进入详情 | `evidence/e2e.txt`、`e2e-post.png` |
+| 公网 HTTPS（临时） | Quick Tunnel 返回 200，TLS 校验通过 | `evidence/public-https.txt` |
 | manifest | SHA-256 校验 | `evidence/manifest.json` |
 
 ## 5. 范围与边界
 
 - 没有后端/数据库/认证；内容在构建时打包。
-- 没有真实部署、HTTPS、CDN、缓存头；本地 `vite preview`。
+- 公网 HTTPS 只用 Cloudflare Quick Tunnel 做过临时验证；无自定义域名、持久部署、CDN 或缓存头。
 - E2E 只跑 Edge headless，没有 Firefox/Safari；没有真实手机/读屏。
 - 搜索是同步字符串匹配，没有分词/拼音/高亮；数据量大时需要索引或后端搜索。
 - 没有分页/标签页/ RSS；3 篇内容不足以证明内容规模。
