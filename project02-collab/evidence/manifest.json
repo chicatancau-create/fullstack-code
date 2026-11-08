@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P02",
-  "generated_at": "2026-11-08T06:03:20.394Z",
-  "commit": "b991695007f234bb7a860b71d5f4daa392432d67",
+  "generated_at": "2026-11-08T06:03:55.509Z",
+  "commit": "9e1df1c20d0d567e2b04e90e0c4a17edee379869",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -36,11 +36,6 @@
       "path": "evidence/backup.txt",
       "bytes": 46,
       "sha256": "135645537a53e60a24eafe5cfcd2624d5fe16ff7231685c932308808503f20ce"
-    },
-    {
-      "path": "evidence/p02-dump.sql",
-      "bytes": 8148,
-      "sha256": "2649b6b92a46689334eb8fb8c349332ee679ecbb5f6ebd8824141787422120f6"
     },
     {
       "path": "evidence/deploy.txt",
@@ -80,6 +75,7 @@
   ],
   "unverified": [
     "本地自签名HTTPS，不是公网部署",
-    "回滚只验证旧版本可启动（旧版无/health，用401证明链路）"
+    "回滚只验证旧版本可启动（旧版无/health，用401证明链路）",
+    "p02-dump.sql被gitignore，不作为manifest工件；备份恢复见backup.txt"
   ]
 }
