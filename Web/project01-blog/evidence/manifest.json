@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P01",
-  "generated_at": "2026-11-08T03:13:07.132Z",
-  "commit": "dbf866f850c43923aa995258e566433534a63f25",
+  "generated_at": "2026-11-08T04:30:50.607Z",
+  "commit": "4753e6346cd1f35bbcce0fb27039f561c008a3f9",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -25,6 +25,10 @@
     },
     {
       "cmd": "Cloudflare Quick Tunnel public HTTPS 200",
+      "exit": 0
+    },
+    {
+      "cmd": "GitHub Pages public HTTPS 200",
       "exit": 0
     }
   ],
@@ -88,10 +92,15 @@
       "path": "evidence/public-https.txt",
       "bytes": 522,
       "sha256": "4f655bd428856c12fd767946d8050a1bd1036584435def769abd781f02537a2e"
+    },
+    {
+      "path": "evidence/public-pages.txt",
+      "bytes": 358,
+      "sha256": "3c3698a8747a636e7dc9a5be0f123fd492f840a8dff306df36c58aa6d0e015e1"
     }
   ],
   "unverified": [
-    "临时公网HTTPS（Quick Tunnel），无自定义域名/持久部署",
+    "GitHub Pages无自定义域名；Quick Tunnel为临时",
     "回滚只验证上一提交构建产物可访问"
   ]
 }

@@ -1,0 +1,9 @@
+captured_at: 2026-11-08
+provider: GitHub Pages (repo chicatancau-create/learning-blog-demo, public)
+url: https://chicatancau-create.github.io/learning-blog-demo/
+scope: persistent static hosting; no custom domain; SPA fallback via 404.html
+
+index_status=200
+title=<title>项目 01：学习笔记博客</title>
+asset_status=200
+asset=assets/index-0EHiNwJy.js
