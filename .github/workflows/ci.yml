@@ -12,6 +12,10 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: '24'
+      - name: secret scan
+        run: |
+          ! git grep -q -E 'BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|sk-[A-Za-z0-9]{20,}' -- .
+          ! git ls-files | grep -E '(^|/)(\.env($|\..+)|id_rsa|id_ed25519|.*\.(pem|key|p12|pfx))$|(^|/)node_modules/|(^|/)target/'
       - run: node scripts/manifest.mjs verify evidence/manifest.json
         working-directory: Web/project01-blog
       - run: node scripts/manifest.mjs verify evidence/manifest.json
