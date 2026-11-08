@@ -13,6 +13,7 @@ fi
 mkdir -p evidence
 echo "node $(node -v)" | tee evidence/toolchain.txt
 node scripts/migrate.mjs | tee evidence/migrate.txt
+node scripts/d90_perf.mjs | tee evidence/d90-perf-run.txt
 
 set +e
 node --test tests/regressions.test.js 2>&1 | tee evidence/test.txt

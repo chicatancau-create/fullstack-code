@@ -3,11 +3,12 @@
 ## 仓库地图
 
 ```text
-src/app.js          Fastify 应用：认证、工作区、成员、任务
+src/app.js          Fastify 应用：认证、工作区、成员、任务（含批量状态更新）
 src/db.mjs          pg Pool（PGPASSWORD 必填）
 migrations/001_init.sql  p02 schema：users/sessions/workspaces/members/tasks
-tests/regressions.test.js 接手后新增的回归测试（7 个）
-scripts/migrate.mjs 执行迁移
+migrations/002_task_events.sql  追加任务状态事件表并回填
+scripts/d90_perf.mjs  D90 性能对照（10k 行，索引/顺序 + 逐条/集合）
+tests/regressions.test.js 接手后回归测试（12 个）
 ```
 
 ## 运行与停止
@@ -28,14 +29,15 @@ scripts/migrate.mjs 执行迁移
 ## 风险与建议（未实施）
 
 - 会话令牌明文入库（项目 02 快照设计），生产应存哈希。
-- 登录无速率限制/锁定；无审计日志。
-- 成员角色变更与删除的并发路径需要专门测试（当前只有顺序回归）。
+- 登录无速率限制/锁定；审计仅覆盖任务状态变更，认证与成员变更仍未审计。
+- 已测双 owner 并发互删；角色变更并发仍未测。
 - 无健康检查、结构化指标、备份恢复与部署脚本。
 
 ## 交接清单
 
 - [x] 能按 README 从空库跑起测试
 - [x] 三个报告缺陷有失败先行证据
-- [x] 修复后有回归测试
+- [x] 修复后有回归测试（12/12）
+- [x] D88 批量状态更新与 D89 迁移、D90 性能报告
 - [x] 风险与未修复项写明
 - [ ] 真实接收人独立复现（未做）

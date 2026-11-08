@@ -1,1 +1,1 @@
-migrated tables=members,sessions,tasks,users,workspaces
+migrated tables=members,sessions,task_events,tasks,users,workspaces

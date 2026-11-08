@@ -35,20 +35,31 @@ bash scripts/run_project.sh     # 默认使用独立库 study_lab_p05
 
 - 修复前：4 个测试中 **1 pass / 3 fail**（基线通过，三个报告缺陷复现）。
 - 修复后：**7/7 pass**（新增正向删除、降级与双 owner 并发用例）。
+- 接手增量：新增批量状态更新与任务事件审计，回归扩到 **12/12**（含 D88/D89 五条）。
 - 修复点：恢复会话过期条件、任务列表成员校验、删除成员时的最后 owner 保护（行锁事务内）。
 - 详细根因与取舍见 [docs/fix-log.md](docs/fix-log.md)；交接说明见 [docs/handover.md](docs/handover.md)。
+
+## 接手增量（D88–D90）
+
+- **D88 有界功能**：`PATCH /workspaces/:id/tasks/batch`，最多 50 项，逐项返回 `ok/error/changed`；
+  跨工作区返回 `not_found`，同状态重复提交幂等。设计与取舍见 [docs/rfc-d88-batch-status.md](docs/rfc-d88-batch-status.md)。
+- **D89 兼容迁移**：`migrations/002_task_events.sql` 追加任务事件表并回填初始事件；
+  兼容矩阵与回滚限制见 [docs/d89-compatibility.md](docs/d89-compatibility.md)。
+- **D90 性能定位**：10,000 行状态过滤的索引/顺序扫描对照，以及 50 条逐条更新 vs 集合更新；
+  原始计划与耗时见 [evidence/d90-perf.txt](evidence/d90-perf.txt)，结论与限制见 [docs/d90-performance.md](docs/d90-performance.md)。
 
 ## 证据
 
 - [evidence/before-fix.txt](evidence/before-fix.txt)：失败测试原始输出。
-- [evidence/after-fix.txt](evidence/after-fix.txt)：修复后全绿（历史 4/4；当前 7/7）。
+- [evidence/after-fix.txt](evidence/after-fix.txt)：修复后全绿（历史 4/4；当时扩到 7/7；当前回归 12/12）。
 - [docs/reproduce-before-fix.md](docs/reproduce-before-fix.md)：在临时副本中回退三处校验以复现 1/3 fail。
-- [evidence/test.txt](evidence/test.txt) 与 [evidence/run.txt](evidence/run.txt)：脚本复跑结果。
+- [evidence/test.txt](evidence/test.txt) 与 [evidence/run.txt](evidence/run.txt)：脚本复跑结果（12/12）。
+- [evidence/d90-perf.txt](evidence/d90-perf.txt)：D90 执行计划与耗时。
 - 重跑 `run_project.sh` 会重写这些证据文件并改变 manifest 哈希；需要重新生成 manifest。
 
 ## 未完成 / 未验证
 
 - 没有真实接收人复现，不能声称团队交接通过。
 - 只演练 3 个缺陷；未覆盖并发删 owner（当前实现有行锁，但本轮测试是顺序场景）。
-- 未修复项：登录无速率限制、无审计、无分页、无备份恢复、无 CI/部署。
+- 未修复项：登录无速率限制、无分页、无备份恢复、无部署；审计仅覆盖任务状态变更。
 - 快照来自本人项目，不能代表陌生大型代码库的接手难度。
