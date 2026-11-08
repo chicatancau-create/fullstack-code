@@ -100,7 +100,7 @@ python EnvironmentTest.py
 | `project05-takeover/` | 受控接手：3 缺陷→12/12 + D88–D90 | `bash scripts/run_project.sh`（独立库 `study_lab_p05`） |
 | `project06-ai-min/` | mock LLM + 本地 Qwen0.5B + BM25 RAG | `npm test` / `node scripts/eval.mjs` |
 
-CI：`.github/workflows/ci.yml`，8 个 job（项目 01–05、Java/MySQL、Express/Nest、AI）。最近全绿 run `42447157990`。
+CI：`.github/workflows/ci.yml`，9 个 job（项目 01–05、Java/MySQL、Express/Nest、AI、manifest 校验）。最近全绿 run `42453215623`。
 仓库为私有；项目 README 与 `evidence/` 里有逐项测试、故障注入和限制说明。
 
 ## 相关文档
