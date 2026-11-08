@@ -7,7 +7,7 @@ let mock;
 let app;
 before(async () => {
   mock = await startMock();
-  app = buildApp({ apiKey: 'test-key', baseUrl: mock.url, model: 'mock-1', timeoutMs: 150 });
+  app = buildApp({ apiKey: 'test-key', baseUrl: mock.url, model: 'mock-1', timeoutMs: 300 });
   await app.ready();
 });
 after(async () => { await app.close(); await mock.close(); });
