@@ -87,6 +87,22 @@ python EnvironmentTest.py
 - 工程内**没有** `hvigorw` / `hvigorw.bat` 包装脚本，无法直接在命令行构建，验证以 DevEco 预览器/模拟器为主。
 - 依赖与构建产物（`oh_modules`、`.hvigor`、`build`、`.preview`）不入库。
 
+## 全栈项目线（project01–06）
+
+| 目录 | 内容 | 本地入口 |
+|---|---|---|
+| `Web/project01-blog/` | React + Vite 学习笔记博客；组件 7/7、E2E、axe 0 | `npm ci && npm test && npm run build`；公网 <https://chicatancau-create.github.io/learning-blog-demo/> |
+| `project02-collab/` | Fastify + PostgreSQL 协作平台；7/7、租户隔离、最后 Owner 并发 | `bash scripts/run_project.sh` |
+| `project02-spring/` | Spring Boot + Spring Security + MySQL 迁移；本地 9/9、CI 10/10（Testcontainers） | `bash scripts/run_project.sh` |
+| `project02-frameworks/` | Express/Nest 同契约对照；2/2 | 各目录 `npm test` |
+| `project03-trade/` | 交易/库存/幂等/状态机 + RabbitMQ Outbox/Inbox/DLQ；15/15 | `bash scripts/run_project.sh` |
+| `project04-saas/` | 多租户 SaaS、后台任务、OTel、Docker/K3s、Ingress、告警；13/13 | `bash scripts/run_project.sh` |
+| `project05-takeover/` | 受控接手：3 缺陷→12/12 + D88–D90 | `bash scripts/run_project.sh`（独立库 `study_lab_p05`） |
+| `project06-ai-min/` | mock LLM + 本地 Qwen0.5B + BM25 RAG | `npm test` / `node scripts/eval.mjs` |
+
+CI：`.github/workflows/ci.yml`，8 个 job（项目 01–05、Java/MySQL、Express/Nest、AI）。最近全绿 run `42447157990`。
+仓库为私有；项目 README 与 `evidence/` 里有逐项测试、故障注入和限制说明。
+
 ## 相关文档
 
 - [progress.md](progress.md) — 进度记录：仓库当前做到哪一步、结构是什么样、下一步做什么
