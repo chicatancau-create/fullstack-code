@@ -1,0 +1,5 @@
+captured_at: 2026-11-08
+url: https://chicatancau-create.github.io/learning-blog-demo/posts/http-cache
+browser: headless Edge via CDP
+heading=HTTP 缓存：max-age 与 ETag
+PUBLIC DEEP LINK PASS

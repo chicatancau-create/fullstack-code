@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P01",
-  "generated_at": "2026-11-08T04:31:23.131Z",
-  "commit": "03efd47d9745b084ab14d2f7c6a0c6c40871cb0e",
+  "generated_at": "2026-11-08T05:21:26.925Z",
+  "commit": "7725aaeb78e2a1d215ebb8db7ab419516b6f4912",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -28,7 +28,7 @@
       "exit": 0
     },
     {
-      "cmd": "GitHub Pages public HTTPS 200",
+      "cmd": "GitHub Pages public HTTPS 200 + deep link",
       "exit": 0
     }
   ],
@@ -97,6 +97,11 @@
       "path": "evidence/public-pages.txt",
       "bytes": 358,
       "sha256": "3c3698a8747a636e7dc9a5be0f123fd492f840a8dff306df36c58aa6d0e015e1"
+    },
+    {
+      "path": "evidence/public-deep-link.txt",
+      "bytes": 194,
+      "sha256": "2fc79e6dee1053e01a89152493b02f80cbdea8c629b2ad18949f723f680ed1b6"
     }
   ],
   "unverified": [
