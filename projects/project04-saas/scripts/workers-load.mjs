@@ -131,7 +131,8 @@ try {
   }
   log(`故障演练：错误端口连接数据库 -> ${dbFault}；主连接池 /health=${(await app.inject({ method: 'GET', url: '/health' })).statusCode}`);
 
-  log('通知通道：已实现 SSE GET /tenants/:id/notifications/stream（2s 轮询 job_notifications，事件带 id）；本脚本未完成该通道的自动验证（未证实）');
+  log('通知通道：SSE GET /tenants/:id/notifications/stream 由 tests/worker-runtime.test.js 自动验证（200 + text/event-stream + ": connected" + "id:" 与 data 事件；见 evidence/test.txt）');
+  log('优雅关闭：worker_runtime.shutdown() 与 SIGTERM 处理链由 tests/worker-runtime.test.js 自动验证（子进程退出码 0）');
 
   fs.writeFileSync('evidence/workers-load.txt', lines.join('\n') + '\n');
 } finally {

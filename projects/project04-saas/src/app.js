@@ -512,9 +512,10 @@ export function buildApp({ pool, logger = false, loginLimiter = null } = {}) {
     const tenantId = Number(request.params.id);
     const role = await roleIn(pool, tenantId, request.user.id);
     if (!role) return reply.code(404).send({ error: 'not_found' });
-    const raw = request.raw;
+    const raw = reply.raw;
     reply.hijack();
     raw.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
+    raw.flushHeaders();
     raw.write(': connected\n\n');
     let last = 0;
     const timer = setInterval(async () => {
@@ -533,6 +534,7 @@ export function buildApp({ pool, logger = false, loginLimiter = null } = {}) {
       }
     }, 2000);
     request.raw.on('close', () => clearInterval(timer));
+    raw.on('close', () => clearInterval(timer));
   });
 
   app.get('/tenants/:id/audit', auth, async (request, reply) => {

@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P04",
-  "generated_at": "2026-11-09T03:31:04.570Z",
-  "commit": "ecea0492cfa18291d41e0194db6d14c9c1521ae2",
+  "generated_at": "2026-11-09T13:09:10.671Z",
+  "commit": "19a5d5128455737bfaebdaf842e7a6fb4a70fbd4",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -47,8 +47,8 @@
   "artifacts": [
     {
       "path": "evidence/test.txt",
-      "bytes": 2064,
-      "sha256": "1c9b5201674a3ba4e76692619abfaf382f9bbfc7ab99fcc0c8857bed5bcdc3a0"
+      "bytes": 2428,
+      "sha256": "e71f66a7499e760effae00e5d3332aadc209b6e4b8b252f2d6fa843ec1a123cf"
     },
     {
       "path": "evidence/lint.txt",
@@ -57,8 +57,8 @@
     },
     {
       "path": "evidence/coverage.txt",
-      "bytes": 3301,
-      "sha256": "217cc838511ee6e3464d94103fee71e2527758e7927bdf39f24065c0a40fa8e0"
+      "bytes": 3681,
+      "sha256": "900f233c7dcf887476b394de78755b3c5460d5b99ed851d39ea75bf324f9ae8c"
     },
     {
       "path": "evidence/e2e.txt",
@@ -73,22 +73,22 @@
     {
       "path": "evidence/rbac.txt",
       "bytes": 900,
-      "sha256": "702733fe0bc20b031029d17c4ce4b1fa8f433e986d89a6f59cc1ee4343c1d15f"
+      "sha256": "898eafbf18ceba5b035341d394a452922ddf68872286296b8fd86bd66528cf9b"
     },
     {
       "path": "evidence/audit_log.txt",
       "bytes": 1706,
-      "sha256": "24ed211e02500da8789f980c831f63bacd5f3735c78907d8195b8b5f6d9e8342"
+      "sha256": "b59e61323c7720835990f8435a3dd4e090920c98384cdc0346e673b62b0052cb"
     },
     {
       "path": "evidence/multi_tenant.txt",
       "bytes": 819,
-      "sha256": "22c12957e1b0ccdc12adf60d78e4a3c9513160bc298db4140421fd4adaeb0276"
+      "sha256": "faa6062f4699437cd350331f78f54566a3eb54bc7bfb52317855ed75d53c2b76"
     },
     {
       "path": "evidence/workers-load.txt",
-      "bytes": 1265,
-      "sha256": "d0e438fb9eb0d2bcdade2e4560cb99c8dae09ce5e924e6b38813bb0d9756a213"
+      "bytes": 1420,
+      "sha256": "9bdafd652660496d96c653240e9b1c0d7e2eae463fce5b0abcc311bfb1d3688f"
     },
     {
       "path": "evidence/jobs.txt",
