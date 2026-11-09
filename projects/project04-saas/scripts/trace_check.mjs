@@ -3,7 +3,6 @@ import { SimpleSpanProcessor, InMemorySpanExporter } from '@opentelemetry/sdk-tr
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
-import crypto from 'node:crypto';
 
 const exporter = new InMemorySpanExporter();
 const provider = new NodeTracerProvider();

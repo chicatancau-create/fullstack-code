@@ -2,7 +2,6 @@ import Fastify from 'fastify';
 import crypto from 'node:crypto';
 
 const PLANS = { free: 2, team: 5 };
-const ROLES = ['owner', 'admin', 'member', 'viewer'];
 const INVITE_ROLES = ['admin', 'member', 'viewer'];
 const SESSION_HOURS = 12;
 const INVITE_DAYS = 7;

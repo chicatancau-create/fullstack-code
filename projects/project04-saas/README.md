@@ -2,8 +2,8 @@
 
 > MS1 实现仓库（2026-11-08 迁入资料库并在本机复跑，另补 Redis 登录令牌桶）。
 > **MS6 完整版（2026-11-09）**：四角色 RBAC、审计 before/after/request_id、提醒 Job + 公平调度/重试死信、
-> React 前端 + Playwright E2E、覆盖率门槛、CI 三 job、独立 evidence。当前本机证据：27/27 测试、
-> 覆盖率行 96.94% / 分支 81.58% / 函数 100%、E2E 2/2。
+> React 前端 + Playwright E2E、ESLint、覆盖率门槛、CI（lint/coverage/build/制品/安全扫描）、独立 evidence。
+> 当前本机证据：27/27 测试、覆盖率行 93.34% / 分支 80.26% / 函数 97.73%、E2E 2/2、ESLint 0 告警。
 
 一个小型销售团队的组织、成员、客户、跟进与审计闭环。重点是多租户边界、RBAC、
 席位不变量与审计同事务，而不是页面数量。
@@ -55,7 +55,9 @@ docker compose up --build   # PostgreSQL 18 + Redis 7 + app
 
 ## 证据（本机真实 PostgreSQL 18.6）
 
-- [evidence/test.txt](evidence/test.txt)：历史 15 项测试记录（MS1）。
+- [evidence/test.txt](evidence/test.txt)：27 项真实 DB/Redis 测试（本机串行）。
+- [evidence/lint.txt](evidence/lint.txt)：ESLint 9 flat config，0 error / 0 warning。
+- [evidence/coverage.txt](evidence/coverage.txt)：27/27 测试；行 93.34 / 分支 80.26 / 函数 97.73。
 - [evidence/migrate.txt](evidence/migrate.txt)：9 张表（含迁移记录）。
 - [evidence/backup.txt](evidence/backup.txt)：`tenants/memberships/audit` 恢复前后一致。
 - [evidence/run.txt](evidence/run.txt)：本轮时间与 PASS 汇总。

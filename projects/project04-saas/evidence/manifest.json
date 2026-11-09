@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P04",
-  "generated_at": "2026-11-09T01:19:27.560Z",
-  "commit": "f53c60a537254e52fd02427e92af127763e6d8cc",
+  "generated_at": "2026-11-09T03:31:04.570Z",
+  "commit": "ecea0492cfa18291d41e0194db6d14c9c1521ae2",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -11,6 +11,10 @@
     "gdb": "GNU gdb (GDB for MinGW-W64 x86_64, built by Brecht Sanders, r7) 17.1"
   },
   "commands": [
+    {
+      "cmd": "npm run lint",
+      "exit": 0
+    },
     {
       "cmd": "npm run coverage",
       "exit": 0
@@ -34,18 +38,27 @@
     {
       "cmd": "node scripts/jobs_check.mjs",
       "exit": 0
+    },
+    {
+      "cmd": "bash scripts/run_project.sh",
+      "exit": 0
     }
   ],
   "artifacts": [
     {
       "path": "evidence/test.txt",
-      "bytes": 2150,
-      "sha256": "2e6b76900802e8c89c841ca0d30d4a9fcd4ec20bdb1c474c85f63fb4dd7a9a0a"
+      "bytes": 2064,
+      "sha256": "1c9b5201674a3ba4e76692619abfaf382f9bbfc7ab99fcc0c8857bed5bcdc3a0"
+    },
+    {
+      "path": "evidence/lint.txt",
+      "bytes": 74,
+      "sha256": "8c3cd8a192451e55e40c0855900e62669c070ab46db782f5a7757523e2c05060"
     },
     {
       "path": "evidence/coverage.txt",
-      "bytes": 3297,
-      "sha256": "204b58377fed43480b08bb92b36cf6a837d58be87b129c8dd7d64dc37eda574f"
+      "bytes": 3301,
+      "sha256": "217cc838511ee6e3464d94103fee71e2527758e7927bdf39f24065c0a40fa8e0"
     },
     {
       "path": "evidence/e2e.txt",
@@ -54,8 +67,8 @@
     },
     {
       "path": "evidence/migrate.txt",
-      "bytes": 124,
-      "sha256": "9363c1ca3421d944f1eeaedfd3f3347c7d056a58c7543c769b4711690db4d955"
+      "bytes": 181,
+      "sha256": "232576c7eecbcb4a721527e2ce07726284e30fd6984d603eeb90ba3e35f7f8f1"
     },
     {
       "path": "evidence/rbac.txt",
@@ -80,12 +93,22 @@
     {
       "path": "evidence/jobs.txt",
       "bytes": 320,
-      "sha256": "bf5c054f727b37568387bd2765bfc0bbcbc18554f68cbafcd23fa1b4ee4449a8"
+      "sha256": "45968a5ce789c9f457452ea992e602379abbebede597d0154fe5940076ff92fa"
+    },
+    {
+      "path": "evidence/alerts.txt",
+      "bytes": 128,
+      "sha256": "e9df54affd4bf5651ed9f999dc9ccd9533864ca71d7cae295fa07e1ce613efcb"
+    },
+    {
+      "path": "evidence/trace.txt",
+      "bytes": 955,
+      "sha256": "7e763fc675b564af9f9ef7ecd9a14d0e1dbd79f152a60b0beb51cb33b8b0d064"
     },
     {
       "path": "evidence/backup.txt",
-      "bytes": 215,
-      "sha256": "7342a8ffd9f88cbc63ee83690aad0ce9d6b222714c296ac876a514ff41ca014b"
+      "bytes": 183,
+      "sha256": "dec0d4a0d3b45d08fe8dfa58c3123c7ba5b0f3afbcfee055a242cd9c4e9d7497"
     },
     {
       "path": "evidence/deploy.txt",
@@ -93,7 +116,5 @@
       "sha256": "fbdf7d58ff9e9b122a03bad5c67f841005f87c8a2acf261897fd38ad33a876cc"
     }
   ],
-  "unverified": [
-    "Windows 无 Docker：compose 证据来自此前隔离 VM；SSE 通道与 SIGTERM 优雅关闭未在本机自动验证"
-  ]
+  "unverified": []
 }

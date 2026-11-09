@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { createPool } from '../src/db.mjs';
 import { buildApp } from '../src/app.js';
-import { enqueue } from '../src/jobs.mjs';
 
 const pool = createPool();
 const app = buildApp({ pool });
@@ -13,8 +12,15 @@ await post('/auth/register', { email, password: 'correct-horse-1', name: 'Alert'
 const { token } = await (await post('/auth/login', { email, password: 'correct-horse-1' })).json();
 for (let i = 0; i < 5; i++) await fetch(`${base}/health`);
 for (let i = 0; i < 10; i++) await fetch(`${base}/missing`);
-await pool.query('TRUNCATE p04.job_results, p04.jobs RESTART IDENTITY');
-for (let i = 1; i <= 60; i++) await enqueue(pool, { tenantId: 99, kind: 'followup.reminder', dedupeKey: `alert-${i}`, payload: {} });
+await pool.query('TRUNCATE p04.job_notifications, p04.worker_inbox, p04.job_dead_letter, p04.job_results, p04.jobs RESTART IDENTITY CASCADE');
+for (let i = 1; i <= 60; i++) {
+  await pool.query(
+    `INSERT INTO p04.jobs (tenant_id, kind, dedupe_key, payload, priority)
+     VALUES ($1, 'followup.reminder', $2, '{}'::jsonb, 0)
+     ON CONFLICT (tenant_id, dedupe_key) DO NOTHING`,
+    [99, `alert-${i}`],
+  );
+}
 
 const response = await fetch(`${base}/metrics`, { headers: { authorization: `Bearer ${token}` } });
 const text = await response.text();

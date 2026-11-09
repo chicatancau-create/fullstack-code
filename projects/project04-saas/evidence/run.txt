@@ -1,6 +1,8 @@
-captured_at: 2026-11-08T17:51:17+08:00
+captured_at: 2026-11-09T11:30:02+08:00
 node: v24.15.0
 migrate=PASS
+lint=PASS
+coverage=PASS
 tests=PASS
 backup_restore=PASS
 otel=PASS

@@ -16,9 +16,11 @@ mkdir -p evidence
 echo "node $(node -v) pg=$(node -p "require('pg/package.json').version")" | tee evidence/toolchain.txt
 
 node scripts/migrate.mjs | tee evidence/migrate.txt
+npm run lint 2>&1 | tee evidence/lint.txt
+npm run coverage 2>&1 | tee evidence/coverage.txt
 
 set +e
-node --test tests/*.test.js 2>&1 | tee evidence/test.txt
+node --test --test-concurrency=1 tests/*.test.js 2>&1 | tee evidence/test.txt
 tests_rc=${PIPESTATUS[0]}
 set -e
 if [ "$tests_rc" -ne 0 ]; then
@@ -35,6 +37,8 @@ node scripts/alert_check.mjs 2>&1 | tee evidence/alerts.txt
   echo "captured_at: $(date -Is)"
   echo "node: $(node -v)"
   echo "migrate=PASS"
+  echo "lint=PASS"
+  echo "coverage=PASS"
   echo "tests=PASS"
   echo "backup_restore=PASS"
   echo "otel=PASS"
