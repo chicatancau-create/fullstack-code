@@ -93,14 +93,30 @@ try {
   log(`重试路径：boom 任务 5 次注入失败后 status=${dead.status} attempts=${dead.attempts}，死信=${deadLetters}`);
   log('');
 
+  const overArgs = { remindersPerDay: 10000000, peakFactor: 3, msPerJob: 20, workerConcurrency: 1, workers: 1 };
   for (const [label, args] of [
     ['normal', { remindersPerDay: 1000, peakFactor: 3, msPerJob: 20, workerConcurrency: 4, workers: 1 }],
     ['peak', { remindersPerDay: 1200000, peakFactor: 3, msPerJob: 20, workerConcurrency: 1, workers: 1 }],
-    ['over', { remindersPerDay: 10000000, peakFactor: 3, msPerJob: 20, workerConcurrency: 1, workers: 1 }],
+    ['over', overArgs],
   ]) {
     const est = capacityEstimate(args);
     log(`容量估算 ${label}：normal=${est.normal_rps}rps peak=${est.peak_rps}rps capacity=${est.capacity_rps}rps util=${est.utilization} tier=${est.tier}`);
   }
+  log('');
+
+  // 扩容验证：超容量档按 runbook「先加 worker/并发」逐个加 worker，找最小可行组合
+  const peakRpsNeeded = capacityEstimate(overArgs).peak_rps;
+  let scaling = null;
+  for (let workers = 1; workers <= 500; workers += 1) {
+    const est = capacityEstimate({ ...overArgs, workers, workerConcurrency: 4 });
+    if (est.tier !== 'over') { scaling = { workers, concurrencyPerWorker: 4, ...est }; break; }
+  }
+  assert.ok(scaling, '扩容扫描应能找到脱离 over 的组合');
+  assert.equal(scaling.tier, 'peak');
+  const doubled = capacityEstimate({ ...overArgs, workers: scaling.workers * 2, workerConcurrency: 4 });
+  log(`扩容验证：over 档峰值 ${peakRpsNeeded}rps，最小可行 ${scaling.workers} worker × 并发 ${scaling.concurrencyPerWorker} → capacity=${scaling.capacity_rps}rps util=${scaling.utilization} tier=${scaling.tier}；翻倍到 ${scaling.workers * 2} worker → util=${doubled.utilization} tier=${doubled.tier}`);
+  const dbCeiling = Number(process.env.PG_MAX_CONNECTIONS || 100);
+  log(`扩容约束：PostgreSQL max_connections=${dbCeiling}，worker 池上限需 ≤ 该值；本次方案 ${scaling.workers} 连接余量 ${dbCeiling - scaling.workers}`);
   log('');
 
   const child = spawn(process.execPath, ['src/worker.js'], {

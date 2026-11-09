@@ -131,6 +131,18 @@ test('容量估算三档与 RLS 策略存在', async () => {
   assert.equal(capacityEstimate({ remindersPerDay: 1000, peakFactor: 1, msPerJob: 10, workerConcurrency: 4, workers: 1 }).tier, 'normal');
   assert.equal(capacityEstimate({ remindersPerDay: 1200000, peakFactor: 3, msPerJob: 20, workerConcurrency: 1, workers: 1 }).tier, 'peak');
   assert.equal(capacityEstimate({ remindersPerDay: 10000000, peakFactor: 3, msPerJob: 20, workerConcurrency: 1, workers: 1 }).tier, 'over');
+  // 扩容路径：同一负载按 worker 逐个加，最小可行组合应回到 peak 档，再翻倍进入 normal
+  const overArgs = { remindersPerDay: 10000000, peakFactor: 3, msPerJob: 20, workerConcurrency: 4 };
+  let minimum = null;
+  for (let workers = 1; workers <= 500; workers += 1) {
+    const est = capacityEstimate({ ...overArgs, workers });
+    if (est.tier !== 'over') { minimum = { workers, ...est }; break; }
+  }
+  assert.ok(minimum, '扩容扫描应能找到脱离 over 的最小 worker 数');
+  assert.equal(minimum.tier, 'peak');
+  assert.ok(minimum.capacity_rps >= minimum.peak_rps);
+  const doubled = capacityEstimate({ ...overArgs, workers: minimum.workers * 2 });
+  assert.equal(doubled.tier, 'normal');
   const policies = await pool.query("SELECT tablename FROM pg_policies WHERE schemaname='p04' ORDER BY tablename");
   assert.deepEqual(policies.rows.map((r) => r.tablename), ['clients', 'followups', 'jobs']);
   const rls = await pool.query("SELECT relname, relrowsecurity FROM pg_class WHERE relnamespace='p04'::regnamespace AND relname IN ('clients','followups','jobs')");

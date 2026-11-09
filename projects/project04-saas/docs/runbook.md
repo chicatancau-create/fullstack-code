@@ -94,3 +94,9 @@ worker 每批 `JOB_BATCH=5`，轮询间隔 `JOB_INTERVAL_MS=500`；处理成功�
 
 `capacityEstimate()` 以提醒量、峰值系数、单任务耗时、worker 并发计算 normal/peak/over 三档；
 本机口径见 `evidence/workers-load.txt`。容量不足时先加 worker/并发，再评估 DB 连接与通知通道。
+
+超容量档（1000 万条/日、峰值 347.2rps）的扩容路径已实测：并发 4 时最小可行 2 个 worker
+（capacity 400rps、util 0.8681、tier=peak），翻倍到 4 个 worker 即进入 normal（util 0.434）。
+加 worker 前先核对 PostgreSQL `max_connections` 与单实例连接上限：每个 worker 至少占用 1 条连接，
+本机 PG 上限 100，4 worker 仅占 4 条，瓶颈在通知通道与 DB 写入而非连接数。
+判定命令：`npm run workers:load`，输出里必须同时出现三档与「扩容验证」行。

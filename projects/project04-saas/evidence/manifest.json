@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P04",
-  "generated_at": "2026-11-09T13:09:10.671Z",
-  "commit": "19a5d5128455737bfaebdaf842e7a6fb4a70fbd4",
+  "generated_at": "2026-11-09T13:15:26.824Z",
+  "commit": "846b2b1848b82518089401934ea2221942c69ef5",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -47,8 +47,8 @@
   "artifacts": [
     {
       "path": "evidence/test.txt",
-      "bytes": 2428,
-      "sha256": "e71f66a7499e760effae00e5d3332aadc209b6e4b8b252f2d6fa843ec1a123cf"
+      "bytes": 2427,
+      "sha256": "8c981ce1a9b42107edb382d3f3cefe3226fd8eee160ed5afe505ef48b906d0f8"
     },
     {
       "path": "evidence/lint.txt",
@@ -57,8 +57,8 @@
     },
     {
       "path": "evidence/coverage.txt",
-      "bytes": 3681,
-      "sha256": "900f233c7dcf887476b394de78755b3c5460d5b99ed851d39ea75bf324f9ae8c"
+      "bytes": 3682,
+      "sha256": "cd306391304c9beaaa185fbd2f7774abca19cb10b68b6a170fbecc40fff7115e"
     },
     {
       "path": "evidence/e2e.txt",
@@ -87,8 +87,8 @@
     },
     {
       "path": "evidence/workers-load.txt",
-      "bytes": 1420,
-      "sha256": "9bdafd652660496d96c653240e9b1c0d7e2eae463fce5b0abcc311bfb1d3688f"
+      "bytes": 1701,
+      "sha256": "5cc86fb91148d1e773e4617c0e927040ff1dc461adefd771b91e2059e4ec00ec"
     },
     {
       "path": "evidence/jobs.txt",
