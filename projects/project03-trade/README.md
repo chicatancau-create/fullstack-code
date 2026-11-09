@@ -36,13 +36,15 @@ Windows 下备份脚本默认使用 `D:/PostgreSQL/18/bin`，可用 `PG_BIN` 覆
 ## Docker Compose
 
 ```bash
-docker compose up --build   # PostgreSQL 18 + RabbitMQ 4 + app + web
+docker compose up --build   # PostgreSQL 18 + RabbitMQ 4 + app + worker + web
 # API：http://127.0.0.1:8796  前端：http://127.0.0.1:8081
+# app 启动时自动 migrate + 种子商品；业务 smoke：npm run smoke（默认打 http://127.0.0.1:8081/api）
 ```
 
-> 已在隔离 Ubuntu 虚拟机实际执行 `docker compose up --build`：db 与 RabbitMQ healthy、
-> app 启动后 `GET /health` 返回 200。用 `bash scripts/deploy-evidence.sh` 复跑并生成
-> `evidence/deploy.txt`；Windows 本机无 Docker，本机功能证据来自原生 PostgreSQL 18.6 + RabbitMQ，CI 用 service 容器跑迁移、测试与 build。
+> compose 拓扑：`app` 只提供 HTTP（`MQ_MODE=off`），`worker` 独立发布 Outbox + 消费并暴露 `/health`（决定 mq/db 模式），`web` 由 nginx 提供前端并反代 `/api`。
+> 本机 Windows 无 Docker，**本轮未复跑 compose**；app/worker 拆分已在原生 PostgreSQL 18.6 + RabbitMQ 上用
+> `scripts/worker_runtime_check.mjs` 验证（app 下单支付 → worker 置 outbox=sent 且通知落库，见 `evidence/worker-runtime.txt`）。
+> 历史隔离 Ubuntu 虚拟机的 `docker compose up --build` 仅覆盖 db/mq/app/web 旧拓扑；CI 用 service 容器跑迁移、测试与 build。
 >
 > 栈约定中的 Redis 在本实现未使用；库存并发控制由 PostgreSQL 行锁/条件更新完成，未用缓存替身冒充。
 
@@ -120,6 +122,7 @@ npm run load:locks       # 双锁 100 并发原始数据 → evidence/load-locks
 - [evidence/bug-001-failure.txt](evidence/bug-001-failure.txt)：修复前的超时原始输出。
 - [evidence/mq.txt](evidence/mq.txt)：真实 RabbitMQ 的 outbox/幂等/DLQ/积压/对账结果。
 - [evidence/mq-runtime.txt](evidence/mq-runtime.txt)：真实启动服务后的发布器 + 消费者联通结果。
+- [evidence/worker-runtime.txt](evidence/worker-runtime.txt)：app 只开 HTTP、worker 独立发布/消费的拆分验证。
 - [docs/bugs/001-pool-starvation.md](docs/bugs/001-pool-starvation.md)：真实 Bug 复盘。
 
 ## 已知限制（未验证）

@@ -32,6 +32,7 @@ fi
 node scripts/load.mjs 2>&1 | tee evidence/load.txt
 node scripts/mq_check.mjs 2>&1 | tee evidence/mq.txt
 node scripts/mq_runtime_check.mjs 2>&1 | tee evidence/mq-runtime.txt
+node scripts/worker_runtime_check.mjs 2>&1 | tee evidence/worker-runtime.txt
 node scripts/fault_inject.mjs 2>&1 | tee evidence/fault-injection.txt
 npm sbom --sbom-format=cyclonedx > evidence/sbom.json
 npm audit --omit=dev --audit-level=high > evidence/audit.txt 2>&1 || true
@@ -45,6 +46,7 @@ node scripts/backup.mjs 2>&1 | tee evidence/backup.txt
   echo "load=PASS"
   echo "mq=PASS"
   echo "mq_runtime=PASS"
+  echo "worker_split=PASS"
   echo "fault_injection=PASS"
   echo "sbom=evidence/sbom.json"
   echo "audit=evidence/audit.txt (本机 npmmirror 不支持 advisories 接口，结果以文件内容为准)"

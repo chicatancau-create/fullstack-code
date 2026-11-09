@@ -27,12 +27,13 @@ services:
 
   app:
     build: .
+    command: ["sh", "-c", "node scripts/migrate.mjs && node scripts/seed_e2e.mjs && node src/server.js"]
     environment:
       PGHOST: db
       PGUSER: p03
       PGPASSWORD: p03-local-pass
       PGDATABASE: study_lab
-      AMQP_URL: amqp://guest:guest@mq:5672
+      MQ_MODE: "off"
       P03_API_KEY: local-api-key
       P03_PROVIDER_SECRET: local-provider-secret
       HOST: 0.0.0.0
@@ -44,6 +45,29 @@ services:
         condition: service_healthy
     ports:
       - "8796:8796"
+
+  worker:
+    build: .
+    command: ["node", "src/worker.js"]
+    environment:
+      PGHOST: db
+      PGUSER: p03
+      PGPASSWORD: p03-local-pass
+      PGDATABASE: study_lab
+      AMQP_URL: amqp://guest:guest@mq:5672
+      WORKER_PORT: "8797"
+    depends_on:
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+      app:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8797/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   web:
     build: ./web

@@ -1,4 +1,4 @@
-dump bytes=44494 file=E:\fullstack-code\projects\project03-trade\evidence\p03-backup.sql
-source  orders=4 inventory=3
-restore orders=4 inventory=3
+dump bytes=45497 file=E:\fullstack-code\projects\project03-trade\evidence\p03-backup.sql
+source  orders=5 inventory=4
+restore orders=5 inventory=4
 RESTORE OK

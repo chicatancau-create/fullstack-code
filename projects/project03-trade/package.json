@@ -13,6 +13,8 @@
     "build": "node scripts/check-syntax.mjs",
     "load": "node scripts/load.mjs",
     "start": "node src/server.js",
+    "worker": "node src/worker.js",
+    "smoke": "node scripts/compose_smoke.mjs",
     "coverage": "node --test --test-concurrency=1 --experimental-test-coverage --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=75 tests/*.test.js",
     "e2e": "playwright test",
     "load:locks": "node scripts/load-locks.mjs"
