@@ -2,12 +2,13 @@ import crypto from 'node:crypto';
 import { createPool } from '../src/db.mjs';
 import { buildApp } from '../src/app.js';
 
-const CONCURRENCY = 20;
-const REQUESTS = 240;
-const STOCK = 150;
+const CONCURRENCY = Number(process.env.LOAD_CONCURRENCY || 20);
+const REQUESTS = Number(process.env.LOAD_REQUESTS || 240);
+const STOCK = Number(process.env.LOAD_STOCK || 150);
 
 const pool = createPool();
 const app = buildApp({ pool });
+await pool.query("INSERT INTO p03.products (sku, title, price_cents, active) VALUES ('load-sku', '压测商品', 1000, true) ON CONFLICT (sku) DO UPDATE SET active = true");
 await pool.query("INSERT INTO p03.inventory (sku, title, unit_price, stock) VALUES ('load-sku', '压测商品', 10, $1) ON CONFLICT (sku) DO UPDATE SET stock = $1", [STOCK]);
 await app.listen({ host: '127.0.0.1', port: 0 });
 const base = app.server.address().port;
