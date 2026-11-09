@@ -1,0 +1,2 @@
+stage=runtime_mq order=2 event=pay-1 outbox=sent notification_order=2
+PROJECT03 MQ RUNTIME PASS

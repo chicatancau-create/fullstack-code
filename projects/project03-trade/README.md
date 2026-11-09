@@ -95,7 +95,8 @@ npm run load:locks       # 双锁 100 并发原始数据 → evidence/load-locks
 - 消费端以 `event_id` 为 `p03.notifications` 主键，重复投递只产生一条通知。
 - 处理失败 `nack(requeue=false)`，经 `p03.dlx` 进入 `p03.dlq`。
 - 已验证：重复投递不重复写、30 条积压可排空、DLQ 收到 1 条、outbox sent 与通知对账 missing=0。
-- 证据：[evidence/mq.txt](evidence/mq.txt)。
+- 运行时联通：`src/server.js` 启动即接 RabbitMQ，每 500ms 发布 pending outbox 并消费；`scripts/mq_runtime_check.mjs` 真实起服务下单支付，断言 outbox 转 sent 且通知落库。
+- 证据：[evidence/mq.txt](evidence/mq.txt)、[evidence/mq-runtime.txt](evidence/mq-runtime.txt)。
 
 ## 数据模型
 
@@ -108,12 +109,15 @@ npm run load:locks       # 双锁 100 并发原始数据 → evidence/load-locks
 
 全部由 `scripts/run_project.sh` 在本机真实 PostgreSQL 上生成：
 
-- [evidence/test.txt](evidence/test.txt)：15/15 通过（含并发幂等、取消/支付竞争）。
+- [evidence/test.txt](evidence/test.txt)：24/24 通过（含 7×7 状态机、双锁并发、Worker、OWASP）。
 - [evidence/load.txt](evidence/load.txt)：20 并发 × 240 请求，成功 150、库存不足 90、其他 0；
-  P50 32.2ms / P95 96.3ms / P99 634.3ms；最终库存 0、订单 150。
+  P50 31.0ms / P95 81.6ms / P99 553.2ms；最终库存 0、订单 150。
+- [evidence/coverage.txt](evidence/coverage.txt)：行 82.29%、分支 75.90%、函数 81.58%。
+- [evidence/e2e.txt](evidence/e2e.txt)：Playwright（Edge）商品→下单→支付 1/1 通过。
 - [evidence/migrate.txt](evidence/migrate.txt)、[evidence/backup.txt](evidence/backup.txt)：迁移与备份恢复行数一致。
 - [evidence/bug-001-failure.txt](evidence/bug-001-failure.txt)：修复前的超时原始输出。
 - [evidence/mq.txt](evidence/mq.txt)：真实 RabbitMQ 的 outbox/幂等/DLQ/积压/对账结果。
+- [evidence/mq-runtime.txt](evidence/mq-runtime.txt)：真实启动服务后的发布器 + 消费者联通结果。
 - [docs/bugs/001-pool-starvation.md](docs/bugs/001-pool-starvation.md)：真实 Bug 复盘。
 
 ## 已知限制（未验证）

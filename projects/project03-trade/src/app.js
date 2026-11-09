@@ -34,6 +34,9 @@ export function buildApp({ pool, logger = false, lockStrategy = process.env.LOCK
   });
   app.setErrorHandler((error, request, reply) => {
     if (error.validation) return reply.code(400).send({ error: 'validation_failed', request_id: request.id });
+    if (error.statusCode && error.statusCode < 500) {
+      return reply.code(error.statusCode).send({ error: 'bad_request', request_id: request.id });
+    }
     if (error.code === 'ILLEGAL_TRANSITION') {
       return reply.code(409).send({ error: 'illegal_transition', from: error.from, to: error.to, request_id: request.id });
     }

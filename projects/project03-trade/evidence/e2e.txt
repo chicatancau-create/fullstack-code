@@ -1,6 +1,10 @@
 
+> project03-trade@1.0.0 e2e
+> playwright test
+
+
 Running 1 test using 1 worker
 
-  ok 1 e2e\flow.spec.ts:3:1 › 下单→支付→发货→完成→退款全链路 (1.1s)
+  ok 1 e2e\flow.spec.ts:3:1 › 商品 → 下单 → 支付 (1.0s)
 
-  1 passed (3.3s)
+  1 passed (4.7s)

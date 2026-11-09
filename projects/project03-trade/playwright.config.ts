@@ -7,7 +7,7 @@ export default defineConfig({
   use: { baseURL: 'http://localhost:4190', channel: process.env.CI ? undefined : 'msedge' },
   webServer: [
     {
-      command: 'node scripts/migrate.mjs && node src/server.js',
+      command: 'node scripts/migrate.mjs && node scripts/seed_e2e.mjs && node src/server.js',
       url: 'http://127.0.0.1:8796/health',
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,

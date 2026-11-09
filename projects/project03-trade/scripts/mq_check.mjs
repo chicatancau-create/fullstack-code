@@ -27,6 +27,7 @@ try {
   await app.ready();
   await pool.query('TRUNCATE p03.notifications, p03.outbox, p03.payment_events, p03.order_items, p03.orders RESTART IDENTITY CASCADE');
   await pool.query('TRUNCATE p03.inventory');
+  await pool.query("INSERT INTO p03.products (sku, title, price_cents, active) VALUES ('mq-sku', 'MQ 商品', 100, true) ON CONFLICT (sku) DO UPDATE SET active = true");
   await pool.query("INSERT INTO p03.inventory (sku, title, unit_price, stock) VALUES ('mq-sku', 'MQ 商品', 100, 10)");
 
   mq = await connectMq();
@@ -36,7 +37,7 @@ try {
   const created = await app.inject({ method: 'POST', url: '/orders', headers: { ...API, 'idempotency-key': 'mq-order-1' }, payload: { sku: 'mq-sku', qty: 1 } });
   assert.equal(created.statusCode, 201);
   const orderId = created.json().id;
-  const payment = { event_id: 'mq-paid-1', order_id: orderId, result: 'success' };
+  const payment = { event_id: 'mq-paid-1', order_id: orderId, result: 'success', timestamp: Date.now() };
   const paid = await app.inject({ method: 'POST', url: '/payments/callback', headers: { 'x-signature': sign(payment) }, payload: payment });
   assert.equal(paid.statusCode, 200);
   assert.equal((await pool.query("SELECT count(*)::int AS n FROM p03.outbox WHERE status='pending'")).rows[0].n, 1);

@@ -21,7 +21,7 @@ echo "node $(node -v) pg=$(node -p "require('pg/package.json').version")" | tee 
 node scripts/migrate.mjs | tee evidence/migrate.txt
 
 set +e
-node --test tests/*.test.js 2>&1 | tee evidence/test.txt
+node --test --test-concurrency=1 tests/*.test.js 2>&1 | tee evidence/test.txt
 tests_rc=${PIPESTATUS[0]}
 set -e
 if [ "$tests_rc" -ne 0 ]; then
@@ -31,6 +31,7 @@ fi
 
 node scripts/load.mjs 2>&1 | tee evidence/load.txt
 node scripts/mq_check.mjs 2>&1 | tee evidence/mq.txt
+node scripts/mq_runtime_check.mjs 2>&1 | tee evidence/mq-runtime.txt
 node scripts/backup.mjs 2>&1 | tee evidence/backup.txt
 
 {
@@ -40,6 +41,7 @@ node scripts/backup.mjs 2>&1 | tee evidence/backup.txt
   echo "tests=PASS"
   echo "load=PASS"
   echo "mq=PASS"
+  echo "mq_runtime=PASS"
   echo "backup_restore=PASS"
   echo "PROJECT03 PASS"
 } | tee evidence/run.txt
