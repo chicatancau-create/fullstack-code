@@ -121,6 +121,7 @@ jobs:
           cache: npm
           cache-dependency-path: projects/project03-trade/package-lock.json
       - run: npm ci --no-audit --no-fund
+      - run: npm run lint
       - run: node scripts/migrate.mjs
       - run: node --test tests/*.test.js
       - run: node scripts/mq_check.mjs

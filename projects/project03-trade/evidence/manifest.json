@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P03",
-  "generated_at": "2026-11-09T03:24:40.622Z",
-  "commit": "1922ab2137df182d4cccb994524e3b5aefc63ab4",
+  "generated_at": "2026-11-09T10:26:46.769Z",
+  "commit": "065c08de574bc15468fdee8e8294ca0a5dee55c3",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -29,6 +29,10 @@
     },
     {
       "cmd": "bash scripts/run_project.sh",
+      "exit": 0
+    },
+    {
+      "cmd": "npm run lint",
       "exit": 0
     }
   ],
@@ -90,8 +94,8 @@
     },
     {
       "path": "evidence/load-locks.json",
-      "bytes": 697,
-      "sha256": "eb21efa9711b08e89fe7b4bb91f89bb3cfec04f0615b7685ab81881af82e52ac"
+      "bytes": 693,
+      "sha256": "b3d5a644804ffb52bd4eb117b6adbdefa4afb9788359eb28ed3e86807def65e2"
     },
     {
       "path": "evidence/sbom.json",
@@ -112,6 +116,11 @@
       "path": "evidence/bug-001-failure.txt",
       "bytes": 639,
       "sha256": "ee7dba58312633308be02956c7c8225831ce1b26087a5cd88772d042632336c4"
+    },
+    {
+      "path": "evidence/lint.txt",
+      "bytes": 75,
+      "sha256": "2ffe4108946e52db9223b77aa4e0b6734fe9badf7c062c199e1d9667855d36ae"
     }
   ],
   "unverified": []
