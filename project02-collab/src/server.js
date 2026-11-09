@@ -1,22 +1,19 @@
+import { PrismaClient } from '@prisma/client';
 import { buildApp } from './app.js';
-import { createPool } from './db.mjs';
 
-const pool = createPool();
-const app = buildApp({ pool, logger: true });
-const port = Number(process.env.PORT || 8795);
+const prisma = new PrismaClient();
+const app = await buildApp({ prisma });
+const port = Number(process.env.PORT || 3102);
+const host = process.env.HOST || '0.0.0.0';
 
-for (const signal of ['SIGINT', 'SIGTERM']) {
-  process.on(signal, async () => {
-    await app.close();
-    await pool.end();
-    process.exit(0);
-  });
-}
+const shutdown = async () => {
+  await app.close();
+  await prisma.$disconnect();
+  process.exit(0);
+};
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
-try {
-  await app.listen({ port, host: '127.0.0.1' });
-} catch (error) {
-  app.log.error(error);
-  await pool.end();
-  process.exit(1);
-}
+app.listen({ port, host }).then(() => {
+  console.log(`P02 listening on http://${host}:${port}`);
+});

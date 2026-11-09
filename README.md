@@ -101,6 +101,12 @@ python EnvironmentTest.py
 | `project06-ai-min/` | mock LLM + 本地 Qwen0.5B + BM25 RAG | `npm test` / `node scripts/eval.mjs` |
 
 CI：`.github/workflows/ci.yml`，9 个 job（项目 01–05、Java/MySQL、Express/Nest、AI、manifest 校验）。最近全绿 run `42453215623`。
+
+### 资料采集工具
+
+| 目录 | 内容 |
+|---|---|
+| `jd-audit/` | 2026-11-07 批次的 JD 采集与 URL 复核脚本（`collect2.mjs` / `repair.mjs` / `render.mjs` / `check-urls.mjs`），产出交给 Obsidian 学习库的 `04-资源与评估/data/` |
 仓库为私有；项目 README 与 `evidence/` 里有逐项测试、故障注入和限制说明。
 
 ## 相关文档

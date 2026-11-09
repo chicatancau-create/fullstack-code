@@ -1,5 +1,7 @@
 # 项目 03：电商交易 Demo
 
+> MS1 实现仓库（2026-11-08 迁入资料库并在本机复跑）。证据由 `scripts/run_project.sh` 现场生成。
+
 在项目 02 的基础上独立演进的最小交易闭环：下单 → 冻结库存 → 取消回补 / 支付成功。
 重点是**并发正确性**而不是页面数量：库存不为负、金额由服务端计算、订单快照不随商品修改、
 幂等重试不重复下单、支付回调可重复投递、取消与支付竞争有确定终态。
@@ -31,6 +33,19 @@ PGPASSWORD=study-pass bash scripts/run_project.sh
 
 Windows 下备份脚本默认使用 `D:/PostgreSQL/18/bin`，可用 `PG_BIN` 覆盖。
 
+## Docker Compose
+
+```bash
+docker compose up --build   # PostgreSQL 18 + RabbitMQ 4 + app + web
+# API：http://127.0.0.1:8796  前端：http://127.0.0.1:8081
+```
+
+> 已在隔离 Ubuntu 虚拟机实际执行 `docker compose up --build`：db 与 RabbitMQ healthy、
+> app 启动后 `GET /health` 返回 200。用 `bash scripts/deploy-evidence.sh` 复跑并生成
+> `evidence/deploy.txt`；Windows 本机无 Docker，本机功能证据来自原生 PostgreSQL 18.6 + RabbitMQ，CI 用 service 容器跑迁移、测试与 build。
+>
+> 栈约定中的 Redis 在本实现未使用；库存并发控制由 PostgreSQL 行锁/条件更新完成，未用缓存替身冒充。
+
 ## API 摘要
 
 完整契约见 [docs/openapi.yaml](docs/openapi.yaml)。业务接口要求 `x-api-key` 与 `x-user-id`；
@@ -40,9 +55,33 @@ Demo 中用户身份由网关头模拟，生产必须从认证令牌解析。
 | --- | --- | --- |
 | POST | `/orders` | 创建订单，要求 `Idempotency-Key`，返回服务端金额与快照 |
 | GET | `/orders/:id` | 仅本人可见 |
-| POST | `/orders/:id/cancel` | 仅 `created` 可取消，回补库存，重复取消幂等 |
+| POST | `/orders/:id/cancel` | 仅 `pending_payment` 可取消，回补库存，重复取消幂等 |
+| POST | `/orders/:id/pay` | Mock Gateway 支付；成功推进 `paid` 并写 Outbox |
+| POST | `/orders/:id/ship` | `paid` → `shipped` |
+| POST | `/orders/:id/complete` | `shipped` → `completed` |
+| POST | `/orders/:id/refund` | `paid/shipped/completed` → `refunding` → `refunded`；仅支付后未发货回补库存 |
+| GET | `/orders/:id/audit` | 该订单审计链（actor/action/request_id/before/after） |
+| GET | `/products` `/ready` `/metrics` | 商品、就绪、指标 |
 | POST | `/payments/callback` | HMAC-SHA256 签名，`event_id` 去重，状态机推进 |
 | GET | `/health` | 健康检查 |
+
+## 完整版能力
+
+- 七态状态机：`pending_payment / paid / shipped / completed / cancelled / refunding / refunded`，7×7 迁移矩阵测试。
+- 双锁对照：`LOCK_STRATEGY=row|optimistic`，同一 100 并发抢 10 件套件跑两遍。
+- 前端 + Playwright：下单→支付→发货→完成→退款全链路。
+- Worker：Outbox 轮询、Inbox 去重、失败退避、5 次后 dead；设置 `AMQP_URL` 时投递 RabbitMQ。
+- 审计：所有写操作写 `p03.audit_log`（before/after/request_id）。
+- OWASP：见 [docs/owasp-matrix.md](docs/owasp-matrix.md)。
+
+```bash
+export PGPASSWORD=study-pass PGDATABASE=study_lab
+node scripts/migrate.mjs
+npm test                 # 24 用例（含 7×7 状态机、双锁 100 并发、Worker、OWASP）
+npm run coverage         # 行 ≥80%、分支 ≥75%、函数 ≥80%
+npm run e2e              # Playwright 全链路
+npm run load:locks       # 双锁 100 并发原始数据 → evidence/load-locks.json
+```
 
 ## 关键决策
 

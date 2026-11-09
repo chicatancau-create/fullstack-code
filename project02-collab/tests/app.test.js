@@ -1,125 +1,184 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { after, before, beforeEach, test } from 'node:test';
-import assert from 'node:assert/strict';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { PrismaClient } from '@prisma/client';
 import { buildApp } from '../src/app.js';
-import { createPool } from '../src/db.mjs';
 
-const pool = createPool();
+const prisma = new PrismaClient();
 let app;
 
-async function reset() {
-  await pool.query('DROP SCHEMA IF EXISTS p02 CASCADE');
-  const sql = fs.readFileSync(path.resolve('migrations/001_init.sql'), 'utf8');
-  await pool.query(sql);
+const authHeaders = (token) => ({ authorization: `Bearer ${token}` });
+
+async function resetDb() {
+  await prisma.comment.deleteMany();
+  await prisma.task.deleteMany();
+  await prisma.membership.deleteMany();
+  await prisma.refreshToken.deleteMany();
+  await prisma.workspace.deleteMany();
+  await prisma.user.deleteMany();
 }
 
-before(async () => {
-  app = buildApp({ pool });
+async function register(email) {
+  const res = await app.inject({
+    method: 'POST',
+    url: '/auth/register',
+    payload: { email, password: 'password123', name: email.split('@')[0] },
+  });
+  expect(res.statusCode).toBe(201);
+  return res.json();
+}
+
+async function createWorkspace(token, name) {
+  const res = await app.inject({
+    method: 'POST',
+    url: '/workspaces',
+    headers: authHeaders(token),
+    payload: { name },
+  });
+  expect(res.statusCode).toBe(201);
+  return res.json().workspace;
+}
+
+beforeAll(async () => {
+  await resetDb();
+  app = await buildApp({ prisma, jwtSecret: 'p02-test-secret' });
   await app.ready();
 });
 
-beforeEach(reset);
-
-after(async () => {
+afterAll(async () => {
   await app.close();
-  await pool.end();
+  await prisma.$disconnect();
 });
 
-const auth = (token) => ({ authorization: `Bearer ${token}` });
+describe('认证', () => {
+  it('注册、登录、refresh 轮换且旧 token 立即失效', async () => {
+    const first = await register('auth@example.com');
+    const login = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: 'auth@example.com', password: 'password123' },
+    });
+    expect(login.statusCode).toBe(200);
+    const { refreshToken } = login.json();
 
-async function registerAndLogin(email, password = 'password123') {
-  const register = await app.inject({ method: 'POST', url: '/auth/register', payload: { email, password } });
-  assert.equal(register.statusCode, 201, register.body);
-  const login = await app.inject({ method: 'POST', url: '/auth/login', payload: { email, password } });
-  assert.equal(login.statusCode, 200, login.body);
-  return { id: register.json().id, token: login.json().token };
-}
+    const rotated = await app.inject({
+      method: 'POST',
+      url: '/auth/refresh',
+      payload: { refreshToken },
+    });
+    expect(rotated.statusCode).toBe(200);
+    expect(rotated.json().refreshToken).not.toBe(refreshToken);
 
-async function createWorkspace(token, slug) {
-  const response = await app.inject({ method: 'POST', url: '/workspaces', headers: auth(token), payload: { name: slug, slug } });
-  assert.equal(response.statusCode, 201, response.body);
-  return response.json();
-}
-
-test('注册/登录/me/logout', async () => {
-  const { token } = await registerAndLogin('alice@example.com');
-  const me = await app.inject({ method: 'GET', url: '/me', headers: auth(token) });
-  assert.equal(me.statusCode, 200);
-  assert.equal(me.json().email, 'alice@example.com');
-  const out = await app.inject({ method: 'POST', url: '/auth/logout', headers: auth(token) });
-  assert.equal(out.statusCode, 204);
-  assert.equal((await app.inject({ method: 'GET', url: '/me', headers: auth(token) })).statusCode, 401);
+    const replay = await app.inject({
+      method: 'POST',
+      url: '/auth/refresh',
+      payload: { refreshToken },
+    });
+    expect(replay.statusCode).toBe(401);
+    expect(first.accessToken).toBeTruthy();
+  });
 });
 
-test('工作区：创建者成为 owner，跨租户 404', async () => {
-  const alice = await registerAndLogin('alice@example.com');
-  const bob = await registerAndLogin('bob@example.com');
-  const ws = await createWorkspace(alice.token, 'alpha');
-  const list = await app.inject({ method: 'GET', url: '/workspaces', headers: auth(alice.token) });
-  assert.equal(list.json().workspaces[0].role, 'owner');
-  const other = await app.inject({ method: 'GET', url: `/workspaces/${ws.id}`, headers: auth(bob.token) });
-  assert.equal(other.statusCode, 404);
+describe('主路径', () => {
+  it('工作区 → 任务 → 评论全链路', async () => {
+    const { accessToken } = await register('owner@example.com');
+    const ws = await createWorkspace(accessToken, '团队 A');
+
+    const taskRes = await app.inject({
+      method: 'POST',
+      url: `/workspaces/${ws.id}/tasks`,
+      headers: authHeaders(accessToken),
+      payload: { title: '实现登录', status: 'todo' },
+    });
+    expect(taskRes.statusCode).toBe(201);
+    const task = taskRes.json().task;
+
+    const commentRes = await app.inject({
+      method: 'POST',
+      url: `/tasks/${task.id}/comments`,
+      headers: authHeaders(accessToken),
+      payload: { body: '先补失败测试' },
+    });
+    expect(commentRes.statusCode).toBe(201);
+
+    const listRes = await app.inject({
+      method: 'GET',
+      url: `/tasks/${task.id}/comments`,
+      headers: authHeaders(accessToken),
+    });
+    expect(listRes.json().comments).toHaveLength(1);
+  });
 });
 
-test('成员管理：owner 可加人，member 不可加/删', async () => {
-  const alice = await registerAndLogin('alice@example.com');
-  const bob = await registerAndLogin('bob@example.com');
-  const ws = await createWorkspace(alice.token, 'alpha');
-  const added = await app.inject({ method: 'POST', url: `/workspaces/${ws.id}/members`, headers: auth(alice.token), payload: { email: 'bob@example.com' } });
-  assert.equal(added.statusCode, 201);
-  const memberAdd = await app.inject({ method: 'POST', url: `/workspaces/${ws.id}/members`, headers: auth(bob.token), payload: { email: 'bob@example.com' } });
-  assert.equal(memberAdd.statusCode, 404);
-  const memberDelete = await app.inject({ method: 'DELETE', url: `/workspaces/${ws.id}/members/${alice.id}`, headers: auth(bob.token) });
-  assert.equal(memberDelete.statusCode, 404);
+describe('对象级授权', () => {
+  it('跨租户读取任务与评论一律 403', async () => {
+    const a = await register('a@example.com');
+    const b = await register('b@example.com');
+    const ws = await createWorkspace(a.accessToken, '租户 A');
+    const taskRes = await app.inject({
+      method: 'POST',
+      url: `/workspaces/${ws.id}/tasks`,
+      headers: authHeaders(a.accessToken),
+      payload: { title: '私有任务' },
+    });
+    const task = taskRes.json().task;
+
+    const read = await app.inject({
+      method: 'GET',
+      url: `/workspaces/${ws.id}/tasks`,
+      headers: authHeaders(b.accessToken),
+    });
+    expect(read.statusCode).toBe(403);
+
+    const comment = await app.inject({
+      method: 'POST',
+      url: `/tasks/${task.id}/comments`,
+      headers: authHeaders(b.accessToken),
+      payload: { body: '越权' },
+    });
+    expect(comment.statusCode).toBe(403);
+  });
 });
 
-test('最后 Owner：删除自己返回 409', async () => {
-  const alice = await registerAndLogin('alice@example.com');
-  const ws = await createWorkspace(alice.token, 'alpha');
-  const response = await app.inject({ method: 'DELETE', url: `/workspaces/${ws.id}/members/${alice.id}`, headers: auth(alice.token) });
-  assert.equal(response.statusCode, 409);
-  assert.equal(response.json().error, 'last_owner');
+describe('owner concurrency', () => {
+  it('同一 Owner 并发创建进行中任务只成功一个', async () => {
+    const { accessToken } = await register('conc@example.com');
+    const ws = await createWorkspace(accessToken, '并发租户');
+    const body = {
+      method: 'POST',
+      url: `/workspaces/${ws.id}/tasks`,
+      headers: authHeaders(accessToken),
+      payload: { title: '并发任务', status: 'in_progress' },
+    };
+    const results = await Promise.all([app.inject(body), app.inject(body)]);
+    const statuses = results.map((r) => r.statusCode).sort();
+    expect(statuses).toEqual([201, 409]);
+    const count = await prisma.task.count({ where: { workspaceId: ws.id, status: 'in_progress' } });
+    expect(count).toBe(1);
+  });
 });
 
-test('并发：两个 Owner 同时删自己，只有一个成功，最终保留 1 个', async () => {
-  const alice = await registerAndLogin('alice@example.com');
-  const bob = await registerAndLogin('bob@example.com');
-  const ws = await createWorkspace(alice.token, 'alpha');
-  await app.inject({ method: 'POST', url: `/workspaces/${ws.id}/members`, headers: auth(alice.token), payload: { email: 'bob@example.com', role: 'owner' } });
-
-  const [a, b] = await Promise.all([
-    app.inject({ method: 'DELETE', url: `/workspaces/${ws.id}/members/${alice.id}`, headers: auth(alice.token) }),
-    app.inject({ method: 'DELETE', url: `/workspaces/${ws.id}/members/${bob.id}`, headers: auth(bob.token) }),
-  ]);
-  assert.deepEqual([a.statusCode, b.statusCode].sort(), [204, 409]);
-  const owners = await pool.query("SELECT count(*)::int AS n FROM p02.members WHERE workspace_id = $1 AND role = 'owner'", [ws.id]);
-  assert.equal(owners.rows[0].n, 1);
+describe('事务回滚', () => {
+  it('事务内抛错后不留半条数据', async () => {
+    const { accessToken } = await register('tx@example.com');
+    const ws = await createWorkspace(accessToken, '事务租户');
+    const res = await app.inject({
+      method: 'POST',
+      url: `/workspaces/${ws.id}/transaction-demo`,
+      headers: authHeaders(accessToken),
+      payload: {},
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().rolledBack).toBe(true);
+    expect(res.json().remainingRows).toBe(0);
+  });
 });
 
-test('唯一约束：slug 与任务标题重复返回 409', async () => {
-  const alice = await registerAndLogin('alice@example.com');
-  const ws = await createWorkspace(alice.token, 'alpha');
-  const dupSlug = await app.inject({ method: 'POST', url: '/workspaces', headers: auth(alice.token), payload: { name: 'alpha2', slug: 'alpha' } });
-  assert.equal(dupSlug.statusCode, 409);
-  const first = await app.inject({ method: 'POST', url: `/workspaces/${ws.id}/tasks`, headers: auth(alice.token), payload: { title: 'same' } });
-  const second = await app.inject({ method: 'POST', url: `/workspaces/${ws.id}/tasks`, headers: auth(alice.token), payload: { title: 'same' } });
-  assert.equal(first.statusCode, 201);
-  assert.equal(second.statusCode, 409);
-});
-
-test('任务：成员可改状态，跨租户 404', async () => {
-  const alice = await registerAndLogin('alice@example.com');
-  const bob = await registerAndLogin('bob@example.com');
-  const ws = await createWorkspace(alice.token, 'alpha');
-  await app.inject({ method: 'POST', url: `/workspaces/${ws.id}/members`, headers: auth(alice.token), payload: { email: 'bob@example.com' } });
-  const task = await app.inject({ method: 'POST', url: `/workspaces/${ws.id}/tasks`, headers: auth(alice.token), payload: { title: 'do it' } });
-  const updated = await app.inject({ method: 'PATCH', url: `/tasks/${task.json().id}`, headers: auth(bob.token), payload: { status: 'done' } });
-  assert.equal(updated.statusCode, 200);
-  assert.equal(updated.json().status, 'done');
-
-  const bobWs = await createWorkspace(bob.token, 'beta');
-  const bobTask = await app.inject({ method: 'POST', url: `/workspaces/${bobWs.id}/tasks`, headers: auth(bob.token), payload: { title: 'bob only' } });
-  const cross = await app.inject({ method: 'PATCH', url: `/tasks/${bobTask.json().id}`, headers: auth(alice.token), payload: { status: 'todo' } });
-  assert.equal(cross.statusCode, 404);
+describe('OpenAPI 契约', () => {
+  it('关键路径都出现在 openapi.json', async () => {
+    const res = await app.inject({ method: 'GET', url: '/openapi.json' });
+    expect(res.statusCode).toBe(200);
+    const doc = res.json();
+    for (const path of ['/auth/register', '/auth/login', '/auth/refresh', '/workspaces', '/workspaces/{id}/tasks', '/tasks/{id}', '/tasks/{id}/comments']) {
+      expect(doc.paths[path], path).toBeTruthy();
+    }
+  });
 });
