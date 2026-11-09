@@ -5,8 +5,12 @@
 
 ## 目录结构
 
+> 根目录只允许出现：课程项目组 `projects/`、工具组 `tools/`、语言练习线（`Web/` `Cpp/` `Python/` `Harmony/`）、`跨平台应用开发/`，以及仓库元文件。规则见 [AGENTS.md](AGENTS.md)。
+
 | 目录 | 技术栈 | 内容 |
 |---|---|---|
+| `projects/` | 见下方"全栈项目线" | P01–P06 课程项目，各自独立可运行 |
+| `tools/` | 见下方"资料采集工具" | 一次性/可复用工具脚本 |
 | `Web/js自学/` | 原生 HTML + JavaScript | 两页**可运行**的语法笔记，页面内会把 `console.log` 的真实输出打印到黄底框 |
 | `Web/vue/` | Vue 3 + Vite + vue-router | 跟课练习：组件、路由、动态组件、商品管理表格与自定义指令 |
 | `Web/webgl自学/` | 原生 HTML + Three.js r169（CDN importmap） | 单文件实时 3D 练习页。`浮空树脂小岛.html`：树脂圆柱沙盘、昼夜光照插值、GTAO + Bloom + AgX + SMAA、屏幕空间折射，贴图全程序化 |
@@ -91,14 +95,14 @@ python EnvironmentTest.py
 
 | 目录 | 内容 | 本地入口 |
 |---|---|---|
-| `Web/project01-blog/` | React + Vite 学习笔记博客；组件 7/7、E2E、axe 0 | `npm ci && npm test && npm run build`；公网 <https://chicatancau-create.github.io/learning-blog-demo/> |
-| `project02-collab/` | Fastify + PostgreSQL 协作平台；7/7、租户隔离、最后 Owner 并发 | `bash scripts/run_project.sh` |
-| `project02-spring/` | Spring Boot + Spring Security + MySQL 迁移；本地 9/9、CI 10/10（Testcontainers） | `bash scripts/run_project.sh` |
-| `project02-frameworks/` | Express/Nest 同契约对照；2/2 | 各目录 `npm test` |
-| `project03-trade/` | 交易/库存/幂等/状态机 + RabbitMQ Outbox/Inbox/DLQ；15/15 | `bash scripts/run_project.sh` |
-| `project04-saas/` | 多租户 SaaS、后台任务、OTel、Docker/K3s、Ingress、告警；13/13 | `bash scripts/run_project.sh` |
-| `project05-takeover/` | 受控接手：3 缺陷→12/12 + D88–D90 | `bash scripts/run_project.sh`（独立库 `study_lab_p05`） |
-| `project06-ai-min/` | mock LLM + 本地 Qwen0.5B + BM25 RAG | `npm test` / `node scripts/eval.mjs` |
+| `projects/project01-blog/` | React + Vite 学习笔记博客；组件 7/7、E2E、axe 0 | `npm ci && npm test && npm run build`；公网 <https://chicatancau-create.github.io/learning-blog-demo/> |
+| `projects/project02-collab/` | Fastify + PostgreSQL 协作平台；7/7、租户隔离、最后 Owner 并发 | `bash scripts/run_project.sh` |
+| `projects/project02-spring/` | Spring Boot + Spring Security + MySQL 迁移；本地 9/9、CI 10/10（Testcontainers） | `bash scripts/run_project.sh` |
+| `projects/project02-frameworks/` | Express/Nest 同契约对照；2/2 | 各目录 `npm test` |
+| `projects/project03-trade/` | 交易/库存/幂等/状态机 + RabbitMQ Outbox/Inbox/DLQ；15/15 | `bash scripts/run_project.sh` |
+| `projects/project04-saas/` | 多租户 SaaS、后台任务、OTel、Docker/K3s、Ingress、告警；13/13 | `bash scripts/run_project.sh` |
+| `projects/project05-takeover/` | 受控接手：3 缺陷→12/12 + D88–D90 | `bash scripts/run_project.sh`（独立库 `study_lab_p05`） |
+| `projects/project06-ai-min/` | mock LLM + 本地 Qwen0.5B + BM25 RAG | `npm test` / `node scripts/eval.mjs` |
 
 CI：`.github/workflows/ci.yml`，9 个 job（项目 01–05、Java/MySQL、Express/Nest、AI、manifest 校验）。最近全绿 run `42453215623`。
 
@@ -106,7 +110,7 @@ CI：`.github/workflows/ci.yml`，9 个 job（项目 01–05、Java/MySQL、Expr
 
 | 目录 | 内容 |
 |---|---|
-| `jd-audit/` | 2026-11-07 批次的 JD 采集与 URL 复核脚本（`collect2.mjs` / `repair.mjs` / `render.mjs` / `check-urls.mjs`），产出交给 Obsidian 学习库的 `04-资源与评估/data/` |
+| `tools/jd-audit/` | 2026-11-07 批次的 JD 采集与 URL 复核脚本（`collect2.mjs` / `repair.mjs` / `render.mjs` / `check-urls.mjs`），产出交给 Obsidian 学习库的 `04-资源与评估/data/` |
 仓库为私有；项目 README 与 `evidence/` 里有逐项测试、故障注入和限制说明。
 
 ## 相关文档

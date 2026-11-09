@@ -6,3 +6,20 @@
 **/deploy/*.yaml text eol=lf
 **/deploy/*.yml text eol=lf
 **/migrations/*.sql text eol=lf
+
+# ---- 跨平台工具链：这些文件必须是 LF，否则在 Windows 上 checkout 成 CRLF 会让 bash/Docker 跑不起来 ----
+*.sh        text eol=lf
+*.mjs       text eol=lf
+*.js        text eol=lf
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.conf      text eol=lf
+Dockerfile  text eol=lf
+docker-compose.yml text eol=lf
+
+# ---- Windows 入口脚本保持 CRLF ----
+*.cmd       text eol=crlf
+*.bat       text eol=crlf
+*.ps1       text eol=crlf
