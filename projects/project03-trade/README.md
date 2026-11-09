@@ -129,3 +129,11 @@ npm run load:locks       # 双锁 100 并发原始数据 → evidence/load-locks
 
 AI 参与代码生成、测试设计与文档初稿；接口行为、并发结论以本仓库脚本实际输出为准。
 所有数字均可在 `evidence/` 中复核，未验证项已在上面列出。
+
+## 前端（web/）与 E2E
+
+- `web/`：React 19 + Vite + TypeScript，商品列表、数量、购买、订单状态与支付/取消。
+- 开发代理：Vite 将 `/api` 转发到 `http://127.0.0.1:8796`，避免浏览器跨域。
+- 单元测试：`cd web && npm ci && npm test`（2 条，组件渲染与错误态）。
+- 构建：`cd web && npm run build`（tsc --noEmit + vite build）。
+- E2E：根目录 `npm ci && npm run e2e`（Playwright + msedge，商品→下单→支付 1 条）。

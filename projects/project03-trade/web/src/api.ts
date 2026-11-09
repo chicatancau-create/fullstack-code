@@ -1,25 +1,47 @@
-export type Product = { sku: string; title: string; price_cents: number; stock: number };
-export type Item = { sku: string; title: string; unit_price: number; qty: number };
+const BASE = import.meta.env.VITE_API_BASE || '/api';
+
+export type Product = {
+  sku: string;
+  title: string;
+  price_cents: number;
+  stock: number;
+};
+
 export type Order = {
-  id: number; status: string; amount: number; qty: number; sku: string;
-  items: Item[]; payments: { id: number; status: string; attempts: number }[];
-  refunds: { id: number; amount: number; status: string }[];
+  id: number;
+  status: string;
+  amount: string | number;
+  qty: number;
+  items: Array<{ title: string; qty: number }>;
 };
-const USER = localStorage.getItem('p03.user') || 'buyer';
-export class ApiError extends Error { constructor(public status: number, public code: string, message: string) { super(message); } }
-async function raw(path: string, init: RequestInit = {}) {
-  const headers: Record<string, string> = { 'x-api-key': 'test-key', 'x-user-id': USER, ...(init.headers as Record<string, string>) };
-  if (init.body) headers['content-type'] = 'application/json';
-  const res = await fetch(`/api${path}`, { ...init, headers });
-  const text = await res.text();
-  const body = text ? JSON.parse(text) : {};
-  if (!res.ok) throw new ApiError(res.status, body.error || 'ERROR', body.message || body.error || res.statusText);
-  return body;
+
+const headers = {
+  'content-type': 'application/json',
+  'x-api-key': import.meta.env.VITE_API_KEY || 'test-key',
+  'x-user-id': 'demo-user',
+};
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const response = await fetch(`${BASE}${path}`, {
+    ...init,
+    headers: { ...headers, ...(init.headers || {}) },
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+  return body as T;
 }
-export const api = {
-  products: () => raw('/products') as Promise<{ products: Product[] }>,
-  orders: () => raw('/orders') as Promise<{ orders: Order[] }>,
-  order: (id: number) => raw(`/orders/${id}`) as Promise<Order>,
-  create: (sku: string, qty: number) => raw('/orders', { method: 'POST', headers: { 'idempotency-key': crypto.randomUUID() }, body: JSON.stringify({ sku, qty }) }) as Promise<Order>,
-  action: (id: number, action: 'pay' | 'ship' | 'complete' | 'cancel' | 'refund') => raw(`/orders/${id}/${action}`, { method: 'POST' }) as Promise<Order | { status: string }>,
-};
+
+export const listProducts = () => request<{ products: Product[] }>('/products');
+
+export const createOrder = (sku: string, qty: number) => request<Order>('/orders', {
+  method: 'POST',
+  headers: { 'idempotency-key': crypto.randomUUID() },
+  body: JSON.stringify({ sku, qty }),
+});
+
+export const getOrder = (id: number) => request<Order>(`/orders/${id}`);
+
+export const act = (id: number, action: 'pay' | 'cancel' | 'ship' | 'complete' | 'refund') => request<{ status: string }>(
+  `/orders/${id}/${action}`,
+  { method: 'POST', body: '{}' },
+);
