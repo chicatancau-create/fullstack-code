@@ -5,6 +5,6 @@
 
 Running 1 test using 1 worker
 
-  ok 1 e2e\flow.spec.ts:3:1 › 商品 → 下单 → 支付 (1.0s)
+  ok 1 e2e\flow.spec.ts:3:1 › 商品 → 下单 → 支付 (1.2s)
 
-  1 passed (4.7s)
+  1 passed (6.8s)

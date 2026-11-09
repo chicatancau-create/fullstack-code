@@ -4,17 +4,9 @@ import { assertTransition } from './stateMachine.mjs';
 import { reserveRow, reserveOptimistic } from './locks.mjs';
 import { createGateway } from './mockGateway.mjs';
 
-const API_KEY = process.env.P03_API_KEY || 'test-key';
-const PROVIDER_SECRET = process.env.P03_PROVIDER_SECRET || 'test-provider-secret';
-
-const GATEWAY = createGateway({
-  delayMs: Number(process.env.GATEWAY_DELAY_MS || 0),
-  failRate: Number(process.env.GATEWAY_FAIL_RATE || 0),
-  seed: Number(process.env.GATEWAY_SEED || 42),
-});
-
 const sha256 = (text) => crypto.createHash('sha256').update(text).digest('hex');
-const signature = (body) => crypto.createHmac('sha256', PROVIDER_SECRET).update(JSON.stringify(body)).digest('hex');
+const DEFAULT_API_KEY = 'test-key';
+const DEFAULT_PROVIDER_SECRET = 'test-provider-secret';
 
 function safeEqual(left, right) {
   const a = Buffer.from(String(left));
@@ -23,31 +15,71 @@ function safeEqual(left, right) {
 }
 
 export function buildApp({ pool, logger = false, lockStrategy = process.env.LOCK_STRATEGY === 'optimistic' ? 'optimistic' : 'row' } = {}) {
+  const production = process.env.NODE_ENV === 'production';
+  const apiKey = process.env.P03_API_KEY || (production ? null : DEFAULT_API_KEY);
+  const providerSecret = process.env.P03_PROVIDER_SECRET || (production ? null : DEFAULT_PROVIDER_SECRET);
+  if (!apiKey || !providerSecret) throw new Error('生产环境必须显式设置 P03_API_KEY 与 P03_PROVIDER_SECRET');
+  const allowedOrigins = (process.env.P03_ALLOWED_ORIGINS || '').split(',').map((item) => item.trim()).filter(Boolean);
+  const gateway = createGateway({
+    delayMs: Number(process.env.GATEWAY_DELAY_MS || 0),
+    failRate: Number(process.env.GATEWAY_FAIL_RATE || 0),
+    seed: Number(process.env.GATEWAY_SEED || 42),
+  });
+  const signature = (raw) => crypto.createHmac('sha256', providerSecret).update(raw).digest('hex');
+
   const app = Fastify({ logger, bodyLimit: 16384, genReqId: (req) => req.headers['x-request-id'] || crypto.randomUUID() });
   app.decorate('pool', pool);
+  app.addContentTypeParser('application/json', { parseAs: 'string' }, (request, body, done) => {
+    request.rawBody = body;
+    try {
+      done(null, JSON.parse(body));
+    } catch {
+      const error = new Error('invalid json');
+      error.statusCode = 400;
+      done(error, undefined);
+    }
+  });
+  app.addHook('onRequest', async (request, reply) => {
+    const origin = request.headers.origin;
+    if (!origin) return;
+    const sameOrigin = origin === `http://${request.headers.host}` || origin === `https://${request.headers.host}`;
+    if (!sameOrigin && !allowedOrigins.includes(origin)) {
+      request.log.warn({ event: 'origin_rejected', request_id: request.id });
+      return reply.code(403).send({ error: 'origin_not_allowed', request_id: request.id });
+    }
+    reply.header('Access-Control-Allow-Origin', origin);
+    reply.header('Vary', 'Origin');
+  });
   app.addHook('onSend', async (request, reply, payload) => {
     reply.header('X-Content-Type-Options', 'nosniff');
     reply.header('X-Frame-Options', 'DENY');
+    reply.header('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
     reply.header('Referrer-Policy', 'no-referrer');
+    reply.header('Permissions-Policy', 'geolocation=(), camera=(), microphone=()');
+    reply.header('Cross-Origin-Resource-Policy', 'same-origin');
     reply.header('X-Request-Id', request.id);
     return payload;
   });
   app.setErrorHandler((error, request, reply) => {
     if (error.validation) return reply.code(400).send({ error: 'validation_failed', request_id: request.id });
-    if (error.statusCode && error.statusCode < 500) {
-      return reply.code(error.statusCode).send({ error: 'bad_request', request_id: request.id });
-    }
     if (error.code === 'ILLEGAL_TRANSITION') {
       return reply.code(409).send({ error: 'illegal_transition', from: error.from, to: error.to, request_id: request.id });
     }
-    request.log.error({ message: error.message });
+    if (error.statusCode && error.statusCode < 500) {
+      return reply.code(error.statusCode).send({ error: 'bad_request', request_id: request.id });
+    }
+    request.log.error({ event: 'unhandled_error', error_code: error.code || 'unknown', request_id: request.id });
     return reply.code(500).send({ error: 'internal_error', request_id: request.id });
   });
 
   async function requireApiKey(request, reply) {
-    if (!safeEqual(request.headers['x-api-key'] || '', API_KEY)) return reply.code(401).send({ error: 'unauthenticated' });
+    if (!safeEqual(request.headers['x-api-key'] || '', apiKey)) {
+      request.log.warn({ event: 'auth_failed', reason: 'bad_api_key', request_id: request.id });
+      return reply.code(401).send({ error: 'unauthenticated' });
+    }
     const userId = request.headers['x-user-id'];
     if (typeof userId !== 'string' || !/^[a-z0-9_-]{2,40}$/.test(userId)) {
+      request.log.warn({ event: 'auth_failed', reason: 'bad_user', request_id: request.id });
       return reply.code(401).send({ error: 'missing_user' });
     }
     request.userId = userId;
@@ -236,7 +268,7 @@ export function buildApp({ pool, logger = false, lockStrategy = process.env.LOCK
       );
       const attemptNo = payment.rows[0].attempts + 1;
       const started = Date.now();
-      const result = await GATEWAY.charge({ orderId: row.id, amount: row.amount });
+      const result = await gateway.charge({ orderId: row.id, amount: row.amount });
       await client.query(
         'INSERT INTO p03.payment_attempts (payment_id, attempt_no, result, note, latency_ms) VALUES ($1,$2,$3,$4,$5)',
         [payment.rows[0].id, attemptNo, result.ok ? 'succeeded' : 'failed', result.note, Date.now() - started],
@@ -302,14 +334,20 @@ export function buildApp({ pool, logger = false, lockStrategy = process.env.LOCK
   });
 
   app.post('/payments/callback', async (request, reply) => {
-    const rawBody = JSON.stringify(request.body || {});
+    const rawBody = request.rawBody ?? JSON.stringify(request.body || {});
     const provided = String(request.headers['x-signature'] || '');
-    if (!safeEqual(provided, signature(request.body))) return reply.code(401).send({ error: 'bad_signature' });
+    if (!safeEqual(provided, signature(rawBody))) {
+      request.log.warn({ event: 'signature_failed', request_id: request.id });
+      return reply.code(401).send({ error: 'bad_signature' });
+    }
     const { event_id: eventId, order_id: orderId, result, timestamp } = request.body || {};
     if (typeof eventId !== 'string' || eventId.length < 4 || !Number.isInteger(orderId)) return reply.code(400).send({ error: 'invalid_event' });
     if (result !== 'success' && result !== 'failed') return reply.code(400).send({ error: 'invalid_result' });
     const age = Math.abs(Date.now() - Number(timestamp || 0));
-    if (!timestamp || age > 5 * 60 * 1000) return reply.code(401).send({ error: 'stale_callback' });
+    if (!timestamp || age > 5 * 60 * 1000) {
+      request.log.warn({ event: 'callback_rejected', reason: 'stale', request_id: request.id });
+      return reply.code(401).send({ error: 'stale_callback' });
+    }
 
     const client = await pool.connect();
     try {

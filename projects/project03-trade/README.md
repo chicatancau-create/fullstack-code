@@ -72,12 +72,12 @@ Demo 中用户身份由网关头模拟，生产必须从认证令牌解析。
 - 前端 + Playwright：下单→支付→发货→完成→退款全链路。
 - Worker：Outbox 轮询、Inbox 去重、失败退避、5 次后 dead；设置 `AMQP_URL` 时投递 RabbitMQ。
 - 审计：所有写操作写 `p03.audit_log`（before/after/request_id）。
-- OWASP：见 [docs/owasp-matrix.md](docs/owasp-matrix.md)。
+- OWASP：见 [docs/owasp-matrix.md](docs/owasp-matrix.md)。关键实现：生产缺秘密拒绝启动；回调按**原始字节** HMAC 验签；CSP/Permissions-Policy/CORP；Origin 白名单；认证/验签失败告警日志不含密钥。
 
 ```bash
 export PGPASSWORD=study-pass PGDATABASE=study_lab
 node scripts/migrate.mjs
-npm test                 # 24 用例（含 7×7 状态机、双锁 100 并发、Worker、OWASP）
+npm test                 # 31 用例（含 7×7 状态机、双锁 100 并发、Worker、OWASP 专项）
 npm run coverage         # 行 ≥80%、分支 ≥75%、函数 ≥80%
 npm run e2e              # Playwright 全链路
 npm run load:locks       # 双锁 100 并发原始数据 → evidence/load-locks.json
@@ -109,7 +109,9 @@ npm run load:locks       # 双锁 100 并发原始数据 → evidence/load-locks
 
 全部由 `scripts/run_project.sh` 在本机真实 PostgreSQL 上生成：
 
-- [evidence/test.txt](evidence/test.txt)：24/24 通过（含 7×7 状态机、双锁并发、Worker、OWASP）。
+- [evidence/test.txt](evidence/test.txt)：31/31 通过（含 7×7 状态机、双锁并发、Worker、OWASP 专项）。
+- [evidence/fault-injection.txt](evidence/fault-injection.txt)：DB 断开/恢复、MQ 不可用降级 DB Worker。
+- [evidence/sbom.json](evidence/sbom.json)：CycloneDX SBOM；[evidence/audit.txt](evidence/audit.txt)：依赖审计留档。
 - [evidence/load.txt](evidence/load.txt)：20 并发 × 240 请求，成功 150、库存不足 90、其他 0；
   P50 31.0ms / P95 81.6ms / P99 553.2ms；最终库存 0、订单 150。
 - [evidence/coverage.txt](evidence/coverage.txt)：行 82.29%、分支 75.90%、函数 81.58%。
@@ -123,7 +125,8 @@ npm run load:locks       # 双锁 100 并发原始数据 → evidence/load-locks
 ## 已知限制（未验证）
 
 - 只支持单 SKU 订单；多商品、优惠、税费未实现。
-- 没有真实支付网关，回调由测试用 HMAC 签名模拟；未验证网关重试节奏与原始报文验签。
+- 没有真实支付网关，回调由测试用 HMAC 签名模拟；签名已按原始字节校验，但未验证网关重试节奏。
+- 依赖审计：本机 npm 源（npmmirror）未实现 advisories 接口，`evidence/audit.txt` 仅留取失败原文；需在 GitHub Actions 或官方源复核。
 - 没有订单超时自动取消、退款与对账。
 - MQ 只验证单节点、单消费者；未验证发布器崩溃窗口、消费者处理中崩溃重投、DLQ 重放、积压告警与多实例竞争。
 - 压测是单机、回环网络、合成数据；数字不代表生产容量。

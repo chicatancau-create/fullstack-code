@@ -1,9 +1,12 @@
-captured_at: 2026-11-09T11:15:07+08:00
+captured_at: 2026-11-09T11:21:35+08:00
 node: v24.15.0
 migrate=PASS
 tests=PASS
 load=PASS
 mq=PASS
 mq_runtime=PASS
+fault_injection=PASS
+sbom=evidence/sbom.json
+audit=evidence/audit.txt (本机 npmmirror 不支持 advisories 接口，结果以文件内容为准)
 backup_restore=PASS
 PROJECT03 PASS

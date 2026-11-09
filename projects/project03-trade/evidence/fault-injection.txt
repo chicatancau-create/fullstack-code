@@ -1,0 +1,4 @@
+stage=db_down ready=503 write=500 request_id=present no_partial_order=true
+stage=db_recovered ready=200 create=201
+stage=mq_down health=200 fallback=db_worker notification=pay-2
+FAULT INJECTION PASS

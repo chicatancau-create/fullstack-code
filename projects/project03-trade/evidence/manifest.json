@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "experiment": "P03",
-  "generated_at": "2026-11-09T03:17:18.396Z",
-  "commit": "f0bcefe44625c57932f936842c0c2f978d4d61dc",
+  "generated_at": "2026-11-09T03:22:04.827Z",
+  "commit": "57b0c92d6b8688a2e008a113ca1eb477bcca7d63",
   "runtime": {
     "platform": "win32 x64",
     "os_release": null,
@@ -35,18 +35,18 @@
   "artifacts": [
     {
       "path": "evidence/test.txt",
-      "bytes": 1938,
-      "sha256": "a39b7ca99ecd6697c87254533d1f4a9e5e5e7f546046401609b87edfeb5f1346"
+      "bytes": 2507,
+      "sha256": "dd5a0d540d42a7841a3cae58140d1cfe377faeef349ed4bd25b8efbe3206cb5e"
     },
     {
       "path": "evidence/coverage.txt",
-      "bytes": 3382,
-      "sha256": "e9ed409203bdcd630e27e88284fa78f047396595d60cb83aed3eabfe804bce8b"
+      "bytes": 3908,
+      "sha256": "c3a5b02561322354fe7b87f765d2ae953a3ab39747654cfff00c3881d91695e6"
     },
     {
       "path": "evidence/load.txt",
-      "bytes": 214,
-      "sha256": "2cfe4002672bbcaba893ec6fa5564b70b225635ae6f1a84c05c239639840ebf5"
+      "bytes": 215,
+      "sha256": "3b5a8b7aa0bcc761ffb0800382a30f9037f0fc967614396f7daf7501dfdfadc1"
     },
     {
       "path": "evidence/mq.txt",
@@ -59,6 +59,11 @@
       "sha256": "fcc84a842b549f675430394096fd3a323d0cacf13a3cc3e3bc57dc16cf6e6b54"
     },
     {
+      "path": "evidence/fault-injection.txt",
+      "bytes": 199,
+      "sha256": "bfe2c7c5cabc4cc88e5946c1c21d9c61a471a2e8bcfd51ccbb3276383f25a1de"
+    },
+    {
       "path": "evidence/migrate.txt",
       "bytes": 153,
       "sha256": "5826141dfe74f16383894b23ec03c593f59fd2fdf075cdc84d2dfa01857899f6"
@@ -66,17 +71,17 @@
     {
       "path": "evidence/backup.txt",
       "bytes": 160,
-      "sha256": "7bad51bdad016d49a44df8a0ec140542e9fe722ff0e023c720876f16b99dad98"
+      "sha256": "f51db14f6281e0fb54e22a5224c58bb87e6c5d4127a993f219d380f54f47d94d"
     },
     {
       "path": "evidence/run.txt",
-      "bytes": 147,
-      "sha256": "6ec05db0144d32edfe4861db1c4633bc4589f987e382ffd600ff0ac445212801"
+      "bytes": 294,
+      "sha256": "fdb6da4c51dfbdf059dd0fed6a28407a0e44121cac483159216966a2ec309a1f"
     },
     {
       "path": "evidence/e2e.txt",
       "bytes": 167,
-      "sha256": "7de85119f1bf0dbd90a973fa4e690bc7b25918b929eec0477d51f7b08ab1b077"
+      "sha256": "dd56406dd95a8ba5a21c64b26037c2cbc3a60ca4f123586eb7892ac17496bcb1"
     },
     {
       "path": "evidence/load-locks.json",
@@ -84,9 +89,19 @@
       "sha256": "eb21efa9711b08e89fe7b4bb91f89bb3cfec04f0615b7685ab81881af82e52ac"
     },
     {
+      "path": "evidence/sbom.json",
+      "bytes": 82452,
+      "sha256": "c33501bb497fbe85b5113c367bda4b8f5e3924335d0ddd790994b006a7820d6f"
+    },
+    {
+      "path": "evidence/audit.txt",
+      "bytes": 413,
+      "sha256": "a28762e2d172b0e82bf3a1cf8b20799a644b2acc75d3ffde829bdebc33015028"
+    },
+    {
       "path": "evidence/p03-backup.sql",
-      "bytes": 43379,
-      "sha256": "33cb86b8b7e013b58b0ddfa809ed2689f4115ef9ee491f867340dca273171c0f"
+      "bytes": 44494,
+      "sha256": "60554de759b57aa43094e44ff4d20f2bb217fbd159e96fc51c6ad7f9a8308e34"
     },
     {
       "path": "evidence/bug-001-failure.txt",

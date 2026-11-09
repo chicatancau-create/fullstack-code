@@ -1,0 +1,4 @@
+npm warn audit 404 Not Found - POST https://registry.npmmirror.com/-/npm/v1/security/advisories/bulk - [NOT_IMPLEMENTED] /-/npm/v1/security/* not implemented yet
+{ error: '[NOT_IMPLEMENTED] /-/npm/v1/security/* not implemented yet' }
+npm error audit endpoint returned an error
+npm error A complete log of this run can be found in: C:\Users\Admin\AppData\Local\npm-cache\_logs\2026-11-09T03_21_31_843Z-debug-0.log
