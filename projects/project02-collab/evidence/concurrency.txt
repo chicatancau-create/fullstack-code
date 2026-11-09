@@ -1,10 +1,18 @@
 
-[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mE:/OBsidian/全栈工程师学习资料库/07-项目实现/P02-协作任务平台[39m
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mE:/fullstack-code/projects/project02-collab[39m
 
- [32m✓[39m tests/app.test.js [2m([22m[2m6 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m[33m 469[2mms[22m[39m
+ [32m✓[39m tests/app.test.js [2m([22m[2m6 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m[33m 617[2mms[22m[39m
+ [2m[90m↓[39m[22m tests/authz-matrix.test.js [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m tests/unit/security.test.js [2m([22m[2m4 tests[22m[2m | [22m[33m4 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m tests/contract.test.js [2m([22m[2m4 tests[22m[2m | [22m[33m4 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m tests/unit/authService.test.js [2m([22m[2m5 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m tests/unit/taskService.test.js [2m([22m[2m6 tests[22m[2m | [22m[33m6 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m tests/unit/policies.test.js [2m([22m[2m4 tests[22m[2m | [22m[33m4 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m tests/unit/taskPolicy.test.js [2m([22m[2m4 tests[22m[2m | [22m[33m4 skipped[39m[2m)[22m
+ [2m[90m↓[39m[22m tests/unit/workspaceService.test.js [2m([22m[2m4 tests[22m[2m | [22m[33m4 skipped[39m[2m)[22m
 
-[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
-[2m      Tests [22m [1m[32m1 passed[39m[22m[2m | [22m[33m5 skipped[39m[90m (6)[39m
-[2m   Start at [22m 17:47:02
-[2m   Duration [22m 1.98s[2m (transform 43ms, setup 0ms, collect 240ms, tests 469ms, environment 0ms, prepare 116ms)[22m
+[2m Test Files [22m [1m[32m1 passed[39m[22m[2m | [22m[33m8 skipped[39m[90m (9)[39m
+[2m      Tests [22m [1m[32m1 passed[39m[22m[2m | [22m[33m37 skipped[39m[90m (38)[39m
+[2m   Start at [22m 11:03:30
+[2m   Duration [22m 4.09s[2m (transform 89ms, setup 0ms, collect 971ms, tests 617ms, environment 2ms, prepare 708ms)[22m
 

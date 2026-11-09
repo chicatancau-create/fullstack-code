@@ -3,12 +3,21 @@
 > vitest run
 
 
-[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mE:/OBsidian/全栈工程师学习资料库/07-项目实现/P02-协作任务平台[39m
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mE:/fullstack-code/projects/project02-collab[39m
 
- [32m✓[39m tests/app.test.js [2m([22m[2m6 tests[22m[2m)[22m[33m 678[2mms[22m[39m
+ [32m✓[39m tests/unit/security.test.js [2m([22m[2m4 tests[22m[2m)[22m[33m 401[2mms[22m[39m
+   [33m[2m✓[22m[39m 安全与可观测性[2m > [22m健康、就绪、指标、请求 ID 与安全头可用 [33m 338[2mms[22m[39m
+ [32m✓[39m tests/app.test.js [2m([22m[2m6 tests[22m[2m)[22m[33m 923[2mms[22m[39m
+ [32m✓[39m tests/authz-matrix.test.js [2m([22m[2m1 test[22m[2m)[22m[33m 592[2mms[22m[39m
+ [32m✓[39m tests/contract.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 197[2mms[22m[39m
+ [32m✓[39m tests/unit/authService.test.js [2m([22m[2m5 tests[22m[2m)[22m[32m 180[2mms[22m[39m
+ [32m✓[39m tests/unit/taskService.test.js [2m([22m[2m6 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m tests/unit/taskPolicy.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m tests/unit/workspaceService.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m tests/unit/policies.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
 
-[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
-[2m      Tests [22m [1m[32m6 passed[39m[22m[90m (6)[39m
-[2m   Start at [22m 17:46:58
-[2m   Duration [22m 2.18s[2m (transform 45ms, setup 0ms, collect 244ms, tests 678ms, environment 0ms, prepare 128ms)[22m
+[2m Test Files [22m [1m[32m9 passed[39m[22m[90m (9)[39m
+[2m      Tests [22m [1m[32m38 passed[39m[22m[90m (38)[39m
+[2m   Start at [22m 11:03:21
+[2m   Duration [22m 6.06s[2m (transform 132ms, setup 0ms, collect 1.08s, tests 2.31s, environment 2ms, prepare 833ms)[22m
 
