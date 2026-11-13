@@ -9,7 +9,7 @@
     "body": {
       "error": "INTERNAL",
       "message": "服务器内部错误",
-      "requestId": "a1b93227-f5e3-4fde-b433-3c583644f42e"
+      "requestId": "78c6f644-19f8-45e5-a66e-4ad893f1319a"
     }
   },
   "write_after_recovery_201": {
@@ -36,16 +36,16 @@
     "create": 0,
     "restore": 0,
     "before": {
-      "users": 7,
-      "workspaces": 5,
-      "tasks": 152,
-      "comments": 2
+      "users": 1,
+      "workspaces": 0,
+      "tasks": 0,
+      "comments": 0
     },
     "after": {
-      "users": 7,
-      "workspaces": 5,
-      "tasks": 152,
-      "comments": 2
+      "users": 1,
+      "workspaces": 0,
+      "tasks": 0,
+      "comments": 0
     }
   }
 }

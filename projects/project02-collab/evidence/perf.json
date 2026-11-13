@@ -1,16 +1,16 @@
 {
-  "base": "http://127.0.0.1:3123",
+  "base": "http://127.0.0.1:3102",
   "concurrency": 50,
-  "total": 2000,
-  "wall_ms": 3477,
-  "qps": 575.22,
+  "total": 3000,
+  "wall_ms": 1882,
+  "qps": 1594.12,
   "error_statuses": [],
   "error_count": 0,
   "error_rate": 0,
-  "p50_ms": 84.04,
-  "p95_ms": 112.88,
-  "p99_ms": 120.12,
-  "max_ms": 144.93,
-  "db_connections": 21,
-  "generated_at": "2026-11-08T15:52:02.353Z"
+  "p50_ms": 30.36,
+  "p95_ms": 38.69,
+  "p99_ms": 43.8,
+  "max_ms": 55.08,
+  "db_connections": 1,
+  "generated_at": "2026-11-09T09:24:23.382Z"
 }

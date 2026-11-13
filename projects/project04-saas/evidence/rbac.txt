@@ -1,5 +1,5 @@
 P04 RBAC 全端点 × 角色 × 租户 矩阵
-生成时间：2026-11-09T01:08:40.525Z
+生成时间：2026-11-09T09:13:31.606Z
 租户 A=1（成员 owner/admin/member/viewer），租户 B=2（outsider 自建）
 
 | 端点 | owner | admin | member | viewer | outsider |
