@@ -1,7 +1,6 @@
 import Title from '../component/Title'
-@Entry
 @Component
-struct Index{
+export default struct Index{
   @State logged:string="用户登录"
   build() {
     Column(){
