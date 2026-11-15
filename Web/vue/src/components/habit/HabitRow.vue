@@ -231,13 +231,13 @@ onBeforeUnmount(clearDeleteTimer)
    这里靠「内部换行」而不是「加宽轨道」解决：行宽在 901px 视口只有 795px，
    其余三列的最小值之和（132+288+104+3×12gap）已经吃掉 560px，把 .stats 的 minmax
    下限抬到 278px 会让整行撑破 .habit-list、量出横向滚动，所以只能让统计自己换行。
-   第 1/3 列用 max-content：这两列永远等于内容宽度，nowrap 的文字不可能越出自己
-   的格子；中间列 1fr = minmax(auto, 1fr)，地板取「进度条 min-width」与
-   「最长 N 天整串不折行的宽度」两者的较大值，所以数字再长也只会把中间列
-   顶宽、把左右两列挤窄，不会越过 .stats 盒子右边缘。 */
+   第 1/3 列必须是**定宽**而不是 max-content：实测 max-content 时「80%」列 24.75px、
+   「100%」列 31.8px，中间 1fr 跟着变，四行的进度条右边缘量出 911 / 918 两档、
+   错位 7px。定宽后逐行相等。上限依据：第 1 列最宽内容是「本周 7/7」（done 与 target
+   都 ≤7，不会出现三位数），第 3 列最宽是「100%」。 */
 .stats {
   display: grid;
-  grid-template-columns: max-content 1fr max-content;
+  grid-template-columns: 66px 1fr 40px;
   column-gap: 8px;
   row-gap: 3px;
   align-items: center;
@@ -310,8 +310,9 @@ onBeforeUnmount(clearDeleteTimer)
     order: 4;
     flex: 0 1 100%;
     /* 整行铺开后中间列不再无限拉伸（1fr 会吃掉 600px 剩余空间，把百分比顶到最右侧）：
-       上限 260px 与桌面档的进度条观感一致，网格默认左对齐，右侧留白不承载信息 */
-    grid-template-columns: max-content minmax(60px, 260px) max-content;
+       上限 260px 与桌面档的进度条观感一致，网格默认左对齐，右侧留白不承载信息。
+       两侧同样用定宽，理由见 .stats 主声明（max-content 会让逐行右边缘错位） */
+    grid-template-columns: 66px minmax(60px, 260px) 40px;
   }
 }
 
