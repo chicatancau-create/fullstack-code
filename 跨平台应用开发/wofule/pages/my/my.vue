@@ -10,7 +10,7 @@
 			<view class="entry">修改密码</view>
 			<view class="entry">意见反馈</view>
 		</view>
-		<button class="button" type="primary">退出</button>
+		<button class="button" type="primary" @click="logout">退出登录</button>
 	</view>
 </template>
 
@@ -26,11 +26,23 @@
 				}
 			}
 		},
-		onLoad() {
-
+		onShow() {
+			var user = uni.getStorageSync('user');
+			if(user){
+				this.userinfo.username = user.username;
+			}else{
+				uni.reLaunch({
+					url:'/pages/login/login'
+				});
+			}
 		},
 		methods: {
-
+			logout(){
+				uni.removeStorageSync('user');
+				uni.reLaunch({
+					url:'/pages/login/login'
+				});
+			}
 		}
 	}
 </script>

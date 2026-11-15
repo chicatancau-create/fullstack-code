@@ -11,6 +11,7 @@
 				</uni-forms-item>
 				<uni-forms-item label="" name="">
 					<button type="primary" @click="login">登录</button>  <!-- 设置click事件方法 -->
+					<button @click="toRegister">注册账号</button>
 				</uni-forms-item>
 			</uni-forms>
 		</view>
@@ -47,11 +48,41 @@
 		methods: {
 			login(){
 				this.$refs.form.validate().then(res=>{
-					uni.showToast({
-						title: this.user.username+'登录成功'
+					uni.request({
+						url:'http://localhost:8090/foodapp/user/login',
+						method:'POST',
+						data:this.user,
+						success: res => {
+							console.log(res.data);
+							if(res.data.success == true){
+								uni.setStorageSync('user', res.data.data);
+								uni.showToast({
+									title:'login success',
+									icon:'none',
+								});
+								uni.switchTab({
+									url:'/pages/my/my'
+								});
+							}else{
+								uni.showToast({
+									title:res.data.msg,
+									icon:'error',
+								});
+							}
+						},
+						fail: () => {
+							console.log('login fail');
+						},
+						complete: () => {
+						}
 					});
 				}).catch(err=>{
 					console.log(err);
+				});
+			},
+			toRegister(){
+				uni.navigateTo({
+					url:'/pages/register/register'
 				});
 			}
 		}
