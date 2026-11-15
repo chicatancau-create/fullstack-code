@@ -86,7 +86,8 @@
 		background-size: contain;
 		position: absolute;
 		left: 0rpx;
-		top: 0.5em;
+		top: 50%;
+		margin-top: -25rpx;
 	}
 
 	.entry:nth-child(1)::before {
@@ -113,7 +114,8 @@
 		background-size: contain;
 		position: absolute;
 		right: 0rpx;
-		top: 0.5em;
+		top: 50%;
+		margin-top: -25rpx;
 	}
 	
 	.entry:first-child {
