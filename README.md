@@ -16,11 +16,11 @@
 | `Web/webgl自学/` | 原生 HTML + Three.js r169（CDN importmap） | 单文件实时 3D 练习页。`浮空树脂小岛.html`：树脂圆柱沙盘、昼夜光照插值、GTAO + Bloom + AgX + SMAA、屏幕空间折射，贴图全程序化 |
 | `Cpp/` | C / C++（MinGW g++） | 环境自检样例，各一个可执行文件 |
 | `Python/` | Python 3 + venv | 环境自检样例 |
-| `Harmony/yingye/` | HarmonyOS ArkTS | **当前主工程**：入口 `entry/src/main/ets/pages/Index.ets`，已备 10 张专辑封面素材供音乐播放器使用 |
-| `Harmony/MyApplication/` | HarmonyOS ArkTS | 早期家电商城 Demo：底部 Tab 导航、搜索过滤、购物车 |
+| `Harmony/ShoppingMallApp/` | HarmonyOS ArkTS | 商城练习工程：主页四 tab 导航（首页/分类/购物车/我的） |
+| `Harmony/harmonyMall-master/` | HarmonyOS ArkTS | **老师的教学项目**：只读参考，项目内不做任何修改 |
 
 > ⚠️ `Harmony/` 下是**两个独立工程**，各自有 `entry/` 模块，互不引用。
-> `yingye` 是当前在写的主工程，`MyApplication` 保留作参考。
+> `ShoppingMallApp` 是自己的练习工程；`harmonyMall-master` 是老师的教学项目，仅供学习参考，不改动。
 > 用 DevEco Studio 打开时请分别打开各自的目录，不要打开 `Harmony/` 本身。
 
 ## 各模块怎么运行
@@ -86,7 +86,7 @@ python EnvironmentTest.py
 
 ### Harmony
 
-用 DevEco Studio 分别打开 `Harmony/yingye` 或 `Harmony/MyApplication` 后运行。
+用 DevEco Studio 分别打开 `Harmony/ShoppingMallApp` 或 `Harmony/harmonyMall-master` 后运行。
 
 - 工程内**没有** `hvigorw` / `hvigorw.bat` 包装脚本，无法直接在命令行构建，验证以 DevEco 预览器/模拟器为主。
 - 依赖与构建产物（`oh_modules`、`.hvigor`、`build`、`.preview`）不入库。
