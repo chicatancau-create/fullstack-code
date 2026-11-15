@@ -64,8 +64,8 @@
 	}
 
 	.headicon {
-		width: 120rpx;
-		height: 120rpx;
+		width: 100rpx;
+		height: 100rpx;
 		margin-left: 60rpx;
 		margin-right: 40rpx;
 		border-radius: 50%;
@@ -93,13 +93,13 @@
 
 	.entry::before {
 		content: "";
-		width: 50rpx;
-		height: 50rpx;
+		width: 40rpx;
+		height: 40rpx;
 		background-size: contain;
 		position: absolute;
 		left: 0rpx;
 		top: 50%;
-		margin-top: -25rpx;
+		margin-top: -20rpx;
 	}
 
 	.entry:nth-child(1)::before {
@@ -120,14 +120,14 @@
 	
 	.entry::after {
 		content: "";
-		width: 50rpx;
-		height: 50rpx;
+		width: 40rpx;
+		height: 40rpx;
 		background-image: url("/static/more.png");
 		background-size: contain;
 		position: absolute;
 		right: 0rpx;
 		top: 50%;
-		margin-top: -25rpx;
+		margin-top: -20rpx;
 	}
 	
 	.entry:first-child {

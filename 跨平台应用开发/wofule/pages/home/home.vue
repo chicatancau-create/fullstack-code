@@ -11,7 +11,7 @@
 				<uni-grid :column="5" :show-border="true">
 					<uni-grid-item v-for="(item,index) in typelist" :key="index">
 						<view style="display: flex; flex-direction: column; align-items: center; padding-top: 10rpx;">
-							<image :src="'../../static' + item.icon" style="width: 80rpx; height: 80rpx;" mode="aspectFill"></image>
+							<image :src="'../../static' + item.icon" style="width: 60rpx; height: 60rpx;" mode="aspectFill"></image>
 							<view style="font-size: 24rpx;">{{item.typename}}</view>
 						</view>
 					</uni-grid-item>
@@ -21,7 +21,7 @@
 				<uni-grid :column="5" :show-border="true">
 					<uni-grid-item v-for="(item,index) in typelist2" :key="index">
 						<view style="display: flex; flex-direction: column; align-items: center; padding-top: 10rpx;">
-							<image :src="'../../static' + item.icon" style="width: 80rpx; height: 80rpx;" mode="aspectFill"></image>
+							<image :src="'../../static' + item.icon" style="width: 60rpx; height: 60rpx;" mode="aspectFill"></image>
 							<view style="font-size: 24rpx;">{{item.typename}}</view>
 						</view>
 					</uni-grid-item>
