@@ -17,6 +17,12 @@
 			"style": {
 				"navigationBarTitleText": "同学"
 				}
+		},
+		{
+			"path": "pages/login/login",
+			"style": {
+				"navigationBarTitleText": "用户登录"
+			}
 		}
 	],
 	"globalStyle": {
