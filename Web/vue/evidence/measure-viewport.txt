@@ -1,0 +1,26 @@
+OK     390px  #/        over=   0 cover=  0  
+OK     390px  #/stats   over=   0 cover=  0  table.stats-table@591 caption.@591 thead.@591 tr.@591
+OK     390px  #/about   over=   0 cover=  0  
+OK     390px  #/login   over=   0 cover=  0  
+OK     480px  #/        over=   0 cover=  0  
+OK     480px  #/stats   over=   0 cover=  0  table.stats-table@591 caption.@591 thead.@591 tr.@591
+OK     480px  #/about   over=   0 cover=  0  
+OK     480px  #/login   over=   0 cover=  0  
+OK     720px  #/        over=   0 cover=  0  
+OK     720px  #/stats   over=   0 cover=  0  
+OK     720px  #/about   over=   0 cover=  0  
+OK     720px  #/login   over=   0 cover=  0  
+OK     901px  #/        over=   0 cover=  0  
+OK     901px  #/stats   over=   0 cover=  0  
+OK     901px  #/about   over=   0 cover=  0  
+OK     901px  #/login   over=   0 cover=  0  
+OK    1024px  #/        over=   0 cover=  0  
+OK    1024px  #/stats   over=   0 cover=  0  
+OK    1024px  #/about   over=   0 cover=  0  
+OK    1024px  #/login   over=   0 cover=  0  
+OK    1280px  #/        over=   0 cover=  0  
+OK    1280px  #/stats   over=   0 cover=  0  
+OK    1280px  #/about   over=   0 cover=  0  
+OK    1280px  #/login   over=   0 cover=  0  
+
+全部视口 x 路由组合无溢出且无遮挡

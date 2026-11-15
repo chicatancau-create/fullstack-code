@@ -1,0 +1,57 @@
+BROWSER+断言结果
+PASS  未登录访问 /#/ 被守卫拦到 /#/login  :: #/login
+PASS  未登录访问 /#/stats 带 redirect 参数  :: #/login?redirect=/stats
+PASS  登录页标题与副标题渲染  :: 演示环境：任意用户名和密码均可登录
+PASS  空提交被拦下（仍在登录页）
+PASS  空提交给出两个字段级错误且 aria-invalid 同步  :: field-error=2 aria-invalid=2
+PASS  登录后回跳到 redirect 指定的 /stats  :: #/stats
+PASS  登录态写入 localStorage
+PASS  页头显示用户名
+PASS  周矩阵渲染出 4 个习惯行  :: rows=4
+PASS  每行 7 个格子  :: cells=28
+PASS  未来格子数量等于本周剩余天数且全部 disabled  :: expected=0 perRow=[0,0,0,0] allDisabled=true
+PASS  今天格子有标记（每行恰好一个）  :: today=4 rows=4
+PASS  格子带 aria-pressed 语义
+PASS  空格子 aria-pressed=false  :: false
+PASS  点击空格子变为已打卡  :: 17 -> 18 @row0/col4 11月13日 · 未打卡，点击打卡
+PASS  打卡后 aria-pressed 翻转为 true  :: true/true
+PASS  打卡后 title 文案随之更新  :: 11月13日 · 已打卡，点击取消
+PASS  再点一次取消打卡  :: 18 -> 17
+PASS  每行三段统计文字齐全且格式正确  :: filled=true fmt=true
+PASS  各行进度条右边缘逐行相等（锁住 7px 错位回归）  :: barRights=[903]
+PASS  统计文字不被操作列压住  :: clippedRows=0
+PASS  打卡写入 localStorage  :: records=223
+PASS  刷新后打卡状态保留  :: 18 -> 18
+PASS  反向对照：抹掉 localStorage 后同一断言确实失败（证明断言有牙齿）  :: wiped=17 vs 18
+N/E   未来格子点击不改变打卡数  :: 本周无未来日期格子（今天是该周最后一天），此断言在当前日期无从执行
+PASS  新增表单打开且有名称输入框  :: inputIndex=0
+PASS  名称输入框收到 v-model 值  :: "每日一道算法题"
+PASS  新增习惯后行数 +1  :: 4 -> 5
+PASS  新习惯出现在列表里
+PASS  删除需要二次确认（第一次不删）  :: 5 -> 5
+PASS  确认态按钮文案为「确认删除」
+PASS  确认态那一行只剩确认按钮（编辑让位）  :: buttons=1
+PASS  第二次确认行数 -1  :: 5 -> 4
+PASS  确认态超时后自动回退为「删除」
+PASS  回退后仍可正常二次删除  :: 4 -> 3
+PASS  上一周 → 周标题变化  :: "第 46 周（2026 年）" -> "第 45 周（2026 年）"
+PASS  能回到当前周  :: 第 46 周（2026 年）
+PASS  本周时「下一周」被禁用  :: disabled=true
+PASS  统计页恰好 4 张数字卡且标签与数值都非空  :: n=4 allFilled=true 有NaN=false
+PASS  热力月历为 7 的倍数格（周一开头整行）  :: cells=42
+PASS  热力色阶档数与当月分布的档数一致  :: 渲染=["heat-0","heat-1","heat-2"] 应有=["heat-0","heat-1","heat-2"] 格数=30 单日最大=2
+PASS  当前月时「下一月」禁用
+PASS  上一月 → 月份切换  :: 2026年11月 -> 2026年10月
+PASS  翻到历史月后「下一月」解禁
+PASS  下一月回到当前月并重新禁用  :: 2026年11月 disabled=true
+PASS  悬停热力格显示当日明细浮层  :: 2026-11-03，2 个习惯完成打卡 -> visible/1
+PASS  展开后 .month-detail 真的渲染出来  :: 0 -> chips=6 text=2026年11月 · 已打卡 6 天 11月3日 11月5日 11月7日 11月
+PASS  该按钮文案由「展开」翻为「收起」  :: 收起
+PASS  关于页含实现说明段
+PASS  实现说明 ≤300 字  :: chars=293
+PASS  未知路由落到 404 页  :: 页面不存在
+PASS  打卡页 390px 无横向溢出  :: OVER=0
+PASS  统计页 390px 无横向溢出  :: OVER=0
+FAIL  负对照（预期 FAIL）：查询不存在的元素  :: 这条必须显示 FAIL，否则说明断言是假的
+
+PASS=52 FAIL=1 NOT_EXECUTED=1
