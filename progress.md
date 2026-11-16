@@ -17,6 +17,7 @@
 | `Python/` | `main.py`、`EnvironmentTest.py` + `.venv` | venv 2026-10-12 重建 |
 | `Harmony/` | `MyApplication/`（606 个文件）；`yingye/`（2026-10-13 后新增） | 未受影响 |
 | `Web/webgl自学/` | `浮空树脂小岛.html` 单文件实时 3D 沙盘（Three.js r169，全程序化贴图） | 2026-10-19 新增，headless Edge 实测可跑、无 console 报错 |
+| `Web/node/` | Express + mysql2 课堂练习：app.js 挂 goods/cart/user 三路由，config/db.js 连本机 shopdb | 2026-11-16 归档，见下 |
 
 ## 提交记录
 
@@ -24,6 +25,8 @@
 |---|---|---|
 | `9d9762d` | 2026-09-18 | 首次提交：建立统一学习仓库并迁入既有练习 |
 | `59ba534` | 2026-09-18 | 记录首次提交哈希与源码清点 |
+| `18e82a1` | 2026-11-16 | chore(Web/node)：清理旧 node 练习文件 26 个 |
+| `e8ae74e` | 2026-11-16 | feat(Web/node)：express+mysql2 商品/购物车/用户路由课堂练习 |
 
 `git log` 可读，但仓库有 **7 个 loose object 被清零**（见下），所以 `git reset` / 读 HEAD 树会失败。
 
@@ -112,8 +115,17 @@
 - 删除后 `Web/vue`（含当时新增的 `Movie.vue`/`MovieDetails.vue` 路由）`npm run build` 通过，exit 0。
 - 随后再次删除 `dist/`，保持工作区干净。
 
+## 2026-11-16 Web/node 课堂练习归档
+
+- **结构**：`Web/node/` = app.js（express，端口 3000，挂 `/api/goods` `/api/cart` `/api/user`，含内联登录判断）+ goodsRouter/cartRouter/userRouter + `config/db.js`（mysql2 连接池，本机 shopdb）；`node_modules/` 不入库。
+- **数据**：本机 MySQL `shopdb`，13 张表全带 `t_` 前缀（老师 dump 导入），`t_goods` 4 行（字段 id/title/content/imagePath/price）。
+- **验收（当日实测）**：GET `/api/goods/list` → 200 四条；`/api/goods/1` → `{code:200, message:查询成功, data:华为P30}`；`/999` → `{code:404, 商品不存在}`；POST `/api/user/register` → 用户注册；POST `/api/cart/getCartById` `{"id":5}` → 查询用户ID是：5。
+- **收口**：26 个旧练习文件删除入库（`18e82a1`）；新代码入库（`e8ae74e`）；goodsRouter.js 里旧 `.then` 版注释删除；六条踩坑记入 [errors.md](errors.md)，与本记录同笔 docs 提交。
+- **已知边界（按用户要求保留原样）**：package.json 的 main 仍指向不存在的 index.js、无 start 脚本，启动用 `npx nodemon app`；`/:id` 用拼接 SQL（课堂写法，占位符数组写法课上后续再学）；**config/db.js 含本机数据库密码，仓库有公开远程（github/gitcode），推送前必须先处理**。
+
 ## 下一步
 
+- [ ] Web/node 跟课继续（goods/cart/user 已连 MySQL，按课堂进度推进）
 - [ ] 补完或撤回 `yingye/.../pages/Index.ets` 里的 `.expandSafeArea({SafeAreaType })` 半成品
 - [ ] `Web/vue` 跟课继续（第 4 章 组件基础（下）：自定义指令已过，接下来是引用静态资源）
 - [ ] 决定 `Cpp/` 要不要拆成 `C/` + `Cpp/`
