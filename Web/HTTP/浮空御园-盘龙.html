@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>浮空御园 · 盘龙 — 立方体东方仙境</title>
+<link rel="icon" href="data:,">
+<style>
+  :root{
+    --ink:#f3ead8; --dim:#b9a888; --gold:#d9a441; --gold-hi:#f2c14e;
+    --verm:#c0392b; --jade:#12b26b; --panel:rgba(16,14,10,.78);
+    --line:rgba(217,164,65,.28); --track:rgba(217,164,65,.18);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#0b0e13;color:var(--ink);
+    font:400 13px/1.55 "Noto Serif SC","Songti SC","STSong","SimSun",serif;
+    -webkit-font-smoothing:antialiased}
+  #stage{position:fixed;inset:0}
+  canvas{display:block;width:100%;height:100%;touch-action:none;outline:none;cursor:grab}
+  canvas.dragging{cursor:grabbing}
+
+  /* 镜头暗角 */
+  #vignette{position:fixed;inset:0;pointer-events:none;z-index:3;
+    background:radial-gradient(ellipse at 50% 46%,transparent 46%,rgba(6,7,11,.34) 78%,rgba(4,5,9,.72) 100%)}
+  #topfade{position:fixed;inset:0;pointer-events:none;z-index:2;
+    background:linear-gradient(180deg,rgba(8,9,13,.28),transparent 18%,transparent 84%,rgba(8,9,13,.30))}
+
+  .brand{position:fixed;left:26px;top:22px;z-index:5;pointer-events:none;user-select:none}
+  .brand h1{margin:0;font-size:26px;font-weight:700;letter-spacing:.22em;color:var(--ink);
+    text-shadow:0 2px 14px rgba(0,0,0,.65)}
+  .brand h1 em{font-style:normal;color:var(--gold-hi)}
+  .brand p{margin:6px 0 0;font-size:11px;letter-spacing:.34em;color:var(--dim)}
+  .brand .seal{display:inline-block;margin-top:10px;padding:3px 7px;font-size:11px;letter-spacing:.2em;
+    color:#f6e3c8;background:var(--verm);border-radius:3px;box-shadow:0 2px 10px rgba(192,57,43,.45)}
+
+  #hint{position:fixed;left:26px;bottom:20px;z-index:5;pointer-events:none;user-select:none;
+    font-size:11px;letter-spacing:.14em;color:var(--dim);text-shadow:0 1px 8px rgba(0,0,0,.7)}
+  #hint b{color:var(--ink);font-weight:600}
+
+  /* 调控面板 */
+  #panel{position:fixed;right:16px;top:16px;bottom:16px;width:248px;z-index:6;
+    display:flex;flex-direction:column;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    backdrop-filter:blur(12px) saturate(1.15);box-shadow:0 22px 60px rgba(0,0,0,.55);
+    overflow:hidden}
+  #panel header{padding:13px 16px 10px;border-bottom:1px solid var(--line);flex:none}
+  #panel header h2{margin:0;font-size:14px;letter-spacing:.3em;color:var(--gold-hi);font-weight:700}
+  #panel header small{display:block;margin-top:3px;font-size:10px;letter-spacing:.18em;color:var(--dim)}
+  #panel .body{flex:1;overflow-y:auto;padding:12px 16px 8px}
+  #panel .body::-webkit-scrollbar{width:8px}
+  #panel .body::-webkit-scrollbar-track{background:rgba(217,164,65,.07);border-radius:4px}
+  #panel .body::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--gold),#8a6420);border-radius:4px}
+  #panel .body::-webkit-scrollbar-thumb:hover{background:var(--gold-hi)}
+  #panel .body{scrollbar-width:thin;scrollbar-color:var(--gold) rgba(217,164,65,.07)}
+
+  .ctl{margin-bottom:12px}
+  .ctl .lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+  .ctl .lab span{font-size:11.5px;letter-spacing:.12em;color:var(--ink)}
+  .ctl .lab output{font-size:11px;color:var(--gold-hi);font-variant-numeric:tabular-nums}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:18px;background:none;cursor:ew-resize;margin:0}
+  input[type=range]::-webkit-slider-runnable-track{height:3px;border-radius:2px;
+    background:linear-gradient(90deg,var(--verm),var(--gold) 55%,var(--jade))}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;margin-top:-5px;
+    border-radius:50%;background:var(--gold-hi);border:1px solid #6b4d12;
+    box-shadow:0 0 0 3px rgba(242,193,78,.18),0 2px 6px rgba(0,0,0,.55)}
+  input[type=range]::-moz-range-track{height:3px;border-radius:2px;
+    background:linear-gradient(90deg,var(--verm),var(--gold) 55%,var(--jade))}
+  input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:var(--gold-hi);
+    border:1px solid #6b4d12;box-shadow:0 0 0 3px rgba(242,193,78,.18)}
+
+  .switchrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px}
+  .switchrow span{font-size:11.5px;letter-spacing:.12em}
+  .switch{position:relative;width:36px;height:19px;flex:none;cursor:pointer}
+  .switch input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+  .switch i{position:absolute;inset:0;border-radius:10px;background:rgba(217,164,65,.16);
+    border:1px solid var(--line);transition:background .2s}
+  .switch i::after{content:"";position:absolute;left:2px;top:2px;width:13px;height:13px;border-radius:50%;
+    background:var(--dim);transition:transform .2s,background .2s}
+  .switch input:checked + i{background:rgba(18,178,107,.4)}
+  .switch input:checked + i::after{transform:translateX(17px);background:var(--gold-hi)}
+
+  select{width:100%;padding:5px 8px;font:inherit;font-size:11.5px;color:var(--ink);
+    background:rgba(217,164,65,.1);border:1px solid var(--line);border-radius:6px;cursor:pointer}
+  select option{background:#171310;color:var(--ink)}
+
+  #panel footer{flex:none;padding:11px 16px 13px;border-top:1px solid var(--line)}
+  .btns{display:flex;gap:7px}
+  .btns button{flex:1;padding:7px 0;font:inherit;font-size:11.5px;letter-spacing:.14em;cursor:pointer;
+    color:var(--ink);background:rgba(217,164,65,.12);border:1px solid var(--line);border-radius:7px;
+    transition:background .15s,transform .1s}
+  .btns button:hover{background:rgba(217,164,65,.3)}
+  .btns button:active{transform:scale(.96)}
+  .btns button.primary{background:linear-gradient(135deg,#a33a24,#c0392b);border-color:#e06a4a;color:#ffe9d2}
+  .btns button.primary:hover{background:linear-gradient(135deg,#c0392b,#d9503c)}
+  #stats{margin-top:9px;font-size:10px;letter-spacing:.12em;color:var(--dim);display:flex;justify-content:space-between}
+  #stats b{color:var(--gold-hi);font-weight:600}
+
+  /* 加载与错误 */
+  #loading{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;gap:18px;
+    align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,#1a2030,#0b0e13 75%);
+    transition:opacity .7s}
+  #loading.gone{opacity:0;pointer-events:none}
+  #loading h1{margin:0;font-size:34px;letter-spacing:.4em;color:var(--gold-hi);font-weight:700;text-indent:.4em}
+  #loading p{margin:0;font-size:12px;letter-spacing:.3em;color:var(--dim)}
+  .spinner{width:44px;height:44px;border-radius:50%;border:2px solid rgba(217,164,65,.18);
+    border-top-color:var(--gold-hi);animation:spin 1.1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #fatal{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;
+    background:#0b0e13;color:var(--dim);font-size:13px;letter-spacing:.1em;text-align:center;padding:30px}
+
+  @media (max-width:760px){
+    .brand{left:12px;top:10px;max-width:170px}
+    .brand h1{font-size:15px;letter-spacing:.1em}
+    .brand p{font-size:8px;letter-spacing:.1em;margin-top:3px}
+    .brand .seal{margin-top:6px;font-size:9px;padding:2px 5px}
+    #hint{display:none}
+    #panel{right:8px;top:8px;bottom:8px;width:196px}
+    #panel .body{padding:10px 12px 6px}
+    #panel header{padding:10px 12px 8px}
+    #panel footer{padding:9px 12px 11px}
+    .btns{flex-wrap:wrap}
+    .btns button{flex:1 1 40%}
+  }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="topfade"></div>
+<div id="vignette"></div>
+
+<div class="brand">
+  <h1>浮空御园 <em>·</em> 盘龙</h1>
+  <p>立方体东方仙境 · VOXEL CELESTIAL GARDEN</p>
+  <span class="seal">御 制</span>
+</div>
+
+<div id="hint"><b>左键拖拽</b> 环绕 &nbsp;·&nbsp; <b>滚轮</b> 缩放 &nbsp;·&nbsp; <b>右键拖拽</b> 平移 &nbsp;·&nbsp; 触屏单指旋转 / 双指缩放</div>
+
+<aside id="panel">
+  <header>
+    <h2>造园司 · 调控</h2>
+    <small>拨动即生效 · 实时渲染</small>
+  </header>
+  <div class="body">
+    <div class="ctl"><div class="lab"><span>龙游速度</span><output id="o-dragon">0.70</output></div>
+      <input type="range" id="c-dragon" min="0" max="2" step="0.01" value="0.7"></div>
+    <div class="ctl"><div class="lab"><span>花瓣数量</span><output id="o-petals">220</output></div>
+      <input type="range" id="c-petals" min="0" max="400" step="10" value="220"></div>
+    <div class="ctl"><div class="lab"><span>日光方位</span><output id="o-sunaz">35°</output></div>
+      <input type="range" id="c-sunaz" min="0" max="360" step="1" value="35"></div>
+    <div class="ctl"><div class="lab"><span>日光强度</span><output id="o-sunint">2.6</output></div>
+      <input type="range" id="c-sunint" min="0.5" max="5" step="0.1" value="2.6"></div>
+    <div class="ctl"><div class="lab"><span>灯笼辉光</span><output id="o-glow">1.00</output></div>
+      <input type="range" id="c-glow" min="0" max="2" step="0.01" value="1"></div>
+    <div class="ctl"><div class="lab"><span>雾霭浓度</span><output id="o-fog">0.0028</output></div>
+      <input type="range" id="c-fog" min="0" max="0.008" step="0.0002" value="0.0028"></div>
+    <div class="ctl"><div class="lab"><span>镜头暗角</span><output id="o-vig">0.55</output></div>
+      <input type="range" id="c-vig" min="0" max="1" step="0.01" value="0.55"></div>
+    <div class="ctl"><div class="lab"><span>渲染画质</span></div>
+      <select id="c-quality">
+        <option value="0.75">流畅 · 0.75×</option>
+        <option value="1.25" selected>均衡 · 1.25×</option>
+        <option value="2">高清 · 2×</option>
+      </select></div>
+    <div class="switchrow"><span>自动环绕</span>
+      <label class="switch"><input type="checkbox" id="c-auto" checked><i></i></label></div>
+    <div class="switchrow"><span>实时阴影</span>
+      <label class="switch"><input type="checkbox" id="c-shadow" checked><i></i></label></div>
+  </div>
+  <footer>
+    <div class="btns">
+      <button id="b-reset" class="primary">重置</button>
+      <button id="b-random">随机气韵</button>
+      <button id="b-shot">截图留存</button>
+    </div>
+    <div id="stats"><span>方块 <b id="st-vox">—</b></span><span><b id="st-fps">—</b> FPS</span></div>
+  </footer>
+</aside>
+
+<div id="loading">
+  <h1>浮空御园</h1>
+  <div class="spinner"></div>
+  <p>叠石为山 · 聚块成园</p>
+</div>
+<div id="fatal"></div>
+
+<script type="module">
+/* ============ Three.js CDN 多级回退 ============ */
+const CDNS = [
+  'https://fastly.jsdelivr.net/npm/three@0.169.0/build/three.module.js',
+  'https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js',
+  'https://registry.npmmirror.com/three/0.169.0/files/build/three.module.js',
+  'https://unpkg.com/three@0.169.0/build/three.module.js'
+];
+let THREE = null;
+for (const u of CDNS) { try { THREE = await import(u); break; } catch (e) {} }
+const fatal = (msg) => {
+  const f = document.getElementById('fatal');
+  f.style.display = 'flex'; f.textContent = msg;
+  document.getElementById('loading').classList.add('gone');
+};
+if (!THREE) { fatal('无法从 CDN 加载 Three.js，请检查网络后刷新。'); throw new Error('three load failed'); }
+
+/* ============ 基础工具 ============ */
+let seed = 20261116;
+const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const rr = (a, b) => a + rnd() * (b - a);
+const pick = arr => arr[Math.floor(rnd() * arr.length)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const hash2 = (x, z) => { const s = Math.sin(x * 127.1 + z * 311.7) * 43758.5453; return s - Math.floor(s); };
+
+const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(),
+      _p = new THREE.Vector3(), _s = new THREE.Vector3(), _c = new THREE.Color(),
+      _up = new THREE.Vector3(0, 1, 0), _tan = new THREE.Vector3(), _look = new THREE.Matrix4();
+
+/* 静态体素收集器：不同物件用不同尺度单元 */
+const SV = [], EV = [], glowPoints = [];
+function vox(x, y, z, sx, sy, sz, c, ry = 0, rx = 0, rz = 0) {
+  SV.push({ x, y, z, sx, sy, sz, c, ry, rx, rz });
+}
+function evox(x, y, z, sx, sy, sz) { EV.push({ x, y, z, sx, sy, sz }); }
+function jitterColor(hex, amt = 0.045) {
+  _c.setHex(hex); const hsl = {}; _c.getHSL(hsl);
+  hsl.l = clamp(hsl.l + (rnd() - 0.5) * amt, 0.02, 0.96);
+  hsl.s = clamp(hsl.s + (rnd() - 0.5) * 0.05, 0, 1);
+  _c.setHSL(hsl.h, hsl.s, hsl.l); return _c.clone();
+}
+function bakeVoxels(list, mat, shadow = true) {
+  const mesh = new THREE.InstancedMesh(boxGeo, mat, list.length);
+  list.forEach((v, i) => {
+    _e.set(v.rx || 0, v.ry || 0, v.rz || 0); _q.setFromEuler(_e);
+    _p.set(v.x, v.y, v.z); _s.set(v.sx, v.sy, v.sz);
+    _m.compose(_p, _q, _s); mesh.setMatrixAt(i, _m);
+    mesh.setColorAt(i, jitterColor(v.c));
+  });
+  mesh.instanceMatrix.needsUpdate = true;
+  if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  mesh.castShadow = shadow; mesh.receiveShadow = shadow;
+  mesh.frustumCulled = false;
+  return mesh;
+}
+
+/* ============ 渲染器 / 场景 / 相机 ============ */
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+} catch (e) { fatal('当前环境不支持 WebGL。'); throw e; }
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.12;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.getElementById('stage').appendChild(renderer.domElement);
+const canvas = renderer.domElement;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0xc9d2dc, 0.0028);
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.5, 900);
+
+/* 天空穹顶：暮色渐变 + 日晕，无云 */
+const skyMat = new THREE.ShaderMaterial({
+  side: THREE.BackSide, depthWrite: false, fog: false,
+  uniforms: {
+    zenith: { value: new THREE.Color(0x27446f) },
+    mid: { value: new THREE.Color(0x84a6cf) },
+    horizon: { value: new THREE.Color(0xe8c193) },
+    abyss: { value: new THREE.Color(0x2b3440) },
+    sunDir: { value: new THREE.Vector3(0.5, 0.6, 0.3).normalize() },
+    sunCol: { value: new THREE.Color(0xffd9a0) }
+  },
+  vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+  fragmentShader: `varying vec3 vP; uniform vec3 zenith,mid,horizon,abyss,sunDir,sunCol;
+    void main(){
+      vec3 d = normalize(vP);
+      float h = clamp(d.y, -1.0, 1.0);
+      vec3 col = mix(horizon, mid, smoothstep(-0.02, 0.24, h));
+      col = mix(col, zenith, smoothstep(0.22, 0.72, h));
+      col = mix(col, abyss, smoothstep(0.02, 0.6, -h));
+      float s = max(dot(d, normalize(sunDir)), 0.0);
+      col += sunCol * (pow(s, 90.0) * 0.9 + pow(s, 7.0) * 0.16);
+      gl_FragColor = vec4(col, 1.0);
+    }`
+});
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(400, 32, 16), skyMat));
+
+/* 光照：暖阳主光 + 天光补光 */
+const hemi = new THREE.HemisphereLight(0xbdd4f0, 0x3e4a33, 0.75);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffd9a8, 2.6);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = -52; sun.shadow.camera.right = 52;
+sun.shadow.camera.top = 52; sun.shadow.camera.bottom = -52;
+sun.shadow.camera.near = 5; sun.shadow.camera.far = 200;
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.5;
+scene.add(sun); scene.add(sun.target);
+function setSun(azDeg, intensity) {
+  const a = azDeg * Math.PI / 180;
+  sun.position.set(Math.cos(a) * 58, 44, Math.sin(a) * 58);
+  sun.intensity = intensity;
+  skyMat.uniforms.sunDir.value.copy(sun.position).normalize();
+}
+setSun(35, 2.6);
+
+/* ============ 地形：主岛高度场（池塘/小溪下凹） ============ */
+const U = 2;
+const pondC = { x: 9, z: 9 };
+function pondSigned(x, z) {
+  const dx = x - pondC.x, dz = z - pondC.z;
+  const ang = Math.atan2(dz, dx);
+  const rp = 6.2 + 1.1 * Math.sin(ang * 3 + 0.8) + 0.5 * Math.sin(ang * 5 + 2);
+  return Math.hypot(dx, dz) - rp;
+}
+const streamPts = [[12.5, 10.2], [16.5, 11.2], [20.5, 12.2], [25.5, 13.0]];
+function segDist(px, pz, a, b) {
+  const abx = b[0] - a[0], abz = b[1] - a[1];
+  const t = clamp(((px - a[0]) * abx + (pz - a[1]) * abz) / (abx * abx + abz * abz), 0, 1);
+  return Math.hypot(px - (a[0] + abx * t), pz - (a[1] + abz * t));
+}
+function streamDist(x, z) {
+  let d = 1e9;
+  for (let i = 0; i < streamPts.length - 1; i++) d = Math.min(d, segDist(x, z, streamPts[i], streamPts[i + 1]));
+  return d;
+}
+const pathPts = [[0.5, 25.5], [0.5, 17], [-1.5, 11], [-4, 5], [-6.5, 0], [-8, -3.5]];
+function pathDist(x, z) {
+  let d = 1e9;
+  for (let i = 0; i < pathPts.length - 1; i++) d = Math.min(d, segDist(x, z, pathPts[i], pathPts[i + 1]));
+  return d;
+}
+function islandR(x, z) { return 24.6 + hash2(Math.round(x / U), Math.round(z / U)) * 2.2; }
+function cellH(x, z) {
+  if (pondSigned(x, z) < 0) return -2.6;
+  if (streamDist(x, z) < 1.8) return -1.7;
+  return 0;
+}
+const cells = [];
+for (let gx = -13; gx <= 13; gx++) for (let gz = -13; gz <= 13; gz++) {
+  const x = gx * U, z = gz * U;
+  if (Math.hypot(x, z) > islandR(x, z) && streamDist(x, z) > 2.4) continue;
+  cells.push({ x, z, h: cellH(x, z), path: cellH(x, z) === 0 && pathDist(x, z) < 1.5 });
+}
+const cellAt = new Map(cells.map(c => [c.x + ',' + c.z, c]));
+const GRASS = [0x4f9e3f, 0x57ab46, 0x4a9440, 0x61b34e];
+const DIRT = [0x7a5230, 0x6b4526, 0x8a6038];
+const ROCK = [0x5d5a55, 0x6e675e, 0x4c4a46];
+for (const c of cells) {
+  let top;
+  if (c.h < -2) top = 0x1d5f66;
+  else if (c.h < 0) top = 0x20646b;
+  else if (c.path) top = 0xcfc4a8;
+  else top = pick(GRASS);
+  vox(c.x, c.h - 1, c.z, U, U, U, top);
+  for (let y = c.h - 3; y >= -5; y -= U) vox(c.x, y, c.z, U, U, U, pick(DIRT));
+}
+/* 岛底岩层倒锥 */
+for (let L = 1; L <= 6; L++) {
+  const y = -5 - L * U, rad = 25.5 - L * 3.4;
+  for (let gx = -13; gx <= 13; gx++) for (let gz = -13; gz <= 13; gz++) {
+    const x = gx * U, z = gz * U;
+    if (Math.hypot(x, z) > rad + hash2(gx + L * 7, gz - L * 3) * 2.4 - 1.2) continue;
+    vox(x, y, z, U, U, U, rnd() < 0.03 ? 0xc9a227 : pick(ROCK));
+  }
+}
+for (let i = 0; i < 9; i++) {
+  const a = rr(0, Math.PI * 2), r = rr(8, 20);
+  const x = Math.round(Math.cos(a) * r / U) * U, z = Math.round(Math.sin(a) * r / U) * U;
+  const depth = Math.floor(rr(2, 5));
+  for (let k = 0; k < depth; k++) vox(x, -17 - k * U, z, U * rr(0.5, 0.9), U, U * rr(0.5, 0.9), pick(ROCK));
+}
+/* 岸边收边石 */
+for (const c of cells) {
+  if (c.h !== 0) continue;
+  for (const [dx, dz] of [[U, 0], [-U, 0], [0, U], [0, -U]]) {
+    const n = cellAt.get((c.x + dx) + ',' + (c.z + dz));
+    if (n && n.h < 0) {
+      const ex = c.x + dx * 0.42, ez = c.z + dz * 0.42;
+      vox(ex, 0.18, ez, rr(0.5, 0.95), rr(0.35, 0.6), rr(0.5, 0.95), pick([0x8a8f98, 0x9aa0a8, 0x707680]), rr(0, 3));
+      if (rnd() < 0.5) vox(ex + rr(-0.4, 0.4), -0.45, ez + rr(-0.4, 0.4), rr(0.4, 0.7), rr(0.4, 0.7), rr(0.4, 0.7), 0x707680, rr(0, 3));
+    }
+  }
+}
+
+/* ============ 水体：浅蓝半透明，下凹有深度 ============ */
+const waterMat = new THREE.MeshPhysicalMaterial({
+  color: 0x8fd6ff, transparent: true, opacity: 0.52, roughness: 0.12,
+  metalness: 0, depthWrite: false
+});
+const waterMeshes = [];
+function waterBox(x, y, z, sx, sy, sz, ry = 0) {
+  const m = new THREE.Mesh(boxGeo, waterMat);
+  m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.rotation.y = ry;
+  m.renderOrder = 2; scene.add(m); waterMeshes.push(m); return m;
+}
+waterBox(9, -1.55, 9, 15.6, 2.15, 15.6);
+for (let i = 0; i < streamPts.length - 1; i++) {
+  const a = streamPts[i], b = streamPts[i + 1];
+  const mx = (a[0] + b[0]) / 2, mz = (a[1] + b[1]) / 2;
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1]) + 1.2;
+  waterBox(mx, -1.05, mz, len, 1.4, 3.4, Math.atan2(b[1] - a[1], b[0] - a[0]));
+}
+let exitCell = null;
+for (const c of cells) if (c.h === -1.7 && (!exitCell || c.x > exitCell.x)) exitCell = c;
+const fallX = exitCell.x + 1.0, fallZ = exitCell.z;
+waterBox(fallX, -11, fallZ, 0.9, 21, 3.2);
+vox(fallX - 0.5, -0.42, fallZ, 1.2, 0.22, 3.3, 0xd8f2ff);
+
+/* ============ 布局保留区（防止穿插重叠） ============ */
+const reserved = [
+  { x: -8, z: -6, r: 8.2 }, { x: -17, z: 7, r: 3.6 }, { x: 3, z: -16, r: 3.8 },
+  { x: 17, z: -8, r: 3.4 }, { x: 20, z: 12, r: 4.2 }, { x: -19, z: -11, r: 2.8 },
+  { x: 21, z: 2, r: 2.6 }, { x: -2, z: -21, r: 2.4 }, { x: 6, z: 16.5, r: 1.8 }
+];
+const lanternPos = [[2.3, 20], [-3.2, 13], [-7.5, 1.5], [15.5, 9.3], [3.5, 15.8], [-14, 3]];
+for (const [x, z] of lanternPos) reserved.push({ x, z, r: 1.1 });
+const beds = [[-3, 18, 2.2], [6, -3, 2], [-13, -13, 2.4], [12, -14, 2.2], [19, -3, 2]];
+for (const [x, z, r] of beds) reserved.push({ x, z, r: r + 0.4 });
+function freeSpot(x, z, pad = 0.6) {
+  if (Math.hypot(x, z) > 23.2) return false;
+  if (cellH(x, z) !== 0) return false;
+  if (pathDist(x, z) < 1.9) return false;
+  for (const o of reserved) if (Math.hypot(x - o.x, z - o.z) < o.r + pad) return false;
+  return true;
+}
+
+/* ============ 主建筑：双层檐四角攒尖顶凉亭 ============ */
+(function pavilion() {
+  const cx = -8, cz = -6;
+  const V = (x, y, z, sx, sy, sz, c, ry = 0) => vox(cx + x, y, cz + z, sx, sy, sz, c, ry);
+  const RED = 0xc0392b, RED_D = 0x96271c, GOLD = 0xd9a441, TEAL = 0x1f7a6d,
+        TILE = 0x1f6fb2, TILE_D = 0x185a92, STONE = 0xb9b3a4;
+  V(0, 0.35, 0, 11, 0.7, 11, STONE);
+  V(0, 0.72, 0, 11.3, 0.12, 11.3, 0x948d7c);
+  for (let k = 0; k < 3; k++) V(0, 0.12 + k * 0.23, 5.9 + (2 - k) * 0.75, 3.2, 0.24, 0.8, 0xa8a291);
+  const colPos = [[-3.2, -3.2], [3.2, -3.2], [-3.2, 3.2], [3.2, 3.2]];
+  for (const [px, pz] of colPos) {
+    V(px, 0.85, pz, 0.85, 0.3, 0.85, 0x8f8878);
+    V(px, 3.15, pz, 0.55, 4.6, 0.55, RED);
+    V(px, 5.42, pz, 0.7, 0.18, 0.7, GOLD);
+    /* 斗拱：三层出跳 */
+    V(px, 5.62, pz, 1.0, 0.22, 1.0, TEAL);
+    V(px, 5.82, pz, 1.5, 0.2, 0.55, GOLD);
+    V(px, 6.0, pz, 0.55, 0.2, 1.5, TEAL);
+    V(px, 6.18, pz, 1.9, 0.16, 0.42, RED_D);
+  }
+  /* 额枋 */
+  for (const s of [-1, 1]) {
+    V(0, 5.25, 3.2 * s, 7.0, 0.42, 0.34, RED);
+    V(3.2 * s, 5.25, 0, 0.34, 0.42, 7.0, RED);
+    V(0, 4.85, 3.2 * s, 7.0, 0.16, 0.26, GOLD);
+    V(3.2 * s, 4.85, 0, 0.26, 0.16, 7.0, GOLD);
+  }
+  /* 三面坐凳栏杆（南面留门） */
+  const sides = [
+    { ax: 'x', fix: -3.2, from: -3.2, to: 3.2 },
+    { ax: 'z', fix: -3.2, from: -3.2, to: 3.2 },
+    { ax: 'z', fix: 3.2, from: -3.2, to: 3.2 }
+  ];
+  for (const s of sides) {
+    for (let t = s.from + 0.45; t <= s.to - 0.4; t += 0.5) {
+      const x = s.ax === 'x' ? t : s.fix, z = s.ax === 'x' ? s.fix : t;
+      V(x, 1.28, z, 0.13, 0.66, 0.13, RED_D);
+    }
+    const mx = s.ax === 'x' ? 0 : s.fix, mz = s.ax === 'x' ? s.fix : 0;
+    const lx = s.ax === 'x' ? 6.4 : 0.2, lz = s.ax === 'x' ? 0.2 : 6.4;
+    V(mx, 1.66, mz, lx, 0.16, lz, RED);
+    V(mx, 0.92, mz, lx, 0.14, lz, STONE);
+  }
+  /* 内槽天花 */
+  V(0, 5.52, 0, 7.4, 0.16, 7.4, RED_D);
+  /* 下檐：四角攒尖，逐层收分 */
+  function roof(baseY, half, layers, rise, apex) {
+    for (let k = 0; k < layers; k++) {
+      const hw = half * (1 - (k / layers) * (1 - apex / half));
+      const y = baseY + k * rise;
+      for (let x = -hw; x <= hw + 0.01; x += 0.62) for (let z = -hw; z <= hw + 0.01; z += 0.62) {
+        const edge = Math.max(Math.abs(x), Math.abs(z)) > hw - 0.62;
+        V(x, y, z, 0.64, 0.34, 0.64, edge ? TILE_D : TILE);
+      }
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+        V(sx * hw, y + 0.22, sz * hw, 0.52, 0.4, 0.52, GOLD);
+        if (k === 0) {
+          V(sx * (hw + 0.28), y + 0.42, sz * (hw + 0.28), 0.42, 0.34, 0.42, TILE);
+          V(sx * (hw + 0.28), y - 0.28, sz * (hw + 0.28), 0.14, 0.22, 0.14, GOLD);
+        }
+      }
+    }
+    return baseY + layers * rise;
+  }
+  const lowerTop = roof(6.35, 5.9, 7, 0.34, 1.7);
+  /* 上层平座与檐柱 */
+  V(0, lowerTop + 0.1, 0, 5.4, 0.24, 5.4, RED_D);
+  for (const [px, pz] of [[-1.9, -1.9], [1.9, -1.9], [-1.9, 1.9], [1.9, 1.9]])
+    V(px, lowerTop + 0.95, pz, 0.4, 1.5, 0.4, RED);
+  /* 上层格子窗（细单元） */
+  for (const s of [-1, 1]) {
+    for (let t = -1.55; t <= 1.56; t += 0.31) {
+      V(t, lowerTop + 0.95, 1.9 * s, 0.1, 1.26, 0.1, GOLD);
+      V(1.9 * s, lowerTop + 0.95, t, 0.1, 1.26, 0.1, GOLD);
+    }
+    for (let yy = 0.45; yy <= 1.5; yy += 0.35) {
+      V(0, lowerTop + yy, 1.9 * s, 3.4, 0.09, 0.09, GOLD);
+      V(1.9 * s, lowerTop + yy, 0, 0.09, 0.09, 3.4, GOLD);
+    }
+    V(0, lowerTop + 0.95, 1.9 * s, 3.6, 0.14, 0.16, RED);
+    V(1.9 * s, lowerTop + 0.95, 0, 0.16, 0.14, 3.6, RED);
+  }
+  const upperTop = roof(lowerTop + 1.75, 3.3, 6, 0.36, 0.3);
+  /* 宝顶 */
+  V(0, upperTop + 0.22, 0, 0.6, 0.34, 0.6, GOLD);
+  V(0, upperTop + 0.55, 0, 0.44, 0.3, 0.44, 0xf2c14e);
+  V(0, upperTop + 0.85, 0, 0.3, 0.3, 0.3, GOLD);
+  evox(cx, upperTop + 1.14, cz, 0.26, 0.26, 0.26);
+  /* 匾额 */
+  V(0, 5.0, 3.42, 1.7, 0.75, 0.14, 0x22303a);
+  V(0, 5.0, 3.5, 1.5, 0.55, 0.06, 0x141d24);
+  for (const dx of [-0.45, 0, 0.45]) V(dx, 5.0, 3.55, 0.16, 0.36, 0.05, GOLD);
+  /* 室内石桌凳 + 吊灯 */
+  V(0, 1.0, 0, 1.5, 0.5, 1.5, 0x9aa0a8);
+  V(0, 1.3, 0, 1.7, 0.12, 1.7, 0x8f8878);
+  for (const [sx, sz] of [[-1.6, 0.6], [1.5, -0.8]]) V(sx, 0.95, sz, 0.7, 0.45, 0.7, 0x9aa0a8);
+  V(0, 4.6, 0, 0.06, 1.6, 0.06, 0x3a3226);
+  evox(cx, 3.7, cz, 0.5, 0.55, 0.5);
+  V(0, 4.05, 0, 0.66, 0.12, 0.66, GOLD);
+  V(0, 3.38, 0, 0.66, 0.12, 0.66, GOLD);
+  glowPoints.push({ x: cx, y: 3.7, z: cz, big: true });
+})();
+
+/* ============ 粉色花树：递归枝干 + 方形花冠 + 根系 ============ */
+const treeTops = [];
+const BLOSSOM = [0xff8fb8, 0xff6fa5, 0xffa8c8, 0xffc4da, 0xf75590, 0xfff0f5];
+function tree(tx, tz, s) {
+  const bark = [0x6d4a2f, 0x7d5636, 0x5c3d26];
+  function branch(x, y, z, dx, dy, dz, len, w, depth) {
+    const steps = Math.max(2, Math.round(len / (w * 0.8)));
+    let px = x, py = y, pz = z;
+    for (let i = 0; i < steps; i++) {
+      vox(px, py, pz, w, w, w, pick(bark), rr(0, 3));
+      px += dx * len / steps + rr(-0.06, 0.06);
+      py += dy * len / steps;
+      pz += dz * len / steps + rr(-0.06, 0.06);
+      const j = 0.14;
+      dx += rr(-j, j); dz += rr(-j, j); dy += rr(-j * 0.5, j * 0.7);
+      const n = Math.hypot(dx, dy, dz); dx /= n; dy /= n; dz /= n;
+    }
+    if (depth >= 3 || w < 0.24) {
+      const R = rr(1.5, 2.1) * s;
+      for (let i = 0; i < 30; i++) {
+        const a = rr(0, Math.PI * 2), b = rr(-1, 1), r = R * Math.cbrt(rnd());
+        const cs = rr(0.42, 0.85) * s;
+        vox(px + Math.cos(a) * r * Math.sqrt(1 - b * b), py + b * r * 0.72, pz + Math.sin(a) * r * Math.sqrt(1 - b * b),
+          cs, cs * 0.8, cs, rnd() < 0.1 ? 0xfff0f5 : pick(BLOSSOM), rr(0, 3));
+      }
+      treeTops.push({ x: px, y: py, z: pz, r: R, g: 0 });
+      return;
+    }
+    const kids = depth === 0 ? 3 : (rnd() < 0.5 ? 2 : 3);
+    for (let k = 0; k < kids; k++) {
+      const a = rr(0, Math.PI * 2), tilt = rr(0.35, 0.85);
+      let nx = dx + Math.cos(a) * tilt, nz = dz + Math.sin(a) * tilt, ny = dy + rr(0.25, 0.7);
+      const n = Math.hypot(nx, ny, nz);
+      branch(px, py, pz, nx / n, ny / n, nz / n, len * rr(0.66, 0.8), w * 0.62, depth + 1);
+    }
+  }
+  branch(tx, 0.35, tz, rr(-0.08, 0.08), 1, rr(-0.08, 0.08), 3.1 * s, 0.85 * s, 0);
+  for (let k = 0; k < 6; k++) {
+    const a = k / 6 * Math.PI * 2 + rr(-0.2, 0.2);
+    for (let i = 0; i < 3; i++) {
+      const w = (0.5 - i * 0.13) * s;
+      vox(tx + Math.cos(a) * (0.6 + i * 0.55) * s, 0.16 - i * 0.14, tz + Math.sin(a) * (0.6 + i * 0.55) * s,
+        w, w * 0.8, w, pick(bark), a);
+    }
+  }
+}
+tree(-17, 7, 1.15); tree(3, -16, 1.3); tree(17, -8, 1.0);
+
+/* ============ 翠竹成丛 ============ */
+function bamboo(cx, cz, n, baseY = 0) {
+  for (let i = 0; i < n; i++) {
+    const a = rr(0, Math.PI * 2), r = Math.sqrt(rnd()) * 1.7;
+    const x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r;
+    const h = rr(4, 6.6), lean = rr(-0.05, 0.05);
+    const segs = Math.round(h / 0.78);
+    for (let k = 0; k < segs; k++) {
+      const y = baseY + 0.4 + k * 0.78;
+      vox(x + lean * k, y, z + lean * k * 0.6, 0.24, 0.74, 0.24, k % 2 ? 0x3fae4a : 0x4cbf55);
+      vox(x + lean * k, y + 0.38, z + lean * k * 0.6, 0.3, 0.1, 0.3, 0x2c7a35);
+    }
+    const ty = baseY + 0.4 + segs * 0.78;
+    for (let l = 0; l < 6; l++) {
+      const la = rr(0, Math.PI * 2), lr = rr(0.2, 0.9);
+      vox(x + lean * segs + Math.cos(la) * lr, ty - rr(0, 1.4), z + Math.sin(la) * lr,
+        0.56, 0.06, 0.22, pick([0x5fc95e, 0x3fae4a, 0x79d97a]), la, rr(-0.4, 0.4));
+    }
+  }
+}
+bamboo(-19, -11, 11); bamboo(21, 2, 9); bamboo(-2, -21, 8);
+
+/* ============ 花丛 / 草丛 / 石头 ============ */
+const FLOWER = [0xe64980, 0xffb020, 0xf8f4ff, 0x9c36b5, 0xff6b6b];
+for (const [bx, bz, br] of beds) {
+  for (let i = 0; i < 16; i++) {
+    const a = rr(0, Math.PI * 2), r = Math.sqrt(rnd()) * br;
+    const x = bx + Math.cos(a) * r, z = bz + Math.sin(a) * r;
+    if (!freeSpot(x, z, 0.1)) continue;
+    const h = rr(0.35, 0.6);
+    vox(x, h / 2, z, 0.1, h, 0.1, 0x2f9e44);
+    vox(x, h + 0.14, z, 0.3, 0.28, 0.3, pick(FLOWER), rr(0, 3));
+    vox(x + 0.14, h * 0.5, z, 0.18, 0.08, 0.12, 0x37b24d, rr(0, 3));
+  }
+}
+for (let i = 0; i < 240; i++) {
+  const x = rr(-23, 23), z = rr(-23, 23);
+  if (!freeSpot(x, z)) continue;
+  for (let k = 0; k < 3; k++)
+    vox(x + rr(-0.16, 0.16), rr(0.16, 0.26), z + rr(-0.16, 0.16), 0.13, rr(0.32, 0.55), 0.13, pick([0x57ab46, 0x69c257, 0x4a9440]), rr(0, 3), rr(-0.14, 0.14));
+}
+function rockCluster(x, z, s = 1, baseY = 0) {
+  const n = Math.floor(rr(3, 6));
+  for (let i = 0; i < n; i++) {
+    const w = rr(0.5, 1.4) * s;
+    vox(x + rr(-0.8, 0.8) * s, baseY + w * 0.32, z + rr(-0.8, 0.8) * s, w, w * rr(0.6, 0.9), w * rr(0.7, 1), pick([0x8a8f98, 0x6b7280, 0x9aa0a8]), rr(0, 3));
+  }
+}
+for (let i = 0; i < 14; i++) {
+  const x = rr(-22, 22), z = rr(-22, 22);
+  if (freeSpot(x, z, 0.8)) rockCluster(x, z, rr(0.7, 1.2));
+}
+rockCluster(4.2, 14.6, 0.8); rockCluster(13.8, 6.2, 0.7); rockCluster(-4.5, 16.5, 0.9);
+
+/* ============ 石灯笼：中空内发光 ============ */
+const glowMat = new THREE.MeshStandardMaterial({ color: 0x332211, emissive: 0xffb347, emissiveIntensity: 2.2, roughness: 0.6 });
+const lanternLights = [];
+lanternPos.forEach(([x, z], idx) => {
+  const G = 0x8f8878, GD = 0x6f695c;
+  vox(x, 0.13, z, 1.15, 0.26, 1.15, GD);
+  vox(x, 0.78, z, 0.38, 1.05, 0.38, G);
+  vox(x, 1.36, z, 0.95, 0.14, 0.95, GD);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1])
+    vox(x + sx * 0.36, 1.72, z + sz * 0.36, 0.16, 0.62, 0.16, G);
+  evox(x, 1.72, z, 0.46, 0.5, 0.46);
+  vox(x, 2.12, z, 1.25, 0.2, 1.25, GD);
+  vox(x, 2.3, z, 0.85, 0.18, 0.85, G);
+  vox(x, 2.46, z, 0.45, 0.16, 0.45, GD);
+  vox(x, 2.6, z, 0.22, 0.2, 0.22, G);
+  glowPoints.push({ x, y: 1.72, z });
+  if (idx < 3) {
+    const pl = new THREE.PointLight(0xffb347, 6, 10, 2);
+    pl.position.set(x, 1.75, z); scene.add(pl); lanternLights.push(pl);
+  }
+});
+{
+  const pl = new THREE.PointLight(0xffb347, 7, 12, 2);
+  pl.position.set(-8, 3.7, -6); scene.add(pl); lanternLights.push(pl);
+}
+
+/* ============ 主步道铺石 + 石板小径 ============ */
+function paversAlong(pts, step, size, color, y = 0.05) {
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i], b = pts[i + 1];
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const n = Math.floor(len / step);
+    for (let k = 0; k <= n; k++) {
+      const t = k / Math.max(1, n);
+      const x = a[0] + (b[0] - a[0]) * t + rr(-0.12, 0.12);
+      const z = a[1] + (b[1] - a[1]) * t + rr(-0.12, 0.12);
+      if (cellH(x, z) !== 0) continue;
+      vox(x, y, z, size * rr(0.85, 1.05), 0.09, size * rr(0.85, 1.05), color, rr(-0.2, 0.2));
+    }
+  }
+}
+paversAlong(pathPts, 0.95, 0.9, 0xcfc4a8);
+paversAlong([[-1.5, 11], [3, 11.5], [8, 11.8], [13, 11.9], [16.6, 12]], 1.15, 0.78, 0x9aa0a8, 0.06);
+paversAlong([[-6.5, 0], [-11, 2.5], [-14.5, 4.5]], 1.2, 0.7, 0x9aa0a8, 0.06);
+
+/* ============ 拱形桥：细单元护栏 ============ */
+(function bridge() {
+  const bx = 20, bz = 12;
+  const dirX = 0.24, dirZ = -0.97; /* 垂直于溪流 */
+  const V = (u, y, w, sx, sy, sz, c) => vox(bx + dirX * u + dirZ * w, y, bz + dirZ * u - dirX * w, sx, sy, sz, c, Math.atan2(dirX, dirZ));
+  for (let u = -3; u <= 3.01; u += 0.6) {
+    const y = 0.3 + 1.35 * Math.pow(Math.cos(u / 3.15 * Math.PI / 2), 1.1);
+    V(u, y, 0, 2.0, 0.28, 0.64, 0xd8d4c8);
+    for (const s of [-1, 1]) {
+      V(u, y + 0.42, s * 0.95, 0.14, 0.62, 0.14, 0xc0392b);
+      V(u, y + 0.76, s * 0.95, 0.17, 0.12, 0.62, 0x96271c);
+    }
+  }
+  for (const e of [-3.3, 3.3]) V(e, 0.16, 0, 1.1, 0.32, 2.3, 0xa8a291);
+  for (const s of [-1, 1]) for (const e of [-3.1, 3.1]) {
+    const y = 0.3 + 1.35 * Math.pow(Math.cos(e / 3.15 * Math.PI / 2), 1.1);
+    V(e, y + 0.5, s * 0.95, 0.24, 0.85, 0.24, 0x96271c);
+    V(e, y + 0.98, s * 0.95, 0.18, 0.16, 0.18, 0xd9a441);
+  }
+})();
+
+/* ============ 荷花与莲叶 ============ */
+const lotusSpots = [[7, 7.4], [10.6, 6.6], [11.4, 10.8], [7.6, 11.2], [9.4, 9]];
+lotusSpots.forEach(([x, z], i) => {
+  vox(x, -0.42, z, rr(1.0, 1.4), 0.09, rr(1.0, 1.4), 0x2f9e44, rr(0, 3));
+  if (i % 2 === 0) {
+    vox(x + 0.2, -0.2, z - 0.1, 0.42, 0.3, 0.42, i === 0 ? 0xff8fb8 : 0xfff0f5, rr(0, 3));
+    vox(x + 0.2, 0.02, z - 0.1, 0.26, 0.22, 0.26, 0xffc4da, rr(0, 3));
+    vox(x + 0.2, 0.16, z - 0.1, 0.12, 0.1, 0.12, 0xf2c14e);
+  }
+});
+
+/* ============ 卫星浮岛 ============ */
+function satellite(cx, cy, cz, rad, kind) {
+  const u = 1.4;
+  for (let gx = -4; gx <= 4; gx++) for (let gz = -4; gz <= 4; gz++) {
+    const x = gx * u, z = gz * u;
+    if (Math.hypot(x, z) > rad + hash2(gx + cx, gz + cz) * 0.9 - 0.45) continue;
+    vox(cx + x, cy - 0.5, cz + z, u, 1, u, pick(GRASS));
+    vox(cx + x, cy - 1.5, cz + z, u, 1, u, pick(DIRT));
+  }
+  for (let L = 1; L <= 3; L++) {
+    const r2 = rad - L * 1.15;
+    if (r2 < 0.4) break;
+    for (let gx = -4; gx <= 4; gx++) for (let gz = -4; gz <= 4; gz++) {
+      const x = gx * u, z = gz * u;
+      if (Math.hypot(x, z) > r2 + hash2(gx - L, gz + L) * 0.7 - 0.35) continue;
+      vox(cx + x, cy - 1.5 - L, cz + z, u, 1, u, pick(ROCK));
+    }
+  }
+  const top = cy;
+  if (kind === 'tree') {
+    const bark = 0x6d4a2f;
+    for (let k = 0; k < 5; k++) vox(cx + rr(-0.1, 0.1), top + 0.3 + k * 0.55, cz, 0.5 - k * 0.06, 0.55, 0.5 - k * 0.06, bark, rr(0, 3));
+    for (let i = 0; i < 40; i++) {
+      const a = rr(0, Math.PI * 2), b = rr(-1, 1), r = 1.7 * Math.cbrt(rnd());
+      vox(cx + Math.cos(a) * r, top + 3.1 + b * r * 0.7, cz + Math.sin(a) * r, rr(0.4, 0.7), rr(0.35, 0.6), rr(0.4, 0.7), pick(BLOSSOM), rr(0, 3));
+    }
+    treeTops.push({ x: cx, y: top + 3.1, z: cz, r: 1.7, g: top });
+  } else if (kind === 'bamboo') {
+    bamboo(cx, cz, 6, top);
+    for (let i = 0; i < 6; i++) vox(cx + rr(-1, 1), top + rr(0.1, 0.3), cz + rr(-1, 1), 0.3, 0.3, 0.3, 0x8a8f98, rr(0, 3));
+  } else if (kind === 'pagoda') {
+    for (let k = 0; k < 4; k++) {
+      const w = 1.7 - k * 0.36, y = top + 0.3 + k * 1.05;
+      vox(cx, y, cz, w, 0.7, w, 0x9aa0a8);
+      vox(cx, y + 0.45, cz, w + 0.7, 0.2, w + 0.7, 0x6b7280);
+    }
+    vox(cx, top + 4.7, cz, 0.3, 0.5, 0.3, 0xd9a441);
+    evox(cx, top + 5.05, cz, 0.2, 0.2, 0.2);
+    glowPoints.push({ x: cx, y: top + 5.05, z: cz });
+  } else if (kind === 'lantern') {
+    rockCluster(cx - 0.8, cz + 0.5, 0.8, top);
+    vox(cx + 0.7, top + 0.5, cz - 0.4, 0.34, 1.0, 0.34, 0x8f8878);
+    vox(cx + 0.7, top + 1.15, cz - 0.4, 0.8, 0.14, 0.8, 0x6f695c);
+    evox(cx + 0.7, top + 1.5, cz - 0.4, 0.42, 0.44, 0.42);
+    vox(cx + 0.7, top + 1.86, cz - 0.4, 0.95, 0.18, 0.95, 0x6f695c);
+    glowPoints.push({ x: cx + 0.7, y: top + 1.5, z: cz - 0.4 });
+  } else {
+    for (let i = 0; i < 12; i++) {
+      const x = cx + rr(-rad * 0.6, rad * 0.6), z = cz + rr(-rad * 0.6, rad * 0.6);
+      vox(x, top + 0.25, z, 0.1, 0.5, 0.1, 0x2f9e44);
+      vox(x, top + 0.58, z, 0.28, 0.26, 0.28, pick(FLOWER), rr(0, 3));
+    }
+    rockCluster(cx + rad * 0.4, cz - rad * 0.3, 0.6, top);
+  }
+}
+satellite(38, 3.5, -8, 4.4, 'tree');
+satellite(-37, -2.5, 13, 3.8, 'bamboo');
+satellite(-30, 6.5, -27, 4.6, 'pagoda');
+satellite(28, -5, 30, 3.6, 'lantern');
+satellite(5, 1.5, -40, 4.2, 'flower');
+satellite(-15, -6, 38, 3.4, 'flower');
+
+/* ============ 烘焙静态体素 ============ */
+const stdMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.86, metalness: 0.02 });
+const staticMesh = bakeVoxels(SV, stdMat);
+scene.add(staticMesh);
+const glowMesh = bakeVoxels(EV.map(v => ({ ...v, c: 0xffb347 })), glowMat, false);
+scene.add(glowMesh);
+
+/* 灯笼光晕贴片 */
+const glowTexCanvas = document.createElement('canvas');
+glowTexCanvas.width = glowTexCanvas.height = 64;
+{
+  const g = glowTexCanvas.getContext('2d');
+  const gr = g.createRadialGradient(32, 32, 2, 32, 32, 30);
+  gr.addColorStop(0, 'rgba(255,190,110,0.9)');
+  gr.addColorStop(0.4, 'rgba(255,160,70,0.32)');
+  gr.addColorStop(1, 'rgba(255,140,50,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+}
+const glowTex = new THREE.CanvasTexture(glowTexCanvas);
+const glowSprites = [];
+for (const gp of glowPoints) {
+  const sm = new THREE.SpriteMaterial({ map: glowTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.7 });
+  const sp = new THREE.Sprite(sm);
+  sp.position.set(gp.x, gp.y, gp.z);
+  const sc = gp.big ? 4.2 : 2.8;
+  sp.scale.set(sc, sc, 1); scene.add(sp); glowSprites.push(sp);
+}
+
+/* ============ 动态体素网格工具 ============ */
+function dynMesh(cap, mat, shadow = true) {
+  const m = new THREE.InstancedMesh(boxGeo, mat, cap);
+  m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  m.castShadow = shadow; m.receiveShadow = false; m.frustumCulled = false;
+  scene.add(m); return m;
+}
+function setInst(mesh, i, x, y, z, sx, sy, sz, q = null, color = null) {
+  _p.set(x, y, z); _s.set(sx, sy, sz);
+  _m.compose(_p, q || _q.identity(), _s);
+  mesh.setMatrixAt(i, _m);
+  if (color !== null) mesh.setColorAt(i, color);
+}
+
+/* ============ 金龙：连贯龙身 + 精细龙头 + 四爪 ============ */
+const DRAGON_N = 30;
+const dragonMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.55, metalness: 0.25 });
+const bodyMesh = dynMesh(DRAGON_N * 5 + 12, dragonMat);
+const segSize = [], segOff = [];
+for (let i = 0; i < DRAGON_N; i++) {
+  const f = i / (DRAGON_N - 1);
+  segSize.push(1.5 * (1 - 0.8 * f * f) * (i < 3 ? 0.94 + i * 0.02 : 1));
+}
+const JADE = new THREE.Color(0x12b26b), JADE_D = new THREE.Color(0x0d8a52),
+      GOLD_C = new THREE.Color(0xf2c14e), CRIMSON = new THREE.Color(0xe03131);
+{
+  let ci = 0;
+  for (let i = 0; i < DRAGON_N; i++) {
+    bodyMesh.setColorAt(ci++, JADE);
+    bodyMesh.setColorAt(ci++, GOLD_C);
+    bodyMesh.setColorAt(ci++, CRIMSON);
+    bodyMesh.setColorAt(ci++, i % 4 === 0 ? GOLD_C : JADE_D);
+    bodyMesh.setColorAt(ci++, i % 4 === 0 ? GOLD_C : JADE_D);
+  }
+  for (let k = 0; k < 12; k++) bodyMesh.setColorAt(ci++, k % 2 ? CRIMSON : GOLD_C);
+  bodyMesh.instanceColor.needsUpdate = true;
+}
+function dragonPath(t, out) {
+  const th = t * 0.32;
+  const r = 13.5 + 4.5 * Math.sin(t * 0.21 + 1.7);
+  out.set(
+    Math.cos(th) * r + 2 * Math.sin(t * 0.13),
+    19.5 + 2.6 * Math.sin(t * 0.43) + 1.2 * Math.sin(t * 0.9 + 2),
+    Math.sin(th) * r * 0.92 + 1.5 * Math.cos(t * 0.17)
+  );
+  return out;
+}
+/* 龙头（细单元 u=0.24，+z 朝前） */
+const headGroup = new THREE.Group(); headGroup.scale.setScalar(1.5); scene.add(headGroup);
+{
+  const u = 0.24, HV = [];
+  const hv = (x, y, z, sx, sy, sz, c) => HV.push({ x: x * u, y: y * u, z: z * u, sx: sx * u, sy: sy * u, sz: sz * u, c });
+  const J = 0x12b26b, JD = 0x0d8a52, G = 0xf2c14e, CR = 0xe03131, W = 0xfff4e0;
+  hv(0, 0, 0, 5, 4, 6, J);
+  hv(0, 0.6, -2.4, 4.4, 3.4, 2.4, JD);
+  hv(0, -0.2, 4.6, 3.2, 2.6, 5, J);
+  hv(0, 0.9, 6.8, 2.6, 1.6, 2.2, JD);
+  hv(-0.9, 1.5, 7.6, 0.7, 0.6, 0.7, G); hv(0.9, 1.5, 7.6, 0.7, 0.6, 0.7, G);
+  hv(-0.8, 1.2, 8.2, 0.3, 0.3, 0.3, 0x1a1a1a); hv(0.8, 1.2, 8.2, 0.3, 0.3, 0.3, 0x1a1a1a);
+  hv(0, -1.7, 4.2, 2.9, 1.1, 4.6, JD);
+  hv(0, -1.2, 6.4, 2.4, 0.5, 1.6, CR);
+  for (const s of [-1, 1]) for (let k = 0; k < 4; k++)
+    hv(s * 1.35, -1.05, 3.2 + k * 1.2, 0.28, 0.5, 0.28, W);
+  for (const s of [-1, 1]) {
+    hv(s * 2.55, 1.3, 1.8, 1.1, 1.1, 1.1, G);
+    hv(s * 2.75, 1.3, 2.45, 0.5, 0.5, 0.3, 0x101010);
+    hv(s * 2.5, 2.2, 1.6, 1.4, 0.5, 1.5, CR);
+    hv(s * 2.4, 2.1, -0.4, 0.6, 0.7, 0.9, JD);
+    /* 龙角：分叉 */
+    for (let k = 0; k < 6; k++)
+      hv(s * (1.5 + k * 0.16), 2.9 + k * 0.62, -0.6 - k * 0.42, 0.85 - k * 0.09, 0.7, 0.85 - k * 0.09, 0xd9a441);
+    for (let k = 0; k < 3; k++)
+      hv(s * (2.1 + k * 0.4), 4.6 + k * 0.4, -1.9 - k * 0.2, 0.5, 0.5, 0.5, 0xd9a441);
+    /* 龙须：细长链 */
+    for (let k = 0; k < 10; k++)
+      hv(s * (1.7 + k * 0.24), -0.5 - k * 0.1 + Math.sin(k * 0.55) * 0.35, 6.2 + k * 0.55, 0.34 - k * 0.02, 0.34 - k * 0.02, 0.5, k % 3 === 0 ? G : W);
+  }
+  /* 鬃毛 */
+  for (let k = 0; k < 14; k++) {
+    const a = k / 14 * Math.PI * 2;
+    hv(Math.cos(a) * 2.9, Math.sin(a) * 2.6 + 0.4, -3.6 - (k % 3) * 0.7, 1.0, 1.0, 1.4, k % 2 ? CR : 0xb02525);
+  }
+  const headMesh = bakeVoxels(HV, dragonMat);
+  headGroup.add(headMesh);
+  const eyeV = [{ x: -2.55 * u, y: 1.3 * u, z: 2.5 * u, sx: 0.55 * u, sy: 0.55 * u, sz: 0.3 * u },
+                { x: 2.55 * u, y: 1.3 * u, z: 2.5 * u, sx: 0.55 * u, sy: 0.55 * u, sz: 0.3 * u }];
+  const eyeMat = new THREE.MeshStandardMaterial({ color: 0x221100, emissive: 0xffc94d, emissiveIntensity: 2.2 });
+  headGroup.add(bakeVoxels(eyeV.map(v => ({ ...v, c: 0xffc94d })), eyeMat, false));
+}
+/* 四爪 */
+const legs = [];
+for (let L = 0; L < 4; L++) {
+  const g = new THREE.Group(); g.scale.setScalar(1.25); scene.add(g);
+  const LV = [];
+  const lv = (x, y, z, sx, sy, sz, c) => LV.push({ x, y, z, sx, sy, sz, c });
+  lv(0, -0.3, 0, 0.42, 0.75, 0.46, 0x12b26b);
+  lv(0.06, -0.85, 0.1, 0.32, 0.65, 0.36, 0x0d8a52);
+  lv(0.1, -1.2, 0.28, 0.36, 0.24, 0.5, 0xf2c14e);
+  for (let k = -1; k <= 1; k++) lv(0.1 + k * 0.14, -1.26, 0.6, 0.1, 0.12, 0.34, 0xfff4e0);
+  g.add(bakeVoxels(LV, dragonMat));
+  legs.push({ g, seg: L < 2 ? 4 : 17, side: L % 2 ? 1 : -1, ph: L * 1.7 });
+}
+const _fr = Array.from({ length: DRAGON_N }, () => ({ p: new THREE.Vector3(), q: new THREE.Quaternion(), s: 1, len: 1 }));
+const _pa = new THREE.Vector3(), _pb = new THREE.Vector3(), _right = new THREE.Vector3();
+let dragonT = 12;
+function updateDragon(t) {
+  let tt = dragonT;
+  for (let i = 0; i < DRAGON_N; i++) {
+    dragonPath(tt, _fr[i].p);
+    dragonPath(tt + 0.06, _pa);
+    const v = Math.max(2.5, _pa.distanceTo(_fr[i].p) / 0.06);
+    _fr[i].s = segSize[i];
+    tt -= segSize[i] * 0.8 / v;
+  }
+  let ci = 0;
+  for (let i = 0; i < DRAGON_N; i++) {
+    const f = _fr[i];
+    const prev = _fr[Math.max(0, i - 1)].p, next = _fr[Math.min(DRAGON_N - 1, i + 1)].p;
+    _tan.subVectors(prev, next).normalize();
+    if (_tan.lengthSq() < 0.5) _tan.set(0, 0, 1);
+    _look.lookAt(_pa.copy(f.p).add(_tan), f.p, _up);
+    f.q.setFromRotationMatrix(_look);
+    f.len = i < DRAGON_N - 1 ? f.p.distanceTo(_fr[i + 1].p) * 1.3 + 0.12 : _fr[i - 1].len;
+    const s = f.s, len = f.len;
+    setInst(bodyMesh, ci++, f.p.x, f.p.y, f.p.z, s, s * 0.92, len, f.q);
+    _p.set(0, -s * 0.34, 0).applyQuaternion(f.q).add(f.p);
+    setInst(bodyMesh, ci++, _p.x, _p.y, _p.z, s * 0.72, s * 0.5, len * 0.96, f.q);
+    _p.set(0, s * 0.6, 0).applyQuaternion(f.q).add(f.p);
+    setInst(bodyMesh, ci++, _p.x, _p.y, _p.z, 0.2, s * 0.6, len * 0.55, f.q);
+    for (const sd of [-1, 1]) {
+      _p.set(sd * s * 0.52, 0, 0).applyQuaternion(f.q).add(f.p);
+      setInst(bodyMesh, ci++, _p.x, _p.y, _p.z, 0.16, s * 0.55, len * 0.8, f.q);
+    }
+  }
+  /* 尾鳍 */
+  const tail = _fr[DRAGON_N - 1];
+  for (let k = 0; k < 6; k++) {
+    const a = (k / 5 - 0.5) * 2.2;
+    _p.set(Math.sin(a) * 0.7, Math.cos(a) * 0.55 - 0.1, -0.5).applyQuaternion(tail.q).add(tail.p);
+    _e.set(0, 0, -a); _q.setFromEuler(_e).premultiply(tail.q);
+    setInst(bodyMesh, ci++, _p.x, _p.y, _p.z, 0.16, 0.75, 0.5, _q);
+  }
+  for (let k = ci; k < bodyMesh.count; k++) setInst(bodyMesh, k, 0, -999, 0, 0.001, 0.001, 0.001);
+  bodyMesh.instanceMatrix.needsUpdate = true;
+  /* 头与爪 */
+  headGroup.position.copy(_fr[0].p);
+  headGroup.quaternion.copy(_fr[0].q);
+  for (const leg of legs) {
+    const f = _fr[leg.seg];
+    _right.set(1, 0, 0).applyQuaternion(f.q);
+    leg.g.position.copy(f.p).addScaledVector(_right, leg.side * f.s * 0.55);
+    leg.g.position.y -= f.s * 0.25;
+    leg.g.quaternion.copy(f.q);
+    leg.g.rotateX(Math.sin(t * 1.8 + leg.ph) * 0.3);
+    leg.g.rotateZ(leg.side * 0.25);
+  }
+}
+
+/* ============ 花瓣：小方形薄片 ============ */
+const PETAL_CAP = 400;
+const petalMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7, side: THREE.DoubleSide });
+const petalMesh = dynMesh(PETAL_CAP, petalMat, false);
+const petals = [];
+{
+  const cols = [0xff8fb8, 0xff6fa5, 0xffa8c8, 0xffc4da, 0xf75590];
+  for (let i = 0; i < PETAL_CAP; i++) {
+    petalMesh.setColorAt(i, new THREE.Color(pick(cols)));
+    petals.push({ x: 0, y: -999, z: 0, vy: 0, ph: rr(0, 9), rs: rr(0.5, 2), size: rr(0.18, 0.3), live: false });
+  }
+  petalMesh.instanceColor.needsUpdate = true;
+}
+function respawnPetal(p) {
+  const t = pick(treeTops);
+  p.x = t.x + rr(-t.r, t.r); p.y = t.y + rr(-0.5, 1.2); p.z = t.z + rr(-t.r, t.r);
+  p.vy = rr(0.55, 1.15); p.g = t.g; p.live = true;
+}
+let windX = 0.35, windZ = 0.15;
+function updatePetals(t, dt, count) {
+  petalMesh.count = count;
+  for (let i = 0; i < count; i++) {
+    const p = petals[i];
+    if (!p.live || p.y < (p.g || 0) + 0.06) respawnPetal(p);
+    p.y -= p.vy * dt;
+    p.x += (Math.sin(t * 1.3 + p.ph) * 0.65 + windX) * dt;
+    p.z += (Math.cos(t * 1.1 + p.ph * 1.7) * 0.5 + windZ) * dt;
+    _e.set(t * p.rs + p.ph, p.ph + t * 0.6, t * p.rs * 0.7);
+    _q.setFromEuler(_e);
+    setInst(petalMesh, i, p.x, p.y, p.z, p.size, 0.035, p.size, _q);
+  }
+  petalMesh.instanceMatrix.needsUpdate = true;
+}
+
+/* ============ 瀑布水珠 / 溪流波光 / 池面鳞光 / 浮石 ============ */
+const dropMat = new THREE.MeshStandardMaterial({ color: 0xbfe9ff, transparent: true, opacity: 0.8, roughness: 0.2 });
+const dropMesh = dynMesh(80, dropMat, false);
+const drops = Array.from({ length: 80 }, () => ({ y: rr(-24, -0.5), v: rr(7, 11), x: rr(-0.4, 0.4), z: rr(-1.4, 1.4), s: rr(0.22, 0.34) }));
+const streakMat = new THREE.MeshStandardMaterial({ color: 0xeaf7ff, transparent: true, opacity: 0.5, roughness: 0.3 });
+const streakMesh = dynMesh(18, streakMat, false);
+const sparkleMesh = dynMesh(14, streakMat, false);
+const sparkles = Array.from({ length: 14 }, () => ({ a: rr(0, 9), r: rr(1, 5.4), sp: rr(0.05, 0.2), s: rr(0.3, 0.7) }));
+const shardMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
+const shardMesh = dynMesh(16, shardMat);
+const shards = Array.from({ length: 16 }, (_, i) => ({ r: rr(28, 42), a: rr(0, 9), y: rr(-9, 12), sp: rr(0.01, 0.04) * (i % 2 ? 1 : -1), s: rr(0.5, 1.4), bob: rr(0, 9) }));
+for (let i = 0; i < 16; i++) shardMesh.setColorAt(i, jitterColor(pick(ROCK)));
+shardMesh.instanceColor.needsUpdate = true;
+function updateWater(t, dt) {
+  drops.forEach((d, i) => {
+    d.y -= d.v * dt; d.x += dt * 0.25;
+    if (d.y < -25) { d.y = rr(-1.5, -0.4); d.x = rr(-0.4, 0.4); d.z = rr(-1.4, 1.4); }
+    setInst(dropMesh, i, fallX + d.x, d.y, fallZ + d.z, d.s, rr(0.7, 1.0), d.s);
+  });
+  dropMesh.instanceMatrix.needsUpdate = true;
+  for (let i = 0; i < 18; i++) {
+    const f = ((t * 0.12 + i / 18) % 1);
+    const segF = f * (streamPts.length - 1);
+    const si = Math.min(streamPts.length - 2, Math.floor(segF)), tt = segF - si;
+    const a = streamPts[si], b = streamPts[si + 1];
+    const x = a[0] + (b[0] - a[0]) * tt, z = a[1] + (b[1] - a[1]) * tt;
+    setInst(streakMesh, i, x + Math.sin(i * 3.7) * 0.8, -0.32, z + Math.cos(i * 2.9) * 0.8, 0.7, 0.05, 0.24, null);
+  }
+  streakMesh.instanceMatrix.needsUpdate = true;
+  sparkles.forEach((s, i) => {
+    const a = s.a + t * s.sp;
+    setInst(sparkleMesh, i, 9 + Math.cos(a) * s.r, -0.44, 9 + Math.sin(a) * s.r, s.s, 0.04, s.s * 0.6);
+  });
+  sparkleMesh.instanceMatrix.needsUpdate = true;
+  shards.forEach((s, i) => {
+    const a = s.a + t * s.sp;
+    _e.set(t * 0.1 + s.bob, a, t * 0.07); _q.setFromEuler(_e);
+    setInst(shardMesh, i, Math.cos(a) * s.r, s.y + Math.sin(t * 0.4 + s.bob) * 0.8, Math.sin(a) * s.r, s.s, s.s * 0.8, s.s, _q);
+  });
+  shardMesh.instanceMatrix.needsUpdate = true;
+}
+
+/* ============ 金鱼 ============ */
+const kois = [];
+const koiColors = [[0xff6b35, 0xfff4e0], [0xfff4e0, 0xff6b35], [0xffb020, 0xfff4e0], [0xff6b35, 0xff6b35], [0xfff4e0, 0xffb020], [0xe8590c, 0xfff4e0]];
+for (let i = 0; i < 6; i++) {
+  const g = new THREE.Group();
+  const [c1, c2] = koiColors[i];
+  const m1 = new THREE.MeshStandardMaterial({ color: c1, roughness: 0.5 });
+  const m2 = new THREE.MeshStandardMaterial({ color: c2, roughness: 0.5 });
+  const head = new THREE.Mesh(boxGeo, m1); head.scale.set(0.42, 0.28, 0.5); head.position.z = 0.42;
+  const body = new THREE.Mesh(boxGeo, i % 2 ? m2 : m1); body.scale.set(0.48, 0.32, 0.62);
+  const tail = new THREE.Mesh(boxGeo, m2); tail.scale.set(0.3, 0.22, 0.42); tail.position.z = -0.52;
+  const fin = new THREE.Mesh(boxGeo, m2); fin.scale.set(0.56, 0.06, 0.24); fin.position.set(0, -0.1, 0.1);
+  g.add(head, body, tail, fin);
+  g.traverse(o => { if (o.isMesh) { o.castShadow = false; } });
+  scene.add(g);
+  kois.push({ g, tail, r: 2 + (i % 3) * 1.35, sp: rr(0.25, 0.5) * (i % 2 ? 1 : -1), ph: rr(0, 9), y: rr(-1.6, -1.0) });
+}
+function updateKoi(t) {
+  for (const k of kois) {
+    const a = t * k.sp + k.ph;
+    const x = 9 + Math.cos(a) * k.r, z = 9 + Math.sin(a) * k.r;
+    k.g.position.set(x, k.y + Math.sin(t * 0.8 + k.ph) * 0.18, z);
+    const vx = -Math.sin(a) * k.sp, vz = Math.cos(a) * k.sp;
+    k.g.rotation.y = Math.atan2(vx, vz);
+    k.tail.rotation.y = Math.sin(t * 6 + k.ph) * 0.45;
+    k.g.rotation.z = Math.sin(t * 2 + k.ph) * 0.06;
+  }
+}
+
+/* ============ 蝴蝶（细单元） ============ */
+const butterflies = [];
+const wingGeo = new THREE.BoxGeometry(0.3, 0.02, 0.22); wingGeo.translate(0.16, 0, 0);
+const bflyCols = [0x22d3ee, 0xf06595, 0xffc078, 0xb197fc, 0x69db7c, 0xff8787, 0x74c0fc, 0xf783ac];
+const bflyCenters = beds.map(b => [b[0], b[1]]).concat([[-15, 5], [15, -6]]);
+for (let i = 0; i < 8; i++) {
+  const g = new THREE.Group();
+  const mat = new THREE.MeshStandardMaterial({ color: bflyCols[i], roughness: 0.5, side: THREE.DoubleSide });
+  const bodyM = new THREE.Mesh(boxGeo, new THREE.MeshStandardMaterial({ color: 0x2b2b2b }));
+  bodyM.scale.set(0.07, 0.07, 0.3);
+  const wl = new THREE.Mesh(wingGeo, mat), wr = new THREE.Mesh(wingGeo, mat);
+  wr.scale.x = -1;
+  g.add(bodyM, wl, wr); scene.add(g);
+  const c = bflyCenters[i % bflyCenters.length];
+  butterflies.push({ g, wl, wr, cx: c[0], cz: c[1], ph: rr(0, 9), sp: rr(0.5, 1), r: rr(1.4, 2.6) });
+}
+function updateButterflies(t) {
+  for (const b of butterflies) {
+    const a = t * b.sp + b.ph;
+    const x = b.cx + Math.cos(a) * b.r + Math.sin(a * 2.3) * 0.5;
+    const z = b.cz + Math.sin(a * 0.9) * b.r;
+    const y = 1.3 + Math.sin(a * 1.7) * 0.55 + Math.sin(t * 3 + b.ph) * 0.12;
+    b.g.position.set(x, y, z);
+    b.g.rotation.y = Math.atan2(-Math.sin(a) * b.sp, Math.cos(a * 0.9) * b.sp * 0.9);
+    const flap = Math.sin(t * 18 + b.ph) * 0.75 + 0.25;
+    b.wl.rotation.z = flap; b.wr.rotation.z = -flap;
+  }
+}
+
+/* ============ 仙鹤：展翅 ============ */
+function craneModel() {
+  const g = new THREE.Group();
+  const CV = [];
+  const cv = (x, y, z, sx, sy, sz, c) => CV.push({ x, y, z, sx, sy, sz, c });
+  const WH = 0xf8f6f0, BK = 0x22262b;
+  cv(0, 0, 0, 0.9, 0.7, 1.5, WH);
+  cv(0, 0.15, -0.8, 0.7, 0.5, 0.6, BK);
+  cv(0, 0.35, 0.7, 0.3, 0.5, 0.3, WH);
+  cv(0, 0.75, 0.95, 0.24, 0.5, 0.24, WH);
+  cv(0, 1.15, 1.1, 0.22, 0.45, 0.22, WH);
+  cv(0, 1.5, 1.2, 0.3, 0.3, 0.4, WH);
+  cv(0, 1.68, 1.22, 0.16, 0.12, 0.2, 0xe03131);
+  cv(0, 1.47, 1.55, 0.12, 0.1, 0.55, 0x4a4f55);
+  cv(-0.28, -0.75, 0.1, 0.09, 1.0, 0.09, BK);
+  cv(0.28, -0.75, -0.1, 0.09, 1.0, 0.09, BK);
+  g.add(bakeVoxels(CV, stdMat));
+  const wings = [];
+  for (const s of [-1, 1]) {
+    const wg = new THREE.Group(); wg.position.set(s * 0.42, 0.28, 0);
+    const WV = [];
+    for (let k = 0; k < 5; k++) {
+      WV.push({ x: s * (0.35 + k * 0.42), y: k * 0.06, z: -k * 0.06, sx: 0.46, sy: 0.12, sz: 0.9 - k * 0.1, c: k >= 3 ? BK : WH });
+    }
+    wg.add(bakeVoxels(WV, stdMat));
+    g.add(wg); wings.push(wg);
+  }
+  return { g, wings };
+}
+const craneStand = craneModel();
+craneStand.g.position.set(6, 1.44, 16.5);
+craneStand.g.scale.setScalar(1.15);
+craneStand.g.rotation.y = Math.atan2(9 - 6, 9 - 16.5);
+scene.add(craneStand.g);
+const craneFly = craneModel();
+scene.add(craneFly.g);
+function updateCranes(t) {
+  const flap = Math.sin(t * 1.2) * 0.1;
+  craneStand.wings[0].rotation.z = 0.5 + flap;
+  craneStand.wings[1].rotation.z = -0.5 - flap;
+  const a = -t * 0.1 + 2;
+  craneFly.g.position.set(Math.cos(a) * 31, 21 + Math.sin(t * 0.5) * 1.2, Math.sin(a) * 31);
+  craneFly.g.rotation.y = Math.atan2(Math.sin(a), -Math.cos(a));
+  const f2 = Math.sin(t * 6) * 0.5;
+  craneFly.g.rotation.z = 0.12;
+  craneFly.wings[0].rotation.z = 0.35 + f2;
+  craneFly.wings[1].rotation.z = -0.35 - f2;
+}
+
+/* ============ 相机控制：阻尼环绕 / 缩放 / 平移 ============ */
+const INIT = { theta: 0.65, phi: 1.12, dist: 62, tx: 0, ty: 5, tz: 0 };
+const goal = { ...INIT }, cur = { ...INIT };
+let autoRotate = true, dragging = false;
+const pointers = new Map();
+let pinchD = 0;
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+canvas.addEventListener('pointerdown', e => {
+  canvas.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, b: e.button, shift: e.shiftKey });
+  if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    pinchD = Math.hypot(a.x - b.x, a.y - b.y);
+  }
+  dragging = true; canvas.classList.add('dragging');
+});
+canvas.addEventListener('pointermove', e => {
+  const p = pointers.get(e.pointerId);
+  if (!p) return;
+  const dx = e.clientX - p.x, dy = e.clientY - p.y;
+  p.x = e.clientX; p.y = e.clientY;
+  if (pointers.size === 1) {
+    if (p.b === 2 || p.shift) pan(dx, dy);
+    else { goal.theta -= dx * 0.005; goal.phi = clamp(goal.phi - dy * 0.005, 0.12, 2.15); }
+  } else if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    const d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (pinchD > 0) goal.dist = clamp(goal.dist * pinchD / d, 14, 160);
+    pinchD = d;
+    pan(dx * 0.5, dy * 0.5);
+  }
+});
+function endPointer(e) {
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinchD = 0;
+  if (pointers.size === 0) { dragging = false; canvas.classList.remove('dragging'); }
+}
+canvas.addEventListener('pointerup', endPointer);
+canvas.addEventListener('pointercancel', endPointer);
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  goal.dist = clamp(goal.dist * Math.exp(e.deltaY * 0.0012), 14, 160);
+}, { passive: false });
+function pan(dx, dy) {
+  const scale = cur.dist * 0.0011;
+  const sin = Math.sin(cur.theta), cos = Math.cos(cur.theta);
+  goal.tx = clamp(goal.tx - (dx * cos) * scale + (dy * sin) * scale * 0.6, -35, 35);
+  goal.tz = clamp(goal.tz + (dx * sin) * scale + (dy * cos) * scale * 0.6, -35, 35);
+  goal.ty = clamp(goal.ty + dy * scale * 0.8, -14, 30);
+}
+function updateCamera(dt) {
+  if (autoRotate && !dragging) goal.theta += dt * 0.05;
+  const k = 1 - Math.exp(-8 * dt);
+  for (const key of ['theta', 'phi', 'dist', 'tx', 'ty', 'tz']) cur[key] += (goal[key] - cur[key]) * k;
+  const comp = innerWidth < 760 ? clamp(0.95 / (innerWidth / innerHeight), 1, 2.2) : 1;
+  const dist = cur.dist * comp;
+  const sp = Math.sin(cur.phi), cp = Math.cos(cur.phi);
+  camera.position.set(
+    cur.tx + dist * sp * Math.sin(cur.theta),
+    cur.ty + dist * cp,
+    cur.tz + dist * sp * Math.cos(cur.theta)
+  );
+  camera.lookAt(cur.tx, cur.ty, cur.tz);
+}
+
+/* ============ 面板绑定 ============ */
+const $ = id => document.getElementById(id);
+const state = { dragon: 0.7, petals: 220, sunaz: 35, sunint: 2.6, glow: 1, fog: 0.0028, vig: 0.55, quality: 1.25, auto: true, shadow: true };
+const DEF = { ...state };
+function applyState() {
+  setSun(state.sunaz, state.sunint);
+  scene.fog.density = state.fog;
+  $('vignette').style.opacity = state.vig;
+  glowMat.emissiveIntensity = 2.2 * state.glow;
+  for (const pl of lanternLights) pl.intensity = (pl.distance > 11 ? 7 : 6) * state.glow;
+  for (const sp of glowSprites) sp.material.opacity = 0.7 * state.glow;
+  renderer.setPixelRatio(Math.min(devicePixelRatio, state.quality));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.shadowMap.enabled = state.shadow;
+  staticMesh.castShadow = state.shadow; staticMesh.receiveShadow = state.shadow;
+  sun.castShadow = state.shadow;
+  autoRotate = state.auto;
+}
+function bindRange(id, key, fmt) {
+  const el = $('c-' + id), out = $('o-' + id);
+  el.addEventListener('input', () => {
+    state[key] = parseFloat(el.value);
+    out.textContent = fmt(state[key]);
+    applyState();
+  });
+}
+bindRange('dragon', 'dragon', v => v.toFixed(2));
+bindRange('petals', 'petals', v => v.toFixed(0));
+bindRange('sunaz', 'sunaz', v => v.toFixed(0) + '°');
+bindRange('sunint', 'sunint', v => v.toFixed(1));
+bindRange('glow', 'glow', v => v.toFixed(2));
+bindRange('fog', 'fog', v => v.toFixed(4));
+bindRange('vig', 'vig', v => v.toFixed(2));
+$('c-quality').addEventListener('change', e => { state.quality = parseFloat(e.target.value); applyState(); });
+$('c-auto').addEventListener('change', e => { state.auto = e.target.checked; applyState(); });
+$('c-shadow').addEventListener('change', e => { state.shadow = e.target.checked; applyState(); });
+function syncUI() {
+  $('c-dragon').value = state.dragon; $('o-dragon').textContent = state.dragon.toFixed(2);
+  $('c-petals').value = state.petals; $('o-petals').textContent = state.petals.toFixed(0);
+  $('c-sunaz').value = state.sunaz; $('o-sunaz').textContent = state.sunaz.toFixed(0) + '°';
+  $('c-sunint').value = state.sunint; $('o-sunint').textContent = state.sunint.toFixed(1);
+  $('c-glow').value = state.glow; $('o-glow').textContent = state.glow.toFixed(2);
+  $('c-fog').value = state.fog; $('o-fog').textContent = state.fog.toFixed(4);
+  $('c-vig').value = state.vig; $('o-vig').textContent = state.vig.toFixed(2);
+  $('c-quality').value = String(state.quality);
+  $('c-auto').checked = state.auto; $('c-shadow').checked = state.shadow;
+}
+$('b-reset').addEventListener('click', () => {
+  Object.assign(state, DEF); Object.assign(goal, INIT);
+  syncUI(); applyState();
+});
+$('b-random').addEventListener('click', () => {
+  dragonT += rr(20, 200);
+  windX = rr(-0.6, 0.6); windZ = rr(-0.4, 0.4);
+  for (const p of petals) p.live = false;
+  for (const b of butterflies) b.ph = rr(0, 9);
+  for (const s of shards) s.a = rr(0, 9);
+  state.sunaz = Math.floor(rr(0, 360));
+  syncUI(); applyState();
+});
+$('b-shot').addEventListener('click', () => {
+  renderer.render(scene, camera);
+  const a = document.createElement('a');
+  a.download = '浮空御园-盘龙.png';
+  a.href = renderer.domElement.toDataURL('image/png');
+  a.click();
+});
+function applyViewOffset() {
+  const narrow = innerWidth < 760;
+  camera.fov = narrow ? 55 : 45;
+  if (narrow) camera.setViewOffset(innerWidth, innerHeight, 98, 0, innerWidth, innerHeight);
+  else camera.clearViewOffset();
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  applyViewOffset();
+  renderer.setSize(innerWidth, innerHeight);
+});
+applyViewOffset();
+
+/* ============ 主循环 ============ */
+$('st-vox').textContent = (SV.length + EV.length + DRAGON_N * 5 + PETAL_CAP + 80 + 18 + 14 + 16).toLocaleString();
+applyState(); syncUI();
+const clock = new THREE.Clock();
+let frames = 0, fpsT = 0, started = false, __frameCount = 0;
+window.__garden = {
+  get cameraPos() { return camera.position.toArray(); },
+  get dist() { return cur.dist; },
+  get state() { return { ...state }; },
+  get dragonT() { return dragonT; },
+  get petalCount() { return petalMesh.count; },
+  get voxCount() { return SV.length + EV.length; },
+  get sunPos() { return sun.position.toArray(); },
+  get frameCount() { return __frameCount; },
+  get drawCalls() { return renderer.info.render.calls; }
+};
+function loop() {
+  requestAnimationFrame(loop);
+  __frameCount++;
+  const dt = Math.min(0.05, clock.getDelta());
+  const t = clock.elapsedTime;
+  dragonT += dt * state.dragon;
+  updateDragon(t);
+  updatePetals(t, dt, state.petals);
+  updateWater(t, dt);
+  updateKoi(t);
+  updateButterflies(t);
+  updateCranes(t);
+  const flick = 1 + Math.sin(t * 9.7) * 0.04 + Math.sin(t * 23.3) * 0.03;
+  glowMat.emissiveIntensity = 2.2 * state.glow * flick;
+  updateCamera(dt);
+  renderer.render(scene, camera);
+  frames++; fpsT += dt;
+  if (fpsT >= 1) { $('st-fps').textContent = Math.round(frames / fpsT); frames = 0; fpsT = 0; }
+  if (!started) {
+    started = true;
+    setTimeout(() => document.getElementById('loading').classList.add('gone'), 250);
+  }
+}
+loop();
+</script>
+</body>
+</html>
