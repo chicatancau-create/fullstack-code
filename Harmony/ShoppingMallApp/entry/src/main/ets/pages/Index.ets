@@ -1,4 +1,6 @@
-import Me from './me/Index'
+import Me from './me/Index';
+import { Index as Home } from './home/Index';
+
 @Entry
 @Component
 struct Index {
@@ -19,6 +21,7 @@ struct Index {
   build() {
     Tabs({barPosition:BarPosition.End}) {
       TabContent() {
+        Home()
       }
       .tabBar(this.tabBuilder('首页',0,$r('app.media.shouye')))
       TabContent() {
