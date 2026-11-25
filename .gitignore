@@ -47,3 +47,15 @@ Desktop.ini
 
 # ---- 本地 AI 会话记忆（隐私数据，非项目内容）----
 .memsearch/
+# ---- 隐私：含真实学生个人信息（姓名/手机号/邮箱/数据库导出）的本地练习与素材，仅本机保留，禁止入库 ----
+tools/m3-scan/
+tools/dsh-post-upgrade-repatch/
+Harmony/shopmall-api-v2-master/
+Harmony/heimayeyue/
+Harmony/harmonyMall-master/harmonyMall-master/
+跨平台应用开发/3移动Web应用设计与开发模块/
+跨平台应用开发/food-app/
+跨平台应用开发/wofule/pages/comment/
+跨平台应用开发/wofule/pages/food/
+跨平台应用开发/wofule/pages/fooddetail/
+跨平台应用开发/wofule/uni_modules/uni-card/uni-card/
