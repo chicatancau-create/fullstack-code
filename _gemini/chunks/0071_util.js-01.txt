@@ -1,0 +1,193 @@
+class Calendar {
+	constructor({
+		selected,
+		startDate,
+		endDate,
+		range,
+	} = {}) {
+		// 当前日期
+		this.date = this.getDateObj(new Date()) // 当前初入日期
+		// 打点信息
+		this.selected = selected || [];
+		// 起始时间
+		this.startDate = startDate
+		// 终止时间
+		this.endDate = endDate
+		// 是否范围选择
+		this.range = range
+		// 多选状态
+		this.cleanMultipleStatus()
+		// 每周日期
+		this.weeks = {}
+		this.lastHover = false
+	}
+	/**
+	 * 设置日期
+	 * @param {Object} date
+	 */
+	setDate(date) {
+		const selectDate = this.getDateObj(date)
+		this.getWeeks(selectDate.fullDate)
+	}
+
+	/**
+	 * 清理多选状态
+	 */
+	cleanMultipleStatus() {
+		this.multipleStatus = {
+			before: '',
+			after: '',
+			data: []
+		}
+	}
+
+	setStartDate(startDate) {
+		this.startDate = startDate
+	}
+
+	setEndDate(endDate) {
+		this.endDate = endDate
+	}
+
+	getPreMonthObj(date) {
+		date = fixIosDateFormat(date)
+		date = new Date(date)
+
+		const oldMonth = date.getMonth()
+		date.setMonth(oldMonth - 1)
+		const newMonth = date.getMonth()
+		if (oldMonth !== 0 && newMonth - oldMonth === 0) {
+			date.setMonth(newMonth - 1)
+		}
+		return this.getDateObj(date)
+	}
+	getNextMonthObj(date) {
+		date = fixIosDateFormat(date)
+		date = new Date(date)
+
+		const oldMonth = date.getMonth()
+		date.setMonth(oldMonth + 1)
+		const newMonth = date.getMonth()
+		if (newMonth - oldMonth > 1) {
+			date.setMonth(newMonth - 1)
+		}
+		return this.getDateObj(date)
+	}
+
+	/**
+	 * 获取指定格式Date对象
+	 */
+	getDateObj(date) {
+		date = fixIosDateFormat(date)
+		date = new Date(date)
+
+		return {
+			fullDate: getDate(date),
+			year: date.getFullYear(),
+			month: addZero(date.getMonth() + 1),
+			date: addZero(date.getDate()),
+			day: date.getDay()
+		}
+	}
+
+	/**
+	 * 获取上一个月日期集合
+	 */
+	getPreMonthDays(amount, dateObj) {
+		const result = []
+		for (let i = amount - 1; i >= 0; i--) {
+			const month = dateObj.month - 1
+			result.push({
+				date: new Date(dateObj.year, month, -i).getDate(),
+				month,
+				disable: true
+			})
+		}
+		return result
+	}
+	/**
+	 * 获取本月日期集合
+	 */
+	getCurrentMonthDays(amount, dateObj) {
+		const result = []
+		const fullDate = this.date.fullDate
+		for (let i = 1; i <= amount; i++) {
+			const currentDate = `${dateObj.year}-${dateObj.month}-${addZero(i)}`
+			const isToday = fullDate === currentDate
+			// 获取打点信息
+			const info = this.selected && this.selected.find((item) => {
+				if (this.dateEqual(currentDate, item.date)) {
+					return item
+				}
+			})
+
+			// 日期禁用
+			let disableBefore = true
+			let disableAfter = true
+			if (this.startDate) {
+				disableBefore = dateCompare(this.startDate, currentDate)
+			}
+
+			if (this.endDate) {
+				disableAfter = dateCompare(currentDate, this.endDate)
+			}
+
+			let multiples = this.multipleStatus.data
+			let multiplesStatus = -1
+			if (this.range && multiples) {
+				multiplesStatus = multiples.findIndex((item) => {
+					return this.dateEqual(item, currentDate)
+				})
+			}
+			const checked = multiplesStatus !== -1
+
+			result.push({
+				fullDate: currentDate,
+				year: dateObj.year,
+				date: i,
+				multiple: this.range ? checked : false,
+				beforeMultiple: this.isLogicBefore(currentDate, this.multipleStatus.before, this.multipleStatus.after),
+				afterMultiple: this.isLogicAfter(currentDate, this.multipleStatus.before, this.multipleStatus.after),
+				month: dateObj.month,
+				disable: (this.startDate && !dateCompare(this.startDate, currentDate)) || (this.endDate && !dateCompare(
+					currentDate, this.endDate)),
+				isToday,
+				userChecked: false,
+				extraInfo: info
+			})
+		}
+		return result
+	}
+	/**
+	 * 获取下一个月日期集合
+	 */
+	_getNextMonthDays(amount, dateObj) {
+		const result = []
+		const month = dateObj.month + 1
+		for (let i = 1; i <= amount; i++) {
+			result.push({
+				date: i,
+				month,
+				disable: true
+			})
+		}
+		return result
+	}
+
+	/**
+	 * 获取当前日期详情
+	 * @param {Object} date
+	 */
+	getInfo(date) {
+		if (!date) {
+			date = new Date()
+		}
+
+		return this.calendar.find(item => item.fullDate === this.getDateObj(date).fullDate)
+	}
+
+	/**
+	 * 比较时间是否相等
+	 */
+	dateEqual(before, after) {
+		before = new Date(fixIosDateFormat(before))

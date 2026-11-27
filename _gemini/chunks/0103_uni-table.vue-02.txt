@@ -1,0 +1,181 @@
+			this.trChildren.forEach((item, index) => {
+				// if (item.keyValue) {
+
+				const select = row.findIndex(v => {
+					//
+					if (typeof v === 'number') {
+						return v === index - 1
+					} else {
+						return v[this.rowKey] === item.keyValue
+					}
+				})
+				let ischeck = item.checked
+				if (select !== -1) {
+					if (typeof selected === 'boolean') {
+						item.checked = selected
+					} else {
+						item.checked = !item.checked
+					}
+					if (ischeck !== item.checked) {
+						this.check(item.rowData||item, item.checked, item.rowData?item.keyValue:null, true)
+					}
+				}
+				// }
+			})
+			this.$emit('selection-change', {
+				detail: {
+					value: this.backData,
+					index:this.backIndexData
+				}
+			})
+		},
+
+		/**
+		 * 用于多选表格，清空用户的选择
+		 */
+		clearSelection() {
+			let theadChildren = this.theadChildren
+			if (!this.theadChildren) {
+				theadChildren = this.trChildren[0]
+			}
+			// if (!this.theadChildren) return
+			theadChildren.checked = false
+			theadChildren.indeterminate = false
+			this.trChildren.forEach(item => {
+				// if (item.keyValue) {
+					item.checked = false
+				// }
+			})
+			this.backData = []
+			this.backIndexData = []
+			this.$emit('selection-change', {
+				detail: {
+					value: [],
+					index: []
+				}
+			})
+		},
+		/**
+		 * 用于多选表格，切换所有行的选中状态
+		 */
+		toggleAllSelection() {
+			let list = []
+			let startIndex = 1
+			let theadChildren = this.theadChildren
+			if (!this.theadChildren) {
+				theadChildren = this.trChildren[0]
+			} else {
+				startIndex = theadChildren.rowspan - 1
+			}
+			this.trChildren.forEach((item, index) => {
+				if (!item.disabled) {
+					if (index > (startIndex - 1) ) {
+						list.push(index-startIndex)
+					}
+				}
+			})
+			this.toggleRowSelection(list)
+		},
+
+		/**
+		 * 选中\取消选中
+		 * @param {Object} child
+		 * @param {Object} check
+		 * @param {Object} rowValue
+		 */
+		check(child, check, keyValue, emit) {
+			let theadChildren = this.theadChildren
+			if (!this.theadChildren) {
+				theadChildren = this.trChildren[0]
+			}
+			
+			
+			
+			let childDomIndex = this.trChildren.findIndex((item, index) => child === item)
+			if(childDomIndex < 0){
+				childDomIndex = this.data.findIndex(v=>v[this.rowKey] === keyValue) + 1
+			}
+			const dataLen = this.trChildren.filter(v => !v.disabled && v.keyValue).length
+			if (childDomIndex === 0) {
+				check ? this.selectionAll() : this.clearSelection()
+				return
+			}
+
+			if (check) {
+				if (keyValue) {
+					this.backData.push(child)
+				}
+				this.backIndexData.push(childDomIndex - 1)
+			} else {
+				const index = this.backData.findIndex(v => v[this.rowKey] === keyValue)
+				const idx = this.backIndexData.findIndex(item => item === childDomIndex - 1)
+				if (keyValue) {
+					this.backData.splice(index, 1)
+				}
+				this.backIndexData.splice(idx, 1)
+			}
+
+			const domCheckAll = this.trChildren.find((item, index) => index > 0 && !item.checked && !item.disabled)
+			if (!domCheckAll) {
+				theadChildren.indeterminate = false
+				theadChildren.checked = true
+			} else {
+				theadChildren.indeterminate = true
+				theadChildren.checked = false
+			}
+
+			if (this.backIndexData.length === 0) {
+				theadChildren.indeterminate = false
+			}
+
+			if (!emit) {
+				this.$emit('selection-change', {
+					detail: {
+						value: this.backData,
+						index: this.backIndexData
+					}
+				})
+			}
+		}
+	}
+}
+</script>
+
+<style lang="scss">
+$border-color: #ebeef5;
+
+.uni-table-scroll {
+	width: 100%;
+	/* #ifndef APP-NVUE */
+	overflow-x: auto;
+	/* #endif */
+}
+
+.uni-table {
+	position: relative;
+	width: 100%;
+	border-radius: 5px;
+	// box-shadow: 0px 0px 3px 1px rgba(0, 0, 0, 0.1);
+	background-color: #fff;
+	/* #ifndef APP-NVUE */
+	box-sizing: border-box;
+	display: table;
+	overflow-x: auto;
+	::v-deep .uni-table-tr:nth-child(n + 2) {
+		&:hover {
+			background-color: #f5f7fa;
+		}
+	}
+	::v-deep .uni-table-thead {
+		.uni-table-tr {
+			// background-color: #f5f7fa;
+			&:hover {
+				background-color:#fafafa;
+			}
+		}
+	}
+	/* #endif */
+}
+
+.table--border {
+	border: 1px $border-color solid;

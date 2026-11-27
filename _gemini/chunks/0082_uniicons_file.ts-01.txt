@@ -1,0 +1,250 @@
+
+export type IconsData = {
+	id : string
+	name : string
+	font_family : string
+	css_prefix_text : string
+	description : string
+	glyphs : Array<IconsDataItem>
+}
+
+export type IconsDataItem = {
+	font_class : string
+	unicode : string
+}
+
+
+export const fontData = [
+  {
+    "font_class": "arrow-down",
+    "unicode": "\ue6be"
+  },
+  {
+    "font_class": "arrow-left",
+    "unicode": "\ue6bc"
+  },
+  {
+    "font_class": "arrow-right",
+    "unicode": "\ue6bb"
+  },
+  {
+    "font_class": "arrow-up",
+    "unicode": "\ue6bd"
+  },
+  {
+    "font_class": "auth",
+    "unicode": "\ue6ab"
+  },
+  {
+    "font_class": "auth-filled",
+    "unicode": "\ue6cc"
+  },
+  {
+    "font_class": "back",
+    "unicode": "\ue6b9"
+  },
+  {
+    "font_class": "bars",
+    "unicode": "\ue627"
+  },
+  {
+    "font_class": "calendar",
+    "unicode": "\ue6a0"
+  },
+  {
+    "font_class": "calendar-filled",
+    "unicode": "\ue6c0"
+  },
+  {
+    "font_class": "camera",
+    "unicode": "\ue65a"
+  },
+  {
+    "font_class": "camera-filled",
+    "unicode": "\ue658"
+  },
+  {
+    "font_class": "cart",
+    "unicode": "\ue631"
+  },
+  {
+    "font_class": "cart-filled",
+    "unicode": "\ue6d0"
+  },
+  {
+    "font_class": "chat",
+    "unicode": "\ue65d"
+  },
+  {
+    "font_class": "chat-filled",
+    "unicode": "\ue659"
+  },
+  {
+    "font_class": "chatboxes",
+    "unicode": "\ue696"
+  },
+  {
+    "font_class": "chatboxes-filled",
+    "unicode": "\ue692"
+  },
+  {
+    "font_class": "chatbubble",
+    "unicode": "\ue697"
+  },
+  {
+    "font_class": "chatbubble-filled",
+    "unicode": "\ue694"
+  },
+  {
+    "font_class": "checkbox",
+    "unicode": "\ue62b"
+  },
+  {
+    "font_class": "checkbox-filled",
+    "unicode": "\ue62c"
+  },
+  {
+    "font_class": "checkmarkempty",
+    "unicode": "\ue65c"
+  },
+  {
+    "font_class": "circle",
+    "unicode": "\ue65b"
+  },
+  {
+    "font_class": "circle-filled",
+    "unicode": "\ue65e"
+  },
+  {
+    "font_class": "clear",
+    "unicode": "\ue66d"
+  },
+  {
+    "font_class": "close",
+    "unicode": "\ue673"
+  },
+  {
+    "font_class": "closeempty",
+    "unicode": "\ue66c"
+  },
+  {
+    "font_class": "cloud-download",
+    "unicode": "\ue647"
+  },
+  {
+    "font_class": "cloud-download-filled",
+    "unicode": "\ue646"
+  },
+  {
+    "font_class": "cloud-upload",
+    "unicode": "\ue645"
+  },
+  {
+    "font_class": "cloud-upload-filled",
+    "unicode": "\ue648"
+  },
+  {
+    "font_class": "color",
+    "unicode": "\ue6cf"
+  },
+  {
+    "font_class": "color-filled",
+    "unicode": "\ue6c9"
+  },
+  {
+    "font_class": "compose",
+    "unicode": "\ue67f"
+  },
+  {
+    "font_class": "contact",
+    "unicode": "\ue693"
+  },
+  {
+    "font_class": "contact-filled",
+    "unicode": "\ue695"
+  },
+  {
+    "font_class": "down",
+    "unicode": "\ue6b8"
+  },
+	{
+	  "font_class": "bottom",
+	  "unicode": "\ue6b8"
+	},
+  {
+    "font_class": "download",
+    "unicode": "\ue68d"
+  },
+  {
+    "font_class": "download-filled",
+    "unicode": "\ue681"
+  },
+  {
+    "font_class": "email",
+    "unicode": "\ue69e"
+  },
+  {
+    "font_class": "email-filled",
+    "unicode": "\ue69a"
+  },
+  {
+    "font_class": "eye",
+    "unicode": "\ue651"
+  },
+  {
+    "font_class": "eye-filled",
+    "unicode": "\ue66a"
+  },
+  {
+    "font_class": "eye-slash",
+    "unicode": "\ue6b3"
+  },
+  {
+    "font_class": "eye-slash-filled",
+    "unicode": "\ue6b4"
+  },
+  {
+    "font_class": "fire",
+    "unicode": "\ue6a1"
+  },
+  {
+    "font_class": "fire-filled",
+    "unicode": "\ue6c5"
+  },
+  {
+    "font_class": "flag",
+    "unicode": "\ue65f"
+  },
+  {
+    "font_class": "flag-filled",
+    "unicode": "\ue660"
+  },
+  {
+    "font_class": "folder-add",
+    "unicode": "\ue6a9"
+  },
+  {
+    "font_class": "folder-add-filled",
+    "unicode": "\ue6c8"
+  },
+  {
+    "font_class": "font",
+    "unicode": "\ue6a3"
+  },
+  {
+    "font_class": "forward",
+    "unicode": "\ue6ba"
+  },
+  {
+    "font_class": "gear",
+    "unicode": "\ue664"
+  },
+  {
+    "font_class": "gear-filled",
+    "unicode": "\ue661"
+  },
+  {
+    "font_class": "gift",
+    "unicode": "\ue6a4"
+  },
+  {

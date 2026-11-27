@@ -1,0 +1,186 @@
+				type: [Array, String, Number],
+				default () {
+					return '';
+				}
+			},
+			localdata: {
+				type: Array,
+				default () {
+					return []
+				}
+			},
+			min: {
+				type: [Number, String],
+				default: ''
+			},
+			max: {
+				type: [Number, String],
+				default: ''
+			},
+			wrap: {
+				type: Boolean,
+				default: false
+			},
+			icon: {
+				type: String,
+				default: 'left'
+			},
+			selectedColor: {
+				type: String,
+				default: ''
+			},
+			selectedTextColor: {
+				type: String,
+				default: ''
+			},
+			emptyText: {
+				type: String,
+				default: '暂无数据'
+			},
+			disabled: {
+				type: Boolean,
+				default: false
+			},
+			map: {
+				type: Object,
+				default () {
+					return {
+						text: 'text',
+						value: 'value'
+					}
+				}
+			}
+		},
+		watch: {
+			localdata: {
+				handler(newVal) {
+					this.range = newVal
+					this.dataList = this.getDataList(this.getSelectedValue(newVal))
+				},
+				deep: true
+			},
+			mixinDatacomResData(newVal) {
+				this.range = newVal
+				this.dataList = this.getDataList(this.getSelectedValue(newVal))
+			},
+			value(newVal) {
+				this.dataList = this.getDataList(newVal)
+				// fix by mehaotian is_reset 在 uni-forms 中定义
+				// if(!this.is_reset){
+				// 	this.is_reset = false
+				// 	this.formItem && this.formItem.setValue(newVal)
+				// }
+			},
+			modelValue(newVal) {
+				this.dataList = this.getDataList(newVal);
+				// if(!this.is_reset){
+				// 	this.is_reset = false
+				// 	this.formItem && this.formItem.setValue(newVal)
+				// }
+			}
+		},
+		data() {
+			return {
+				dataList: [],
+				range: [],
+				contentText: {
+					contentdown: '查看更多',
+					contentrefresh: '加载中',
+					contentnomore: '没有更多'
+				},
+				isLocal: true,
+				styles: {
+					selectedColor: '#2979ff',
+					selectedTextColor: '#666',
+				},
+				isTop: 0
+			};
+		},
+		computed: {
+			dataValue() {
+				if (this.value === '') return this.modelValue
+				if (this.modelValue === '') return this.value
+				return this.value
+			}
+		},
+		created() {
+			// this.form = this.getForm('uniForms')
+			// this.formItem = this.getForm('uniFormsItem')
+			// this.formItem && this.formItem.setValue(this.value)
+
+			// if (this.formItem) {
+			// 	this.isTop = 6
+			// 	if (this.formItem.name) {
+			// 		// 如果存在name添加默认值,否则formData 中不存在这个字段不校验
+			// 		if(!this.is_reset){
+			// 			this.is_reset = false
+			// 			this.formItem.setValue(this.dataValue)
+			// 		}
+			// 		this.rename = this.formItem.name
+			// 		this.form.inputChildrens.push(this)
+			// 	}
+			// }
+
+			if (this.localdata && this.localdata.length !== 0) {
+				this.isLocal = true
+				this.range = this.localdata
+				this.dataList = this.getDataList(this.getSelectedValue(this.range))
+			} else {
+				if (this.collection) {
+					this.isLocal = false
+					this.loadData()
+				}
+			}
+		},
+		methods: {
+			loadData() {
+				this.mixinDatacomGet().then(res => {
+					this.mixinDatacomResData = res.result.data
+					if (this.mixinDatacomResData.length === 0) {
+						this.isLocal = false
+						this.mixinDatacomErrorMessage = this.emptyText
+					} else {
+						this.isLocal = true
+					}
+				}).catch(err => {
+					this.mixinDatacomErrorMessage = err.message
+				})
+			},
+			/**
+			 * 获取父元素实例
+			 */
+			getForm(name = 'uniForms') {
+				let parent = this.$parent;
+				let parentName = parent.$options.name;
+				while (parentName !== name) {
+					parent = parent.$parent;
+					if (!parent) return false
+					parentName = parent.$options.name;
+				}
+				return parent;
+			},
+			change(e) {
+				const values = e.detail.value
+
+				let detail = {
+					value: [],
+					data: []
+				}
+
+				if (this.multiple) {
+					this.range.forEach(item => {
+
+						if (values.includes(item[this.map.value] + '')) {
+							detail.value.push(item[this.map.value])
+							detail.data.push(item)
+						}
+					})
+				} else {
+					const range = this.range.find(item => (item[this.map.value] + '') === values)
+					if (range) {
+						detail = {
+							value: range[this.map.value],
+							data: range
+						}
+					}
+				}

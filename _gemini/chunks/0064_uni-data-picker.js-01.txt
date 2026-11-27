@@ -1,0 +1,204 @@
+export default {
+  props: {
+    localdata: {
+      type: [Array, Object],
+      default () {
+        return []
+      }
+    },
+    spaceInfo: {
+      type: Object,
+      default () {
+        return {}
+      }
+    },
+    collection: {
+      type: String,
+      default: ''
+    },
+    action: {
+      type: String,
+      default: ''
+    },
+    field: {
+      type: String,
+      default: ''
+    },
+    orderby: {
+      type: String,
+      default: ''
+    },
+    where: {
+      type: [String, Object],
+      default: ''
+    },
+    pageData: {
+      type: String,
+      default: 'add'
+    },
+    pageCurrent: {
+      type: Number,
+      default: 1
+    },
+    pageSize: {
+      type: Number,
+      default: 500
+    },
+    getcount: {
+      type: [Boolean, String],
+      default: false
+    },
+    getone: {
+      type: [Boolean, String],
+      default: false
+    },
+    gettree: {
+      type: [Boolean, String],
+      default: false
+    },
+    manual: {
+      type: Boolean,
+      default: false
+    },
+    value: {
+      type: [Array, String, Number],
+      default () {
+        return []
+      }
+    },
+    modelValue: {
+      type: [Array, String, Number],
+      default () {
+        return []
+      }
+    },
+    preload: {
+      type: Boolean,
+      default: false
+    },
+    stepSearh: {
+      type: Boolean,
+      default: true
+    },
+    selfField: {
+      type: String,
+      default: ''
+    },
+    parentField: {
+      type: String,
+      default: ''
+    },
+    multiple: {
+      type: Boolean,
+      default: false
+    },
+    map: {
+      type: Object,
+      default () {
+        return {
+          text: "text",
+          value: "value"
+        }
+      }
+    }
+  },
+  data() {
+    return {
+      loading: false,
+      errorMessage: '',
+      loadMore: {
+        contentdown: '',
+        contentrefresh: '',
+        contentnomore: ''
+      },
+      dataList: [],
+      selected: [],
+      selectedIndex: 0,
+      page: {
+        current: this.pageCurrent,
+        size: this.pageSize,
+        count: 0
+      }
+    }
+  },
+  computed: {
+    isLocalData() {
+      return !this.collection.length;
+    },
+    isCloudData() {
+      return this.collection.length > 0;
+    },
+    isCloudDataList() {
+      return (this.isCloudData && (!this.parentField && !this.selfField));
+    },
+    isCloudDataTree() {
+      return (this.isCloudData && this.parentField && this.selfField);
+    },
+    dataValue() {
+      let isModelValue = Array.isArray(this.modelValue) ? (this.modelValue.length > 0) : (this.modelValue !== null ||
+        this.modelValue !== undefined);
+      return isModelValue ? this.modelValue : this.value;
+    },
+    hasValue() {
+      if (typeof this.dataValue === 'number') {
+        return true
+      }
+      return (this.dataValue != null) && (this.dataValue.length > 0)
+    }
+  },
+  created() {
+    this.$watch(() => {
+      var al = [];
+      ['pageCurrent',
+        'pageSize',
+        'spaceInfo',
+        'value',
+        'modelValue',
+        'localdata',
+        'collection',
+        'action',
+        'field',
+        'orderby',
+        'where',
+        'getont',
+        'getcount',
+        'gettree'
+      ].forEach(key => {
+        al.push(this[key])
+      });
+      return al
+    }, (newValue, oldValue) => {
+      let needReset = false
+      for (let i = 2; i < newValue.length; i++) {
+        if (newValue[i] != oldValue[i]) {
+          needReset = true
+          break
+        }
+      }
+      if (newValue[0] != oldValue[0]) {
+        this.page.current = this.pageCurrent
+      }
+      this.page.size = this.pageSize
+
+      this.onPropsChange()
+    })
+    this._treeData = []
+  },
+  methods: {
+    onPropsChange() {
+      this._treeData = [];
+    },
+
+    // 填充 pickview 数据
+    async loadData() {
+      if (this.isLocalData) {
+        this.loadLocalData();
+      } else if (this.isCloudDataList) {
+        this.loadCloudDataList();
+      } else if (this.isCloudDataTree) {
+        this.loadCloudDataTree();
+      }
+    },
+
+    // 加载本地数据
+    async loadLocalData() {

@@ -1,0 +1,90 @@
+  for (let i = 0; i < oct; i++) { const n = 1 - Math.abs(vnoise(x * f, y * f, seed + i * 31) * 2 - 1); s += amp * n; norm += amp; amp *= 0.5; f *= 2.07; }
+  return s / norm;           // 0..1
+}
+
+/* ---------------------------------------------------------------- 程序化贴图 */
+function canvasTex(size, height = size, draw, { srgb = true, repeat = [1, 1], aniso = 8 } = {}) {
+  const cv = document.createElement('canvas');
+  cv.width = size; cv.height = height;
+  draw(cv.getContext('2d'), size, height);
+  const t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(repeat[0], repeat[1]);
+  t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+  t.anisotropy = aniso;
+  return t;
+}
+function normalFromHeight(w, h, hf, strength = 2.0, repeat = 1) {
+  return canvasTex(w, h, (ctx) => {
+    const img = ctx.createImageData(w, h), d = img.data;
+    const at = (x, y) => hf((x + w) % w, (y + h) % h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const dx = (at(x + 1, y) - at(x - 1, y)) * strength * repeat;
+      const dy = (at(x, y + 1) - at(x, y - 1)) * strength * repeat;
+      let nx = -dx, ny = -dy, nz = 1;
+      const l = Math.hypot(nx, ny, nz); nx /= l; ny /= l; nz /= l;
+      const i = (y * w + x) * 4;
+      d[i] = (nx * 0.5 + 0.5) * 255; d[i + 1] = (ny * 0.5 + 0.5) * 255;
+      d[i + 2] = (nz * 0.5 + 0.5) * 255; d[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+  }, { srgb: false });
+}
+
+const TEX = {};
+TEX.sandNormal = normalFromHeight(512, 512, (x, y) => {
+  const u = x / 512, v = y / 512;
+  return 0.55 * Math.sin((u * 26 + Math.sin(v * 7.1) * 1.6) * Math.PI * 2) +
+         0.30 * ridged(u * 9, v * 9, 3, 5) + 0.15 * vnoise(u * 60, v * 60, 9);
+}, 0.45);
+TEX.rockNormal = normalFromHeight(512, 512, (x, y) => {
+  const u = x / 512, v = y / 512;
+  return 0.7 * fbm(u * 6, v * 6, 5, 3) + 0.3 * ridged(u * 14, v * 14, 4, 11);
+}, 1.5);
+// 树皮：环状叶痕
+TEX.bark = canvasTex(256, 256, (ctx, w, h) => {
+  ctx.fillStyle = '#6d5638'; ctx.fillRect(0, 0, w, h);
+  for (let y = 0; y < h; y += 2) {
+    const t = y / h;
+    ctx.fillStyle = `rgba(${40 + t * 30 | 0},${30 + t * 24 | 0},${18 + t * 14 | 0},0.5)`;
+    ctx.fillRect(0, y, w, 1);
+  }
+  for (let i = 0; i < 46; i++) {
+    const y = Math.random() * h, x = Math.random() * w, ww = 24 + Math.random() * 34;
+    ctx.strokeStyle = 'rgba(48,36,22,.75)'; ctx.lineWidth = 2.2 + Math.random() * 2;
+    ctx.beginPath(); ctx.ellipse(x, y, ww, 5 + Math.random() * 4, 0, 0.15, Math.PI - 0.15); ctx.stroke();
+    ctx.strokeStyle = 'rgba(176,152,108,.4)'; ctx.lineWidth = 1.1;
+    ctx.beginPath(); ctx.ellipse(x, y - 2.5, ww, 5, 0, 0.2, Math.PI - 0.2); ctx.stroke();
+  }
+}, { repeat: [1, 3] });
+
+// 棕榈叶：中脉 + 羽片（带透明通道）
+TEX.leaf = canvasTex(256, 512, (ctx, w, h) => {
+  ctx.clearRect(0, 0, w, h);
+  const grd = ctx.createLinearGradient(0, 0, 0, h);
+  grd.addColorStop(0, '#3f7a2e'); grd.addColorStop(0.5, '#4f9a35'); grd.addColorStop(1, '#2c5c22');
+  ctx.fillStyle = grd;
+  const pairs = 34;
+  for (let i = 0; i < pairs; i++) {
+    const t = i / pairs, y = t * h, len = (1 - t * t * 0.85) * w * 0.46, hh = h / pairs * 1.55;
+    for (const s of [-1, 1]) {
+      ctx.beginPath(); ctx.moveTo(w / 2, y);
+      ctx.quadraticCurveTo(w / 2 + s * len * 0.62, y - hh * 0.30, w / 2 + s * len, y + hh * 0.52);
+      ctx.quadraticCurveTo(w / 2 + s * len * 0.55, y + hh * 0.72, w / 2, y + hh * 0.9);
+      ctx.fill();
+    }
+  }
+  ctx.fillStyle = '#5f8f3a';
+  ctx.fillRect(w / 2 - 3, 0, 6, h);
+}, { srgb: true });
+
+// 木板
+TEX.plank = canvasTex(512, 512, (ctx, w, h) => {
+  const rows = 6;
+  for (let r = 0; r < rows; r++) {
+    const y = r * h / rows, lum = 118 + Math.random() * 42;
+    ctx.fillStyle = `rgb(${lum | 0},${lum * 0.72 | 0},${lum * 0.46 | 0})`;
+    ctx.fillRect(0, y, w, h / rows);
+    for (let g = 0; g < 90; g++) {
+      ctx.strokeStyle = `rgba(${70 + Math.random() * 60 | 0},48,28,${0.05 + Math.random() * 0.13})`;
+      ctx.lineWidth = 0.6 + Math.random() * 1.6;

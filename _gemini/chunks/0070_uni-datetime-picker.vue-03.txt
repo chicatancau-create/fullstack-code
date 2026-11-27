@@ -1,0 +1,166 @@
+				default: '-'
+			},
+			border: {
+				type: [Boolean],
+				default: true
+			},
+			disabled: {
+				type: [Boolean],
+				default: false
+			},
+			clearIcon: {
+				type: [Boolean],
+				default: true
+			},
+			hideSecond: {
+				type: [Boolean],
+				default: false
+			},
+			defaultValue: {
+				type: [String, Object, Array],
+				default: ''
+			}
+		},
+		watch: {
+			type: {
+				immediate: true,
+				handler(newVal) {
+					this.hasTime = newVal.indexOf('time') !== -1
+					this.isRange = newVal.indexOf('range') !== -1
+				}
+			},
+			// #ifndef VUE3
+			value: {
+				immediate: true,
+				handler(newVal) {
+					if (this.isEmitValue) {
+						this.isEmitValue = false
+						return
+					}
+					this.initPicker(newVal)
+				}
+			},
+			// #endif
+			// #ifdef VUE3
+			modelValue: {
+				immediate: true,
+				handler(newVal) {
+					if (this.isEmitValue) {
+						this.isEmitValue = false
+						return
+					}
+					this.initPicker(newVal)
+				}
+			},
+			// #endif
+			start: {
+				immediate: true,
+				handler(newVal) {
+					if (!newVal) return
+					this.calendarRange.startDate = getDate(newVal)
+					if (this.hasTime) {
+						this.calendarRange.startTime = getTime(newVal)
+					}
+				}
+			},
+			end: {
+				immediate: true,
+				handler(newVal) {
+					if (!newVal) return
+					this.calendarRange.endDate = getDate(newVal)
+					if (this.hasTime) {
+						this.calendarRange.endTime = getTime(newVal, this.hideSecond)
+					}
+				}
+			},
+		},
+		computed: {
+			timepickerStartTime() {
+				const activeDate = this.isRange ? this.tempRange.startDate : this.inputDate
+				return activeDate === this.calendarRange.startDate ? this.calendarRange.startTime : ''
+			},
+			timepickerEndTime() {
+				const activeDate = this.isRange ? this.tempRange.endDate : this.inputDate
+				return activeDate === this.calendarRange.endDate ? this.calendarRange.endTime : ''
+			},
+			mobileCalendarTime() {
+				const timeRange = {
+					start: this.tempRange.startTime,
+					end: this.tempRange.endTime
+				}
+				return this.isRange ? timeRange : this.pickerTime
+			},
+			mobSelectableTime() {
+				return {
+					start: this.calendarRange.startTime,
+					end: this.calendarRange.endTime
+				}
+			},
+			datePopupWidth() {
+				// todo
+				return this.isRange ? 653 : 301
+			},
+
+			/**
+			 * for i18n
+			 */
+			singlePlaceholderText() {
+				return this.placeholder || (this.type === 'date' ? this.selectDateText : this.selectDateTimeText)
+			},
+			startPlaceholderText() {
+				return this.startPlaceholder || this.startDateText
+			},
+			endPlaceholderText() {
+				return this.endPlaceholder || this.endDateText
+			},
+			selectDateText() {
+				return this.i18nT("uni-datetime-picker.selectDate")
+			},
+			selectDateTimeText() {
+				return this.i18nT("uni-datetime-picker.selectDateTime")
+			},
+			selectTimeText() {
+				return this.i18nT("uni-datetime-picker.selectTime")
+			},
+			startDateText() {
+				return this.startPlaceholder || this.i18nT("uni-datetime-picker.startDate")
+			},
+			startTimeText() {
+				return this.i18nT("uni-datetime-picker.startTime")
+			},
+			endDateText() {
+				return this.endPlaceholder || this.i18nT("uni-datetime-picker.endDate")
+			},
+			endTimeText() {
+				return this.i18nT("uni-datetime-picker.endTime")
+			},
+			okText() {
+				return this.i18nT("uni-datetime-picker.ok")
+			},
+			clearText() {
+				return this.i18nT("uni-datetime-picker.clear")
+			},
+			showClearIcon() {
+				return this.clearIcon && !this.disabled && (this.displayValue || (this.displayRangeValue.startDate && this
+					.displayRangeValue.endDate))
+			}
+		},
+		created() {
+			this.initI18nT()
+			this.platform()
+		},
+		methods: {
+			initI18nT() {
+				const vueI18n = initVueI18n(i18nMessages)
+				this.i18nT = vueI18n.t
+			},
+			initPicker(newVal) {
+				if ((!newVal && !this.defaultValue) || Array.isArray(newVal) && !newVal.length) {
+					this.$nextTick(() => {
+						this.clear(false)
+					})
+					return
+				}
+
+				if (!Array.isArray(newVal) && !this.isRange) {
+					if (newVal) {

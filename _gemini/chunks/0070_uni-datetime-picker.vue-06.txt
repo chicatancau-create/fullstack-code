@@ -1,0 +1,113 @@
+				let startDateLaterRangeStartDate = false
+				let startDateLaterRangeEndDate = false
+				let startDate, startTime
+				if (this.start) {
+					let startString = this.start
+					if (typeof this.start === 'number') {
+						startString = getDateTime(this.start, this.hideSecond)
+					}
+					[startDate, startTime] = startString.split(' ')
+					if (this.start && !dateCompare(this.start, this.tempRange.startDate)) {
+						startDateLaterRangeStartDate = true
+						this.tempRange.startDate = startDate
+					}
+					if (this.start && !dateCompare(this.start, this.tempRange.endDate)) {
+						startDateLaterRangeEndDate = true
+						this.tempRange.endDate = startDate
+					}
+				}
+				let endDateEarlierRangeStartDate = false
+				let endDateEarlierRangeEndDate = false
+				let endDate, endTime
+				if (this.end) {
+					let endString = this.end
+					if (typeof this.end === 'number') {
+						endString = getDateTime(this.end, this.hideSecond)
+					}
+					[endDate, endTime] = endString.split(' ')
+
+					if (this.end && !dateCompare(this.tempRange.startDate, this.end)) {
+						endDateEarlierRangeStartDate = true
+						this.tempRange.startDate = endDate
+					}
+					if (this.end && !dateCompare(this.tempRange.endDate, this.end)) {
+						endDateEarlierRangeEndDate = true
+						this.tempRange.endDate = endDate
+					}
+				}
+				if (!this.hasTime) {
+					start = this.displayRangeValue.startDate = this.tempRange.startDate
+					end = this.displayRangeValue.endDate = this.tempRange.endDate
+				} else {
+					if (startDateLaterRangeStartDate) {
+						this.tempRange.startTime = startTime || getDefaultSecond(this.hideSecond)
+					} else if (endDateEarlierRangeStartDate) {
+						this.tempRange.startTime = endTime || getDefaultSecond(this.hideSecond)
+					}
+					if (!this.tempRange.startTime) {
+						this.tempRange.startTime = getTime(Date.now(), this.hideSecond)
+					}
+
+					if (startDateLaterRangeEndDate) {
+						this.tempRange.endTime = startTime || getDefaultSecond(this.hideSecond)
+					} else if (endDateEarlierRangeEndDate) {
+						this.tempRange.endTime = endTime || getDefaultSecond(this.hideSecond)
+					}
+					if (!this.tempRange.endTime) {
+						this.tempRange.endTime = getTime(Date.now(), this.hideSecond)
+					}
+					start = this.displayRangeValue.startDate = `${this.tempRange.startDate} ${this.tempRange.startTime}`
+					end = this.displayRangeValue.endDate = `${this.tempRange.endDate} ${this.tempRange.endTime}`
+				}
+				if (!dateCompare(start, end)) {
+					[start, end] = [end, start]
+				}
+				this.displayRangeValue.startDate = start
+				this.displayRangeValue.endDate = end
+				const displayRange = [start, end]
+				this.setEmit(displayRange)
+				this.pickerVisible = false
+			},
+			handleStartAndEnd(before, after, temp = false) {
+				if (!before) return
+				if (!after) after = before;
+				const type = temp ? 'tempRange' : 'range'
+				const isStartEarlierEnd = dateCompare(before, after)
+				this[type].startDate = isStartEarlierEnd ? before : after
+				this[type].endDate = isStartEarlierEnd ? after : before
+			},
+			/**
+			 * 比较时间大小
+			 */
+			dateCompare(startDate, endDate) {
+				// 计算截止时间
+				startDate = new Date(startDate.replace('-', '/').replace('-', '/'))
+				// 计算详细项的截止时间
+				endDate = new Date(endDate.replace('-', '/').replace('-', '/'))
+				return startDate <= endDate
+			},
+
+			/**
+			 * 比较时间差
+			 */
+			diffDate(startDate, endDate) {
+				// 计算截止时间
+				startDate = new Date(startDate.replace('-', '/').replace('-', '/'))
+				// 计算详细项的截止时间
+				endDate = new Date(endDate.replace('-', '/').replace('-', '/'))
+				const diff = (endDate - startDate) / (24 * 60 * 60 * 1000)
+				return Math.abs(diff)
+			},
+
+			clear(needEmit = true) {
+				if (!this.isRange) {
+					this.displayValue = ''
+					this.inputDate = ''
+					this.pickerTime = ''
+					if (this.isPhone) {
+						this.$refs.mobile && this.$refs.mobile.clearCalender()
+					} else {
+						this.$refs.pcSingle && this.$refs.pcSingle.clearCalender()
+					}
+					if (needEmit) {
+						this.$emit('change', '')

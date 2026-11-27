@@ -1,0 +1,62 @@
+  assert.equal((await app.inject({ method: 'DELETE', url: `/tenants/${tenant.id}/clients/${client.json().id}`, headers: h(memberToken) })).statusCode, 403);
+  assert.equal((await app.inject({ method: 'DELETE', url: `/tenants/${tenant.id}/clients/${client.json().id}`, headers: h(ownerToken) })).statusCode, 204);
+  const list = await app.inject({ method: 'GET', url: `/tenants/${tenant.id}/clients`, headers: h(memberToken) });
+  assert.equal(list.json().clients.length, 0);
+  const followAfterDelete = await app.inject({
+    method: 'POST', url: `/tenants/${tenant.id}/clients/${client.json().id}/followups`, headers: h(memberToken),
+    payload: { summary: '删除后补记' },
+  });
+  assert.equal(followAfterDelete.statusCode, 404);
+});
+
+test('审计仅 admin+ 可见，记录高风险动作且不含密码或令牌', async () => {
+  await register('owner@example.com');
+  await register('member@example.com');
+  const ownerToken = await login('owner@example.com');
+  const memberToken = await login('member@example.com');
+  const tenant = await makeTenant(ownerToken, 'team');
+  const inv = await invite(ownerToken, tenant.id, 'member@example.com');
+  await accept(memberToken, inv.json().token);
+  assert.equal((await app.inject({ method: 'GET', url: `/tenants/${tenant.id}/audit`, headers: h(memberToken) })).statusCode, 403);
+  const events = await app.inject({ method: 'GET', url: `/tenants/${tenant.id}/audit`, headers: h(ownerToken) });
+  assert.equal(events.statusCode, 200);
+  const actions = events.json().events.map((e) => e.action);
+  assert.ok(actions.includes('invitation.create'));
+  assert.ok(actions.includes('invitation.accept'));
+  const serialized = JSON.stringify(events.json());
+  assert.ok(!serialized.includes('correct-horse-1'));
+  assert.ok(!serialized.includes(inv.json().token));
+  assert.ok(!serialized.includes('password_hash'));
+});
+
+test('成员被移除后旧邀请不能再次"幂等"接受', async () => {
+  await register('owner@example.com');
+  await register('bob@example.com');
+  const ownerToken = await login('owner@example.com');
+  const bobToken = await login('bob@example.com');
+  const tenant = await makeTenant(ownerToken, 'team');
+  const inv = await invite(ownerToken, tenant.id, 'bob@example.com');
+  assert.equal((await accept(bobToken, inv.json().token)).statusCode, 200);
+  const bob = (await app.inject({ method: 'GET', url: `/tenants/${tenant.id}/members`, headers: h(ownerToken) })).json().members.find((m) => m.email === 'bob@example.com');
+  assert.equal((await app.inject({ method: 'DELETE', url: `/tenants/${tenant.id}/members/${bob.id}`, headers: h(ownerToken) })).statusCode, 204);
+  const again = await accept(bobToken, inv.json().token);
+  assert.equal(again.statusCode, 409);
+  assert.equal(again.json().error, 'membership_removed');
+  assert.equal((await app.inject({ method: 'GET', url: `/tenants/${tenant.id}/members`, headers: h(bobToken) })).statusCode, 404);
+});
+
+test('审计写入失败时业务变更整体回滚', async () => {
+  await register('owner@example.com');
+  const token = await login('owner@example.com');
+  const tenant = await makeTenant(token, 'team');
+  const client = await app.inject({ method: 'POST', url: `/tenants/${tenant.id}/clients`, headers: h(token), payload: { name: '待删客户' } });
+  await pool.query(`CREATE OR REPLACE FUNCTION p04.fail_audit() RETURNS trigger AS $$
+    BEGIN RAISE EXCEPTION 'audit unavailable'; END; $$ LANGUAGE plpgsql`);
+  await pool.query(`CREATE TRIGGER fail_audit BEFORE INSERT ON p04.audit_events
+    FOR EACH ROW WHEN (NEW.action = 'client.delete') EXECUTE FUNCTION p04.fail_audit()`);
+  const failed = await app.inject({ method: 'DELETE', url: `/tenants/${tenant.id}/clients/${client.json().id}`, headers: h(token) });
+  assert.equal(failed.statusCode, 500);
+  assert.equal(failed.json().error, 'internal_error');
+  const row = await pool.query('SELECT deleted_at FROM p04.clients WHERE id = $1', [client.json().id]);
+  assert.equal(row.rows[0].deleted_at, null);
+  await pool.query('DROP TRIGGER fail_audit ON p04.audit_events');

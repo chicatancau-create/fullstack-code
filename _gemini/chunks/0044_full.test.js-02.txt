@@ -1,0 +1,59 @@
+  const c = await app.inject({ method: 'POST', url: `/tenants/${t.id}/clients`, headers: h(owner), payload: { name: '客户' } });
+  const next = new Date(Date.now() + 3600_000).toISOString();
+  const f = await app.inject({ method: 'POST', url: `/tenants/${t.id}/clients/${c.json().id}/followups`, headers: h(owner), payload: { summary: '回访', next_at: next } });
+  assert.equal(f.statusCode, 201, f.body);
+  const reminder = (await pool.query('SELECT status FROM p04.reminders')).rows[0];
+  const job = (await pool.query('SELECT kind, priority, status FROM p04.jobs')).rows[0];
+  assert.equal(reminder.status, 'scheduled');
+  assert.deepEqual(job, { kind: 'reminder', priority: 5, status: 'pending' });
+});
+
+test('Worker：公平调度每个租户先取一条，执行后通知/Inbox/提醒', async () => {
+  await register('a@example.com');
+  const a = await login('a@example.com');
+  const t1 = await tenant(a);
+  await register('b@example.com');
+  const b = await login('b@example.com');
+  const t2 = await tenant(b);
+  const past = new Date(Date.now() - 1000).toISOString();
+  await app.inject({ method: 'POST', url: `/tenants/${t1.id}/jobs`, headers: h(a), payload: { kind: 'reminder', dedupe_key: 'a-1', priority: 10, run_at: past, payload: { followup_id: 1, client_id: 1 } } });
+  await app.inject({ method: 'POST', url: `/tenants/${t1.id}/jobs`, headers: h(a), payload: { kind: 'reminder', dedupe_key: 'a-2', priority: 10, run_at: past, payload: { followup_id: 2, client_id: 1 } } });
+  await app.inject({ method: 'POST', url: `/tenants/${t2.id}/jobs`, headers: h(b), payload: { kind: 'reminder', dedupe_key: 'b-1', priority: 1, run_at: past, payload: { followup_id: 3, client_id: 2 } } });
+
+  const first = await processJobs(pool, { limit: 2 });
+  assert.equal(first.length, 2);
+  assert.deepEqual(first.map((x) => x.tenant_id).sort((x, y) => x - y), [t1.id, t2.id].sort((x, y) => x - y));
+  const second = await processJobs(pool, { limit: 2 });
+  assert.equal(second.length, 1);
+  assert.equal((await pool.query('SELECT count(*)::int AS n FROM p04.job_notifications')).rows[0].n, 3);
+  assert.equal((await pool.query('SELECT count(*)::int AS n FROM p04.worker_inbox')).rows[0].n, 3);
+  assert.equal((await pool.query("SELECT count(*)::int AS n FROM p04.jobs WHERE status='done'")).rows[0].n, 3);
+});
+
+test('Worker：失败重试 5 次后 dead，写入死信', async () => {
+  await register('a@example.com');
+  const a = await login('a@example.com');
+  const t = await tenant(a);
+  await app.inject({ method: 'POST', url: `/tenants/${t.id}/jobs`, headers: h(a), payload: { kind: 'boom', dedupe_key: 'boom-1', run_at: new Date(Date.now() - 1000).toISOString() } });
+  const fails = new Set(['boom']);
+  for (let i = 0; i < 5; i += 1) {
+    await pool.query("UPDATE p04.jobs SET run_at = now() - interval '1 second' WHERE kind='boom'");
+    await processJobs(pool, { failKinds: fails });
+  }
+  const job = (await pool.query("SELECT status, attempts, last_error FROM p04.jobs WHERE kind='boom'")).rows[0];
+  assert.equal(job.status, 'dead');
+  assert.equal(job.attempts, 5);
+  assert.match(job.last_error, /injected failure/);
+  assert.equal((await pool.query('SELECT count(*)::int AS n FROM p04.job_dead_letter')).rows[0].n, 1);
+});
+
+test('容量估算三档与 RLS 策略存在', async () => {
+  assert.equal(capacityEstimate({ remindersPerDay: 1000, peakFactor: 1, msPerJob: 10, workerConcurrency: 4, workers: 1 }).tier, 'normal');
+  assert.equal(capacityEstimate({ remindersPerDay: 1200000, peakFactor: 3, msPerJob: 20, workerConcurrency: 1, workers: 1 }).tier, 'peak');
+  assert.equal(capacityEstimate({ remindersPerDay: 10000000, peakFactor: 3, msPerJob: 20, workerConcurrency: 1, workers: 1 }).tier, 'over');
+  // 扩容路径：同一负载按 worker 逐个加，最小可行组合应回到 peak 档，再翻倍进入 normal
+  const overArgs = { remindersPerDay: 10000000, peakFactor: 3, msPerJob: 20, workerConcurrency: 4 };
+  let minimum = null;
+  for (let workers = 1; workers <= 500; workers += 1) {
+    const est = capacityEstimate({ ...overArgs, workers });
+    if (est.tier !== 'over') { minimum = { workers, ...est }; break; }

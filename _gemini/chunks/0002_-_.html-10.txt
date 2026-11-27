@@ -1,0 +1,96 @@
+const staticMesh = bakeVoxels(SV, stdMat);
+scene.add(staticMesh);
+const glowMesh = bakeVoxels(EV.map(v => ({ ...v, c: 0xffb347 })), glowMat, false);
+scene.add(glowMesh);
+
+/* 灯笼光晕贴片 */
+const glowTexCanvas = document.createElement('canvas');
+glowTexCanvas.width = glowTexCanvas.height = 64;
+{
+  const g = glowTexCanvas.getContext('2d');
+  const gr = g.createRadialGradient(32, 32, 2, 32, 32, 30);
+  gr.addColorStop(0, 'rgba(255,190,110,0.9)');
+  gr.addColorStop(0.4, 'rgba(255,160,70,0.32)');
+  gr.addColorStop(1, 'rgba(255,140,50,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+}
+const glowTex = new THREE.CanvasTexture(glowTexCanvas);
+const glowSprites = [];
+for (const gp of glowPoints) {
+  const sm = new THREE.SpriteMaterial({ map: glowTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.7 });
+  const sp = new THREE.Sprite(sm);
+  sp.position.set(gp.x, gp.y, gp.z);
+  const sc = gp.big ? 4.2 : 2.8;
+  sp.scale.set(sc, sc, 1); scene.add(sp); glowSprites.push(sp);
+}
+
+/* ============ 动态体素网格工具 ============ */
+function dynMesh(cap, mat, shadow = true) {
+  const m = new THREE.InstancedMesh(boxGeo, mat, cap);
+  m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  m.castShadow = shadow; m.receiveShadow = false; m.frustumCulled = false;
+  scene.add(m); return m;
+}
+function setInst(mesh, i, x, y, z, sx, sy, sz, q = null, color = null) {
+  _p.set(x, y, z); _s.set(sx, sy, sz);
+  _m.compose(_p, q || _q.identity(), _s);
+  mesh.setMatrixAt(i, _m);
+  if (color !== null) mesh.setColorAt(i, color);
+}
+
+/* ============ 金龙：连贯龙身 + 精细龙头 + 四爪 ============ */
+const DRAGON_N = 30;
+const dragonMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.55, metalness: 0.25 });
+const bodyMesh = dynMesh(DRAGON_N * 5 + 12, dragonMat);
+const segSize = [], segOff = [];
+for (let i = 0; i < DRAGON_N; i++) {
+  const f = i / (DRAGON_N - 1);
+  segSize.push(1.5 * (1 - 0.8 * f * f) * (i < 3 ? 0.94 + i * 0.02 : 1));
+}
+const JADE = new THREE.Color(0x12b26b), JADE_D = new THREE.Color(0x0d8a52),
+      GOLD_C = new THREE.Color(0xf2c14e), CRIMSON = new THREE.Color(0xe03131);
+{
+  let ci = 0;
+  for (let i = 0; i < DRAGON_N; i++) {
+    bodyMesh.setColorAt(ci++, JADE);
+    bodyMesh.setColorAt(ci++, GOLD_C);
+    bodyMesh.setColorAt(ci++, CRIMSON);
+    bodyMesh.setColorAt(ci++, i % 4 === 0 ? GOLD_C : JADE_D);
+    bodyMesh.setColorAt(ci++, i % 4 === 0 ? GOLD_C : JADE_D);
+  }
+  for (let k = 0; k < 12; k++) bodyMesh.setColorAt(ci++, k % 2 ? CRIMSON : GOLD_C);
+  bodyMesh.instanceColor.needsUpdate = true;
+}
+function dragonPath(t, out) {
+  const th = t * 0.32;
+  const r = 13.5 + 4.5 * Math.sin(t * 0.21 + 1.7);
+  out.set(
+    Math.cos(th) * r + 2 * Math.sin(t * 0.13),
+    19.5 + 2.6 * Math.sin(t * 0.43) + 1.2 * Math.sin(t * 0.9 + 2),
+    Math.sin(th) * r * 0.92 + 1.5 * Math.cos(t * 0.17)
+  );
+  return out;
+}
+/* 龙头（细单元 u=0.24，+z 朝前） */
+const headGroup = new THREE.Group(); headGroup.scale.setScalar(1.5); scene.add(headGroup);
+{
+  const u = 0.24, HV = [];
+  const hv = (x, y, z, sx, sy, sz, c) => HV.push({ x: x * u, y: y * u, z: z * u, sx: sx * u, sy: sy * u, sz: sz * u, c });
+  const J = 0x12b26b, JD = 0x0d8a52, G = 0xf2c14e, CR = 0xe03131, W = 0xfff4e0;
+  hv(0, 0, 0, 5, 4, 6, J);
+  hv(0, 0.6, -2.4, 4.4, 3.4, 2.4, JD);
+  hv(0, -0.2, 4.6, 3.2, 2.6, 5, J);
+  hv(0, 0.9, 6.8, 2.6, 1.6, 2.2, JD);
+  hv(-0.9, 1.5, 7.6, 0.7, 0.6, 0.7, G); hv(0.9, 1.5, 7.6, 0.7, 0.6, 0.7, G);
+  hv(-0.8, 1.2, 8.2, 0.3, 0.3, 0.3, 0x1a1a1a); hv(0.8, 1.2, 8.2, 0.3, 0.3, 0.3, 0x1a1a1a);
+  hv(0, -1.7, 4.2, 2.9, 1.1, 4.6, JD);
+  hv(0, -1.2, 6.4, 2.4, 0.5, 1.6, CR);
+  for (const s of [-1, 1]) for (let k = 0; k < 4; k++)
+    hv(s * 1.35, -1.05, 3.2 + k * 1.2, 0.28, 0.5, 0.28, W);
+  for (const s of [-1, 1]) {
+    hv(s * 2.55, 1.3, 1.8, 1.1, 1.1, 1.1, G);
+    hv(s * 2.75, 1.3, 2.45, 0.5, 0.5, 0.3, 0x101010);
+    hv(s * 2.5, 2.2, 1.6, 1.4, 0.5, 1.5, CR);
+    hv(s * 2.4, 2.1, -0.4, 0.6, 0.7, 0.9, JD);
+    /* 龙角：分叉 */
+    for (let k = 0; k < 6; k++)

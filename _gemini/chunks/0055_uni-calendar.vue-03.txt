@@ -1,0 +1,207 @@
+				this.calendar = weeks
+				// 设置多选
+				this.cale.setMultiple(this.calendar.fullDate)
+				this.weeks = this.cale.weeks
+				this.change()
+			},
+			/**
+			 * 回到今天
+			 */
+			backToday() {
+				const nowYearMonth = `${this.nowDate.year}-${this.nowDate.month}`
+				const date = this.cale.getDate(new Date())
+        const todayYearMonth = `${date.year}-${date.month}`
+
+				this.init(date.fullDate)
+
+        if(nowYearMonth !== todayYearMonth) {
+          this.monthSwitch()
+        }
+
+				this.change()
+			},
+			/**
+			 * 上个月
+			 */
+			pre() {
+				const preDate = this.cale.getDate(this.nowDate.fullDate, -1, 'month').fullDate
+				this.setDate(preDate)
+				this.monthSwitch()
+
+			},
+			/**
+			 * 下个月
+			 */
+			next() {
+				const nextDate = this.cale.getDate(this.nowDate.fullDate, +1, 'month').fullDate
+				this.setDate(nextDate)
+				this.monthSwitch()
+			},
+			/**
+			 * 设置日期
+			 * @param {Object} date
+			 */
+			setDate(date) {
+				this.cale.setDate(date)
+				this.weeks = this.cale.weeks
+				this.nowDate = this.cale.getInfo(date)
+			}
+		}
+	}
+</script>
+
+<style lang="scss" scoped>
+	$uni-bg-color-mask: rgba($color: #000000, $alpha: 0.4);
+	$uni-border-color: #EDEDED;
+	$uni-text-color: #333;
+	$uni-bg-color-hover:#f1f1f1;
+	$uni-font-size-base:14px;
+	$uni-text-color-placeholder: #808080;
+	$uni-color-subtitle: #555555;
+	$uni-text-color-grey:#999;
+	.uni-calendar {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: column;
+	}
+
+	.uni-calendar__mask {
+		position: fixed;
+		bottom: 0;
+		top: 0;
+		left: 0;
+		right: 0;
+		background-color: $uni-bg-color-mask;
+		transition-property: opacity;
+		transition-duration: 0.3s;
+		opacity: 0;
+		/* #ifndef APP-NVUE */
+		z-index: 99;
+		/* #endif */
+	}
+
+	.uni-calendar--mask-show {
+		opacity: 1
+	}
+
+	.uni-calendar--fixed {
+		position: fixed;
+		/* #ifdef APP-NVUE */
+		bottom: 0;
+		/* #endif */
+		left: 0;
+		right: 0;
+		transition-property: transform;
+		transition-duration: 0.3s;
+		transform: translateY(460px);
+		/* #ifndef APP-NVUE */
+		bottom: calc(var(--window-bottom));
+		z-index: 99;
+		/* #endif */
+	}
+
+	.uni-calendar--ani-show {
+		transform: translateY(0);
+	}
+
+	.uni-calendar__content {
+		background-color: #fff;
+	}
+
+	.uni-calendar__header {
+		position: relative;
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+		height: 50px;
+		border-bottom-color: $uni-border-color;
+		border-bottom-style: solid;
+		border-bottom-width: 1px;
+	}
+
+	.uni-calendar--fixed-top {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: row;
+		justify-content: space-between;
+		border-top-color: $uni-border-color;
+		border-top-style: solid;
+		border-top-width: 1px;
+	}
+
+	.uni-calendar--fixed-width {
+		width: 50px;
+	}
+
+	.uni-calendar__backtoday {
+		position: absolute;
+		right: 0;
+		top: 25rpx;
+		padding: 0 5px;
+		padding-left: 10px;
+		height: 25px;
+		line-height: 25px;
+		font-size: 12px;
+		border-top-left-radius: 25px;
+		border-bottom-left-radius: 25px;
+		color: $uni-text-color;
+		background-color: $uni-bg-color-hover;
+	}
+
+	.uni-calendar__header-text {
+		text-align: center;
+		width: 100px;
+		font-size: $uni-font-size-base;
+		color: $uni-text-color;
+	}
+
+	.uni-calendar__header-btn-box {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		width: 50px;
+		height: 50px;
+	}
+
+	.uni-calendar__header-btn {
+		width: 10px;
+		height: 10px;
+		border-left-color: $uni-text-color-placeholder;
+		border-left-style: solid;
+		border-left-width: 2px;
+		border-top-color: $uni-color-subtitle;
+		border-top-style: solid;
+		border-top-width: 2px;
+	}
+
+	.uni-calendar--left {
+		transform: rotate(-45deg);
+	}
+
+	.uni-calendar--right {
+		transform: rotate(135deg);
+	}
+
+
+	.uni-calendar__weeks {
+		position: relative;
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: row;
+	}
+
+	.uni-calendar__weeks-item {
+		flex: 1;
+	}
+
+	.uni-calendar__weeks-day {
+		flex: 1;

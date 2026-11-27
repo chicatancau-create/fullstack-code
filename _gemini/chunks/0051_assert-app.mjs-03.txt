@@ -1,0 +1,55 @@
+  await goto('/#/login?redirect=%2Fstats');
+  await typeInto('#habit-username', 'xiaok');
+  await typeInto('#habit-password', 'demo1234');
+  await clickAt('.login-btn');
+  await sleep(1200);
+  const landed = await evl('location.hash');
+  check('登录后回跳到 redirect 指定的 /stats', landed === '#/stats', landed);
+  check('登录态写入 localStorage', (await evl(`localStorage.getItem('habit-token')`)) === 'xiaok');
+  check('页头显示用户名', (await evl(`document.querySelector('.user-name,.welcome,header')?.innerText`))?.includes('xiaok'));
+
+  console.log('\n--- 4. 周视图打卡 ---');
+  await goto('/#/');
+  const rowCount0 = await evl(`document.querySelectorAll('.habit-row').length`);
+  const checked0 = await evl(`document.querySelectorAll('.cell.checked').length`);
+  check('周矩阵渲染出 4 个习惯行', rowCount0 === 4, 'rows=' + rowCount0);
+  check('每行 7 个格子', (await evl(`document.querySelectorAll('.cell').length`)) === rowCount0 * 7, 'cells=' + await evl(`document.querySelectorAll('.cell').length`));
+  // 与日期无关的不变量：未来格数应等于「本周剩余天数」，且这些格必须全部 disabled
+  const futureInv = await evl(`(() => {
+    const pad = (n) => String(n).padStart(2, '0');
+    const key = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    const now = new Date();
+    const dow = (now.getDay() + 6) % 7;              // 周一=0 … 周日=6
+    const expected = 6 - dow;                          // 本周还剩几天在今天之后
+    const cells = [...document.querySelectorAll('.cell')];
+    const future = cells.filter(c => /未来|不可/.test(c.title) || c.classList.contains('future'));
+    const perRow = new Map();
+    for (const row of document.querySelectorAll('.habit-row')) {
+      const cs = [...row.querySelectorAll('.cell')];
+      const f = cs.filter(c => c.classList.contains('future'));
+      perRow.set(row.querySelector('.name')?.innerText ?? '?', { n: f.length, allDisabled: f.every(c => c.disabled) });
+    }
+    const counts = [...perRow.values()].map(v => v.n);
+    return { expected, counts, allDisabled: [...perRow.values()].every(v => v.allDisabled), uniq: [...new Set(counts)] };
+  })()`);
+  check('未来格子数量等于本周剩余天数且全部 disabled',
+    futureInv.uniq.length === 1 && futureInv.uniq[0] === futureInv.expected && futureInv.allDisabled,
+    `expected=${futureInv.expected} perRow=${JSON.stringify(futureInv.counts)} allDisabled=${futureInv.allDisabled}`);
+  check('今天格子有标记（每行恰好一个）', (await evl(`document.querySelectorAll('.cell.today').length`)) === rowCount0,
+    'today=' + await evl(`document.querySelectorAll('.cell.today').length`) + ' rows=' + rowCount0);
+  check('格子带 aria-pressed 语义', (await evl(`document.querySelectorAll('.cell[aria-pressed]').length`)) === rowCount0 * 7);
+  await shot('02-board');
+
+  const n0 = await evl(`document.querySelectorAll('.cell.checked').length`);
+  const cellRef = await evl(`(() => { const rows=[...document.querySelectorAll('.habit-row')];
+    for (let i=0;i<rows.length;i++){ const cells=[...rows[i].querySelectorAll('.cell')];
+      const j=cells.findIndex(x=>!x.classList.contains('checked') && !x.classList.contains('future') && !x.disabled);
+      if (j>=0) { const r=cells[j].getBoundingClientRect(); return {row:i, col:j, x:r.left+r.width/2, y:r.top+r.height/2, title:cells[j].title, pressed:cells[j].getAttribute('aria-pressed')}; } }
+    return null; })()`);
+  if (!cellRef) throw new Error('找不到一个可打卡的空格');
+  check('空格子 aria-pressed=false', cellRef.pressed === 'false', String(cellRef.pressed));
+  const cellPath = `document.querySelectorAll('.habit-row')[${cellRef.row}].querySelectorAll('.cell')[${cellRef.col}]`;
+  for (const type of ['mousePressed', 'mouseReleased']) await cdp.send('Input.dispatchMouseEvent', { type, x: cellRef.x, y: cellRef.y, button: 'left', clickCount: 1 }, PG);
+  await sleep(600);
+  const checked1 = await evl(`document.querySelectorAll('.cell.checked').length`);
+  check('点击空格子变为已打卡', checked1 === n0 + 1, `${n0} -> ${checked1} @row${cellRef.row}/col${cellRef.col} ${cellRef.title}`);

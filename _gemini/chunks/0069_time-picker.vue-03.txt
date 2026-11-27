@@ -1,0 +1,187 @@
+				return this.year === this.startYear && this.month === this.startMonth && this.day === this.startDay
+			},
+
+			// 当前 date 是 end
+			currentDateIsEnd() {
+				return this.year === this.endYear && this.month === this.endMonth && this.day === this.endDay
+			},
+
+			// 当前年、月、日、时、分、秒的最小值和最大值
+			minYear() {
+				return this.startYear
+			},
+			maxYear() {
+				return this.endYear
+			},
+			minMonth() {
+				if (this.year === this.startYear) {
+					return this.startMonth
+				} else {
+					return 1
+				}
+			},
+			maxMonth() {
+				if (this.year === this.endYear) {
+					return this.endMonth
+				} else {
+					return 12
+				}
+			},
+			minDay() {
+				if (this.year === this.startYear && this.month === this.startMonth) {
+					return this.startDay
+				} else {
+					return 1
+				}
+			},
+			maxDay() {
+				if (this.year === this.endYear && this.month === this.endMonth) {
+					return this.endDay
+				} else {
+					return this.daysInMonth(this.year, this.month)
+				}
+			},
+			minHour() {
+				if (this.type === 'datetime') {
+					if (this.currentDateIsStart) {
+						return this.startHour
+					} else {
+						return 0
+					}
+				}
+				if (this.type === 'time') {
+					return this.startHour
+				}
+			},
+			maxHour() {
+				if (this.type === 'datetime') {
+					if (this.currentDateIsEnd) {
+						return this.endHour
+					} else {
+						return 23
+					}
+				}
+				if (this.type === 'time') {
+					return this.endHour
+				}
+			},
+			minMinute() {
+				if (this.type === 'datetime') {
+					if (this.currentDateIsStart && this.hour === this.startHour) {
+						return this.startMinute
+					} else {
+						return 0
+					}
+				}
+				if (this.type === 'time') {
+					if (this.hour === this.startHour) {
+						return this.startMinute
+					} else {
+						return 0
+					}
+				}
+			},
+			maxMinute() {
+				if (this.type === 'datetime') {
+					if (this.currentDateIsEnd && this.hour === this.endHour) {
+						return this.endMinute
+					} else {
+						return 59
+					}
+				}
+				if (this.type === 'time') {
+					if (this.hour === this.endHour) {
+						return this.endMinute
+					} else {
+						return 59
+					}
+				}
+			},
+			minSecond() {
+				if (this.type === 'datetime') {
+					if (this.currentDateIsStart && this.hour === this.startHour && this.minute === this.startMinute) {
+						return this.startSecond
+					} else {
+						return 0
+					}
+				}
+				if (this.type === 'time') {
+					if (this.hour === this.startHour && this.minute === this.startMinute) {
+						return this.startSecond
+					} else {
+						return 0
+					}
+				}
+			},
+			maxSecond() {
+				if (this.type === 'datetime') {
+					if (this.currentDateIsEnd && this.hour === this.endHour && this.minute === this.endMinute) {
+						return this.endSecond
+					} else {
+						return 59
+					}
+				}
+				if (this.type === 'time') {
+					if (this.hour === this.endHour && this.minute === this.endMinute) {
+						return this.endSecond
+					} else {
+						return 59
+					}
+				}
+			},
+
+			/**
+			 * for i18n
+			 */
+			selectTimeText() {
+				return t("uni-datetime-picker.selectTime")
+			},
+			okText() {
+				return t("uni-datetime-picker.ok")
+			},
+			clearText() {
+				return t("uni-datetime-picker.clear")
+			},
+			cancelText() {
+				return t("uni-datetime-picker.cancel")
+			}
+		},
+
+		mounted() {
+			// #ifdef APP-NVUE
+			const res = uni.getSystemInfoSync();
+			this.fixNvueBug = {
+				top: res.windowHeight / 2,
+				left: res.windowWidth / 2
+			}
+			// #endif
+		},
+
+		methods: {
+			/**
+			 * @param {Object} item
+			 * 小于 10 在前面加个 0
+			 */
+
+			lessThanTen(item) {
+				return item < 10 ? '0' + item : item
+			},
+
+			/**
+			 * 解析时分秒字符串，例如：00:00:00
+			 * @param {String} timeString
+			 */
+			parseTimeType(timeString) {
+				if (timeString) {
+					let timeArr = timeString.split(':')
+					this.hour = Number(timeArr[0])
+					this.minute = Number(timeArr[1])
+					this.second = Number(timeArr[2])
+				}
+			},
+
+			/**
+			 * 解析选择器初始值，类型可以是字符串、时间戳，例如：2000-10-02、'08:30:00'、 1610695109000
+			 * @param {String | Number} datetime
+			 */
+			initPickerValue(datetime) {

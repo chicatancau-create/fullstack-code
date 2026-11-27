@@ -1,0 +1,87 @@
+  U.absorb.value.set(L('absorb')[0], L('absorb')[1], L('absorb')[2]);
+  CL('waterDeep', U.waterDeep.value); CL('waterShallow', U.waterShallow.value);
+  U.scatter.value = L('scatter');
+  U.scatterCol.value.copy(U.horizon.value).lerp(U.zenith.value, 0.45).multiplyScalar(0.5 * L('ambient') + 0.12);
+  U.causticCol.value.copy(U.sunCol.value).lerp(new THREE.Color(0x9fe9ff), 0.55).multiplyScalar(0.35 * L('sunI') / 3.6 + 0.25);
+  U.windI.value = mix(0.72, 0.42, U.night.value);
+
+  sun.color.copy(U.sunCol.value);
+  sun.intensity = L('sunI') * 1.05;
+  sun.position.copy(U.sunDir.value).multiplyScalar(6);
+  fillTop.color.copy(U.zenith.value).lerp(U.horizon.value, 0.4);
+  fillTop.groundColor.copy(U.ground.value);
+  fillTop.intensity = 0.40 * L('ambient') + 0.04;
+
+  const lamp = L('lamp');
+  lampWarm.intensity = lamp * 0.40;
+  lampPier.intensity = lamp * 0.22;
+  glassEmis.forEach((m, k) => { m.emissiveIntensity = lamp * (k === 0 ? 2.6 : 2.0); });
+  coralMat.emissiveIntensity = L('bio') * 0.30;
+  bloomPass.strength = L('bloom');
+  renderer.toneMappingExposure = L('exposure');
+
+  blob.material.opacity = L('shadowOp') * (0.55 + 0.45 * smoothstep(-0.1, 0.4, U.sunDir.value.y));
+  blob.position.x = -U.sunDir.value.x * 0.20;
+  blob.position.z = -U.sunDir.value.z * 0.20;
+
+  const nm = { 0: '正午', 1: '黄昏', 2: '夜晚' }[Math.round(t * 2)];
+  todNameEl.textContent = nm + ' · ' + Math.round(t * 100) + '%';
+  envDirty = true;
+}
+coralMat.emissive = new THREE.Color(0x1b4a52);
+
+/* ---------------------------------------------------------------- 尺寸 */
+let quality = QUALITY.cine, qKey = 'cine';
+function setSize() {
+  const w = innerWidth, h = innerHeight;
+  const pr = Math.min(devicePixelRatio || 1, quality.pr);
+  renderer.setPixelRatio(pr);
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+  composer.setPixelRatio(pr);
+  composer.setSize(w, h);
+  const pw = Math.round(w * pr), ph = Math.round(h * pr);
+  gtaoPass.setSize(pw, ph);
+  smaaPass.setSize(pw, ph);
+  gradePass.uniforms.uRes.value.set(pw, ph);
+  const sw = Math.max(2, Math.round(pw * quality.pre)), sh = Math.max(2, Math.round(ph * quality.pre));
+  preRT.setSize(sw, sh);
+  U.planktonPix.value = pr;
+  sun.shadow.mapSize.set(quality.shadow, quality.shadow);
+  if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
+}
+addEventListener('resize', setSize);
+/* ---------------------------------------------------------------- 鱼群 boids */
+const _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3();
+const _fm = new THREE.Matrix4(), _sc = new THREE.Vector3();
+function updateFish(dt, time) {
+  const N = fish.length;
+  for (let i = 0; i < N; i++) {
+    const A = fish[i];
+    const coh = _v1.set(0, 0, 0), ali = _v2.set(0, 0, 0), sep = _v3.set(0, 0, 0);
+    let cnt = 0;
+    for (let j = 0; j < N; j++) {
+      if (i === j) continue;
+      const B = fish[j], d = A.p.distanceTo(B.p);
+      if (d < 0.24) {
+        coh.add(B.p); ali.add(B.v); cnt++;
+        if (d < 0.08) sep.addScaledVector(tmpV.subVectors(A.p, B.p), 0.02 / (d + 3e-3));
+      }
+    }
+    if (cnt) { coh.multiplyScalar(1 / cnt).sub(A.p); ali.multiplyScalar(1 / cnt); }
+    A.v.addScaledVector(coh, dt * 0.42).addScaledVector(ali, dt * 0.55).addScaledVector(sep, dt * 1.6);
+
+    const wx = fbm(A.p.x * 2.6 + time * 0.22, A.p.z * 2.6, 2, 5);
+    const wz = fbm(A.p.z * 2.6 - time * 0.19, A.p.x * 2.6 + 9, 2, 9);
+    A.v.x += wx * dt * 0.5; A.v.z += wz * dt * 0.5; A.v.y += fbm(time * 0.3, A.ph, 2, 3) * dt * 0.3;
+
+    const rho = Math.hypot(A.p.x, A.p.z);
+    if (rho > 0.78) { const k = (rho - 0.78) * dt * 9; A.v.x -= A.p.x / rho * k; A.v.z -= A.p.z / rho * k; }
+    const ceil = WATER_Y - 0.055;
+    if (A.p.y > ceil) A.v.y -= (A.p.y - ceil) * dt * 8;
+    const bed = terrainH(A.p.x, A.p.z) + 0.05;
+    if (A.p.y < bed) A.v.y += (bed - A.p.y) * dt * 9;
+
+    const sp = A.v.length() || 1e-5;
+    const want = 0.15 * A.s;
+    A.v.multiplyScalar((sp + (want - sp) * Math.min(1, dt * 2.5)) / sp);

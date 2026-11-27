@@ -1,0 +1,164 @@
+      this._treeData = [];
+      this._extractTree(this.localdata, this._treeData);
+
+      let inputValue = this.dataValue;
+      if (inputValue === undefined) {
+        return;
+      }
+
+      if (Array.isArray(inputValue)) {
+        inputValue = inputValue[inputValue.length - 1];
+        if (typeof inputValue === 'object' && inputValue[this.map.value]) {
+          inputValue = inputValue[this.map.value];
+        }
+      }
+
+      this.selected = this._findNodePath(inputValue, this.localdata);
+    },
+
+    // 加载 Cloud 数据 (单列)
+    async loadCloudDataList() {
+      if (this.loading) {
+        return;
+      }
+      this.loading = true;
+
+      try {
+        let response = await this.getCommand();
+        let responseData = response.result.data;
+
+        this._treeData = responseData;
+
+        this._updateBindData();
+        this._updateSelected();
+
+        this.onDataChange();
+      } catch (e) {
+        this.errorMessage = e;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // 加载 Cloud 数据 (树形)
+    async loadCloudDataTree() {
+      if (this.loading) {
+        return;
+      }
+      this.loading = true;
+
+      try {
+        let commandOptions = {
+          field: this._cloudDataPostField(),
+          where: this._cloudDataTreeWhere()
+        };
+        if (this.gettree) {
+          commandOptions.startwith = `${this.selfField}=='${this.dataValue}'`;
+        }
+
+        let response = await this.getCommand(commandOptions);
+        let responseData = response.result.data;
+
+        this._treeData = responseData;
+        this._updateBindData();
+        this._updateSelected();
+
+        this.onDataChange();
+      } catch (e) {
+        this.errorMessage = e;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // 加载 Cloud 数据 (节点)
+    async loadCloudDataNode(callback) {
+      if (this.loading) {
+        return;
+      }
+      this.loading = true;
+
+      try {
+        let commandOptions = {
+          field: this._cloudDataPostField(),
+          where: this._cloudDataNodeWhere()
+        };
+
+        let response = await this.getCommand(commandOptions);
+        let responseData = response.result.data;
+
+        callback(responseData);
+      } catch (e) {
+        this.errorMessage = e;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // 回显 Cloud 数据
+    getCloudDataValue() {
+      if (this.isCloudDataList) {
+        return this.getCloudDataListValue();
+      }
+
+      if (this.isCloudDataTree) {
+        return this.getCloudDataTreeValue();
+      }
+    },
+
+    // 回显 Cloud 数据 (单列)
+    getCloudDataListValue() {
+      // 根据 field's as value标识匹配 where 条件
+      let where = [];
+      let whereField = this._getForeignKeyByField();
+      if (whereField) {
+        where.push(`${whereField} == '${this.dataValue}'`)
+      }
+
+      where = where.join(' || ');
+
+      if (this.where) {
+        where = `(${this.where}) && (${where})`
+      }
+
+      return this.getCommand({
+        field: this._cloudDataPostField(),
+        where
+      }).then((res) => {
+        this.selected = res.result.data;
+        return res.result.data;
+      });
+    },
+
+    // 回显 Cloud 数据 (树形)
+    getCloudDataTreeValue() {
+      return this.getCommand({
+        field: this._cloudDataPostField(),
+        getTreePath: {
+          startWith: `${this.selfField}=='${this.dataValue}'`
+        }
+      }).then((res) => {
+        let treePath = [];
+        this._extractTreePath(res.result.data, treePath);
+        this.selected = treePath;
+        return treePath;
+      });
+    },
+
+    getCommand(options = {}) {
+      /* eslint-disable no-undef */
+      let db = uniCloud.database(this.spaceInfo)
+
+      const action = options.action || this.action
+      if (action) {
+        db = db.action(action)
+      }
+
+      const collection = options.collection || this.collection
+      db = db.collection(collection)
+
+      const where = options.where || this.where
+      if (!(!where || !Object.keys(where).length)) {
+        db = db.where(where)
+      }
+

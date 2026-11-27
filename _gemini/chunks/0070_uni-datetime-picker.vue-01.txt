@@ -1,0 +1,83 @@
+<template>
+	<view class="uni-date">
+		<view class="uni-date-editor" @click="show">
+			<slot>
+				<view class="uni-date-editor--x"
+					:class="{'uni-date-editor--x__disabled': disabled,'uni-date-x--border': border}">
+					<view v-if="!isRange" class="uni-date-x uni-date-single">
+						<uni-icons class="icon-calendar" type="calendar" color="#c0c4cc" size="22"></uni-icons>
+						<view class="uni-date__x-input">{{ displayValue || singlePlaceholderText }}</view>
+					</view>
+
+					<view v-else class="uni-date-x uni-date-range">
+						<uni-icons class="icon-calendar" type="calendar" color="#c0c4cc" size="22"></uni-icons>
+						<view class="uni-date__x-input text-center">{{ displayRangeValue.startDate || startPlaceholderText }}</view>
+
+						<view class="range-separator">{{rangeSeparator}}</view>
+
+						<view class="uni-date__x-input text-center">{{ displayRangeValue.endDate || endPlaceholderText }}</view>
+					</view>
+
+					<view v-if="showClearIcon" class="uni-date__icon-clear" @click.stop="clear">
+						<uni-icons type="clear" color="#c0c4cc" size="22"></uni-icons>
+					</view>
+				</view>
+			</slot>
+		</view>
+
+		<view v-show="pickerVisible" class="uni-date-mask--pc" @click="close"></view>
+
+		<view v-if="!isPhone" v-show="pickerVisible" ref="datePicker" class="uni-date-picker__container">
+			<view v-if="!isRange" class="uni-date-single--x" :style="pickerPositionStyle">
+				<view class="uni-popper__arrow"></view>
+
+				<view v-if="hasTime" class="uni-date-changed popup-x-header">
+					<input class="uni-date__input text-center" type="text" v-model="inputDate" :placeholder="selectDateText" />
+
+					<time-picker type="time" v-model="pickerTime" :border="false" :disabled="!inputDate"
+						:start="timepickerStartTime" :end="timepickerEndTime" :hideSecond="hideSecond" style="width: 100%;">
+						<input class="uni-date__input text-center" type="text" v-model="pickerTime" :placeholder="selectTimeText"
+							:disabled="!inputDate" />
+					</time-picker>
+				</view>
+
+				<Calendar ref="pcSingle" :showMonth="false" :start-date="calendarRange.startDate"
+					:end-date="calendarRange.endDate" :date="calendarDate" @change="singleChange" :default-value="defaultValue"
+					style="padding: 0 8px;" />
+
+				<view v-if="hasTime" class="popup-x-footer">
+					<text class="confirm-text" @click="confirmSingleChange">{{okText}}</text>
+				</view>
+			</view>
+
+			<view v-else class="uni-date-range--x" :style="pickerPositionStyle">
+				<view class="uni-popper__arrow"></view>
+				<view v-if="hasTime" class="popup-x-header uni-date-changed">
+					<view class="popup-x-header--datetime">
+						<input class="uni-date__input uni-date-range__input" type="text" v-model="tempRange.startDate"
+							:placeholder="startDateText" />
+
+						<time-picker type="time" v-model="tempRange.startTime" :start="timepickerStartTime" :border="false"
+							:disabled="!tempRange.startDate" :hideSecond="hideSecond">
+							<input class="uni-date__input uni-date-range__input" type="text" v-model="tempRange.startTime"
+								:placeholder="startTimeText" :disabled="!tempRange.startDate" />
+						</time-picker>
+					</view>
+
+					<uni-icons type="arrowthinright" color="#999" style="line-height: 40px;"></uni-icons>
+
+					<view class="popup-x-header--datetime">
+						<input class="uni-date__input uni-date-range__input" type="text" v-model="tempRange.endDate"
+							:placeholder="endDateText" />
+
+						<time-picker type="time" v-model="tempRange.endTime" :end="timepickerEndTime" :border="false"
+							:disabled="!tempRange.endDate" :hideSecond="hideSecond">
+							<input class="uni-date__input uni-date-range__input" type="text" v-model="tempRange.endTime"
+								:placeholder="endTimeText" :disabled="!tempRange.endDate" />
+						</time-picker>
+					</view>
+				</view>
+
+				<view class="popup-x-body">
+					<Calendar ref="left" :showMonth="false" :start-date="calendarRange.startDate"
+						:end-date="calendarRange.endDate" :range="true" :pleStatus="endMultipleStatus" @change="leftChange"

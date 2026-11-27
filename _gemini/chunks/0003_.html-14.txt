@@ -1,0 +1,106 @@
+    pos.push(x, y + w * 0.35, -w, x, y + w * 0.35, w);
+    uv.push(1 - t, 0, 1 - t, 1);
+    flex.push(t * t);
+  }
+  for (let i = 0; i < N; i++) {
+    const a = i * 2, b = a + 1, c = a + 2, d = a + 3;
+    idx.push(a, c, d, a, d, b);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setAttribute('aFlex', new THREE.Float32BufferAttribute(flex, 1));
+  g.setIndex(idx); g.computeVertexNormals();
+  return g;
+}
+
+function makePalm(px, pz, h = 0.55, lean = 0.16) {
+  const g = new THREE.Group();
+  const pts = [];
+  const twist = rr(-1, 1);
+  for (let i = 0; i <= 8; i++) {
+    const t = i / 8;
+    pts.push(new THREE.Vector3(
+      lean * (1 - Math.cos(t * 1.7)) * 0.9 + Math.sin(t * 2.3 + twist) * 0.012,
+      h * t,
+      lean * Math.sin(t * 1.4 + twist) * 0.35
+    ));
+  }
+  const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.35);
+  const TUB = 40, RAD = 8, COLS = RAD + 1;
+  const trunkGeo = new THREE.TubeGeometry(curve, TUB, 0.0225, RAD, false);
+  const tp = trunkGeo.attributes.position;
+  for (let i = 0; i <= TUB; i++) {
+    const k = i / TUB, ctr = curve.getPointAt(k);
+    const sc = mix(1.55, 0.70, smoothstep(0.0, 0.55, k));
+    for (let j = 0; j <= RAD; j++) {
+      const id = i * COLS + j;
+      tmpV.fromBufferAttribute(tp, id).sub(ctr).multiplyScalar(sc).add(ctr);
+      tp.setXYZ(id, tmpV.x, tmpV.y, tmpV.z);
+    }
+  }
+  trunkGeo.computeVertexNormals();
+  const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+  trunk.castShadow = true; trunk.receiveShadow = true;
+  g.add(trunk);
+
+  // 根部支撑
+  const roots = [];
+  for (let i = 0; i < 5; i++) {
+    const a = i / 5 * Math.PI * 2 + rr(0, 0.5);
+    const r = new THREE.CylinderGeometry(0.004, 0.013, 0.075, 5, 1);
+    const m = M().makeRotationZ(0.55).multiply(M().makeRotationY(a)).multiply(
+      M().makeTranslation(0, 0.038, 0));
+    roots.push(stamp(xform(r, m), new THREE.Color(0x5c4a30)));
+  }
+  const rootMesh = new THREE.Mesh(merge(roots), trunkMat);
+  rootMesh.castShadow = true;
+  g.add(rootMesh);
+
+  // 树冠
+  const top = curve.getPointAt(1);
+  const crown = new THREE.Object3D();
+  crown.position.copy(top);
+  g.add(crown);
+  const NF = 10 + (rnd() > 0.5 ? 1 : 0);
+  for (let i = 0; i < NF; i++) {
+    const yaw = new THREE.Object3D();
+    yaw.rotation.y = i / NF * Math.PI * 2 + rr(-0.12, 0.12);
+    const tilt = new THREE.Object3D();
+    tilt.rotation.z = -rr(-0.16, 0.62);
+    tilt.rotation.y = rr(-0.1, 0.1);
+    const fl = rr(0.86, 1.14);
+    const fr = new THREE.Mesh(frondGeometry(0.36 * fl, 0.135 * fl, rr(0.24, 0.42)), leafMat);
+    fr.castShadow = true;
+    tilt.add(fr); yaw.add(tilt); crown.add(yaw);
+  }
+  const bud = new THREE.Mesh(new THREE.SphereGeometry(0.019, 12, 8), trunkMat);
+  bud.position.y = -0.012; crown.add(bud);
+  for (let i = 0; i < 3; i++) {
+    const nut = new THREE.Mesh(new THREE.SphereGeometry(0.013, 12, 10), trunkMat);
+    const a = i / 3 * Math.PI * 2 + rr(0, 1);
+    nut.position.set(Math.cos(a) * 0.021, -0.024, Math.sin(a) * 0.021);
+    nut.scale.y = 0.86; nut.castShadow = true;
+    crown.add(nut);
+  }
+  g.position.set(px, terrainH(px, pz) - 0.01, pz);
+  g.rotation.y = rr(0, 6.28);
+  return g;
+}
+
+const palms = [makePalm(0.58, -0.10, 0.60, 0.18), makePalm(0.60, -0.02, 0.46, -0.14), makePalm(0.30, -0.62, 0.46, 0.06)];
+palms.forEach(p => island.add(p));
+
+/* ---------------------------------------------------------------- 木屋 + 栈桥 */
+function makeHut() {
+  const g = new THREE.Group();
+  const hx = 0.185, hz = -0.46;
+  const ground = terrainH(hx, hz);
+  const deck = Math.max(ground, WATER_Y) + 0.135;
+  g.position.set(hx, 0, hz);
+
+  const parts = [], postParts = [];
+  const pw = 0.014;
+  for (const [sx, sz] of [[-0.10, -0.075], [0.10, -0.075], [-0.10, 0.075], [0.10, 0.075], [0, 0]]) {
+    const len = deck - (ground - 0.01);
+    const c = new THREE.CylinderGeometry(pw, pw * 1.15, len, 6, 1);

@@ -1,0 +1,243 @@
+/* ============================================================
+   学习习惯打卡与目标跟踪 · 全局样式
+   第5题实训案例 · token 来自课程给定的 HTML 样式模板，勿改数值
+   ============================================================ */
+
+/* ---------- 1. 设计变量 ---------- */
+:root {
+  --bg: #f5f7fb;
+  --card: #fff;
+  --line: #e4e9f2;
+  --text: #22303f;
+  --muted: #7a8699;
+  --brand: #1f3a5f;
+  --accent: #3b6fd4;
+  --accent2: #0e7a52;
+  --warn: #c07c00;
+  --danger: #c0392b;
+
+  /* 派生量：统一阴影与圆角，保证卡片观感一致 */
+  --radius-card: 12px;
+  --radius-btn: 8px;
+  --radius-pill: 10px;
+  --shadow-card: 0 1px 3px rgba(31, 58, 95, 0.05);
+  --wrap-max: 960px;
+}
+
+/* ---------- 2. reset ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+blockquote,
+dl,
+dd,
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+/* ---------- 3. 版面基调 ---------- */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+/* 内容最大宽度 960px 居中 */
+.wrap {
+  width: 100%;
+  max-width: var(--wrap-max);
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* ---------- 4. 卡片 ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 18px 20px;
+}
+
+/* 卡片之间的竖向间距：连续卡片用 .card + .card 自动留出呼吸 */
+.card + .card {
+  margin-top: 16px;
+}
+
+/* 卡片内小标题：14.5px + 品牌色 + ▍ 前缀 */
+.section-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--brand);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.section-title::before {
+  content: "▍";
+  color: var(--accent);
+  margin-right: 6px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ---------- 5. 按钮 ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 7px 16px;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-btn);
+  background: var(--card);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.btn:hover {
+  background: #eef2fa;
+  border-color: #cdd8ea;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* 主按钮：--accent 底白字 */
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #2f5cb8;
+  border-color: #2f5cb8;
+  color: #fff;
+}
+
+/* 危险操作：--danger 底白字 */
+.btn-danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #a5322a;
+  border-color: #a5322a;
+  color: #fff;
+}
+
+/* 行内小按钮（表格行、标题栏里用） */
+.btn-sm {
+  padding: 3px 10px;
+  min-height: 26px;
+  font-size: 12.5px;
+}
+
+/* ---------- 6. 胶囊标签 ---------- */
+/* 默认蓝：#e8f0ff / #3b6fd4 */
+.pill {
+  display: inline-block;
+  padding: 1px 9px;
+  border-radius: var(--radius-pill);
+  background: #e8f0ff;
+  color: var(--accent);
+  font-size: 11.5px;
+  line-height: 1.7;
+  white-space: nowrap;
+}
+
+/* 绿：#e8f5ee / #0e7a52 */
+.pill-green {
+  background: #e8f5ee;
+  color: var(--accent2);
+}
+
+/* 黄：#fff6e5 / #c07c00 */
+.pill-amber {
+  background: #fff6e5;
+  color: var(--warn);
+}
+
+/* 红：危险态标签，沿用 danger 色系 */
+.pill-red {
+  background: #fdeceb;
+  color: var(--danger);
+}
+
+/* ---------- 7. 表单 ---------- */
+/* .field 是「标签 + 控件」的竖排容器 */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+
+.field > label,
+.field > .field-label {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-btn);
+  background: var(--card);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+}
+

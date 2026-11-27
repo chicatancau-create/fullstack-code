@@ -1,0 +1,2 @@
+  assert.equal((await app.inject({ method: 'DELETE', url: `/tenants/${tenant.id}/clients/${client.json().id}`, headers: h(token) })).statusCode, 204);
+});

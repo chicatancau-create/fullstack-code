@@ -1,0 +1,69 @@
+  app.addHook('onResponse', async (request, reply) => {
+    const key = `${request.method}|${reply.statusCode}`;
+    httpCounters.set(key, (httpCounters.get(key) || 0) + 1);
+  });
+
+  app.get('/health', async () => ({ status: 'ok' }));
+
+  app.get('/metrics', async (request, reply) => {
+    const jobs = (await pool.query(`SELECT
+      (SELECT count(*)::int FROM p04.jobs WHERE status = 'pending') AS pending,
+      (SELECT count(*)::int FROM p04.jobs WHERE status = 'failed') AS failed`)).rows[0];
+    const lines = ['# HELP p04_http_requests_total HTTP requests by method and status', '# TYPE p04_http_requests_total counter'];
+    for (const [key, value] of httpCounters) {
+      const [method, status] = key.split('|');
+      lines.push(`p04_http_requests_total{method="${method}",status="${status}"} ${value}`);
+    }
+    lines.push('# HELP p04_jobs_pending Pending background jobs', '# TYPE p04_jobs_pending gauge', `p04_jobs_pending ${jobs.pending}`);
+    lines.push('# HELP p04_jobs_failed Failed background jobs', '# TYPE p04_jobs_failed gauge', `p04_jobs_failed ${jobs.failed}`);
+    reply.type('text/plain; version=0.0.4').send(lines.join('\n') + '\n');
+  });
+
+  app.post('/auth/register', async (request, reply) => {
+    const { email, password, name } = request.body || {};
+    if (!emailOk(email) || typeof password !== 'string' || password.length < 10 || password.length > 200) {
+      return reply.code(400).send({ error: 'invalid_credentials' });
+    }
+    if (typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 40) {
+      return reply.code(400).send({ error: 'invalid_name' });
+    }
+    try {
+      const result = await pool.query(
+        'INSERT INTO p04.users (email, name, password_hash) VALUES ($1, $2, $3) RETURNING id, email, name',
+        [email.toLowerCase(), name.trim(), hashPassword(password)],
+      );
+      return reply.code(201).send(publicUser(result.rows[0]));
+    } catch (error) {
+      if (error.code === '23505') return reply.code(409).send({ error: 'email_taken' });
+      throw error;
+    }
+  });
+
+  app.post('/auth/login', async (request, reply) => {
+    const { email, password } = request.body || {};
+    if (!emailOk(email) || typeof password !== 'string') return reply.code(401).send({ error: 'bad_login' });
+    const user = (await pool.query('SELECT * FROM p04.users WHERE email = $1', [String(email).toLowerCase()])).rows[0];
+    if (!user || !verifyPassword(password, user.password_hash)) return reply.code(401).send({ error: 'bad_login' });
+    const token = crypto.randomBytes(32).toString('hex');
+    await pool.query('INSERT INTO p04.sessions (token_hash, user_id, expires_at) VALUES ($1, $2, $3)', [sha256(token), user.id, nowPlus(SESSION_HOURS)]);
+    return { token, user: publicUser(user), expires_at: nowPlus(SESSION_HOURS).toISOString() };
+  });
+
+  app.post('/auth/logout', auth, async (request, reply) => {
+    const token = request.headers.authorization.slice(7);
+    await pool.query('DELETE FROM p04.sessions WHERE token_hash = $1', [sha256(token)]);
+    return reply.code(204).send();
+  });
+
+  app.post('/tenants', auth, async (request, reply) => {
+    const { name, plan = 'free' } = request.body || {};
+    if (typeof name !== 'string' || name.trim().length < 2 || name.trim().length > 60) return reply.code(400).send({ error: 'invalid_name' });
+    if (!Object.hasOwn(PLANS, plan)) return reply.code(400).send({ error: 'invalid_plan' });
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const tenant = await client.query(
+        'INSERT INTO p04.tenants (name, plan, seat_limit) VALUES ($1, $2, $3) RETURNING id, name, plan, seat_limit',
+        [name.trim(), plan, PLANS[plan]],
+      );
+      await client.query("INSERT INTO p04.memberships (tenant_id, user_id, role) VALUES ($1, $2, 'owner')", [tenant.rows[0].id, request.user.id]);

@@ -1,0 +1,170 @@
+    user_id integer NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: tenants; Type: TABLE; Schema: p04; Owner: -
+--
+
+CREATE TABLE p04.tenants (
+    id integer NOT NULL,
+    name text NOT NULL,
+    plan text DEFAULT 'free'::text NOT NULL,
+    seat_limit integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    capacity_tier text DEFAULT 'normal'::text NOT NULL,
+    CONSTRAINT tenants_capacity_tier_check CHECK ((capacity_tier = ANY (ARRAY['normal'::text, 'peak'::text, 'over'::text]))),
+    CONSTRAINT tenants_plan_check CHECK ((plan = ANY (ARRAY['free'::text, 'team'::text]))),
+    CONSTRAINT tenants_seat_limit_check CHECK ((seat_limit > 0))
+);
+
+
+--
+-- Name: tenants_id_seq; Type: SEQUENCE; Schema: p04; Owner: -
+--
+
+CREATE SEQUENCE p04.tenants_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: tenants_id_seq; Type: SEQUENCE OWNED BY; Schema: p04; Owner: -
+--
+
+ALTER SEQUENCE p04.tenants_id_seq OWNED BY p04.tenants.id;
+
+
+--
+-- Name: users; Type: TABLE; Schema: p04; Owner: -
+--
+
+CREATE TABLE p04.users (
+    id integer NOT NULL,
+    email text NOT NULL,
+    name text NOT NULL,
+    password_hash text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: users_id_seq; Type: SEQUENCE; Schema: p04; Owner: -
+--
+
+CREATE SEQUENCE p04.users_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: p04; Owner: -
+--
+
+ALTER SEQUENCE p04.users_id_seq OWNED BY p04.users.id;
+
+
+--
+-- Name: worker_inbox; Type: TABLE; Schema: p04; Owner: -
+--
+
+CREATE TABLE p04.worker_inbox (
+    consumer text NOT NULL,
+    job_id bigint NOT NULL,
+    processed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: audit_events id; Type: DEFAULT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.audit_events ALTER COLUMN id SET DEFAULT nextval('p04.audit_events_id_seq'::regclass);
+
+
+--
+-- Name: clients id; Type: DEFAULT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.clients ALTER COLUMN id SET DEFAULT nextval('p04.clients_id_seq'::regclass);
+
+
+--
+-- Name: followups id; Type: DEFAULT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.followups ALTER COLUMN id SET DEFAULT nextval('p04.followups_id_seq'::regclass);
+
+
+--
+-- Name: invitations id; Type: DEFAULT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.invitations ALTER COLUMN id SET DEFAULT nextval('p04.invitations_id_seq'::regclass);
+
+
+--
+-- Name: job_notifications id; Type: DEFAULT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.job_notifications ALTER COLUMN id SET DEFAULT nextval('p04.job_notifications_id_seq'::regclass);
+
+
+--
+-- Name: jobs id; Type: DEFAULT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.jobs ALTER COLUMN id SET DEFAULT nextval('p04.jobs_id_seq'::regclass);
+
+
+--
+-- Name: reminders id; Type: DEFAULT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.reminders ALTER COLUMN id SET DEFAULT nextval('p04.reminders_id_seq'::regclass);
+
+
+--
+-- Name: tenants id; Type: DEFAULT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.tenants ALTER COLUMN id SET DEFAULT nextval('p04.tenants_id_seq'::regclass);
+
+
+--
+-- Name: users id; Type: DEFAULT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.users ALTER COLUMN id SET DEFAULT nextval('p04.users_id_seq'::regclass);
+
+
+--
+-- Data for Name: audit_events; Type: TABLE DATA; Schema: p04; Owner: -
+--
+
+COPY p04.audit_events (id, tenant_id, actor_id, action, target, metadata, created_at, before, after, request_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: clients; Type: TABLE DATA; Schema: p04; Owner: -
+--
+
+COPY p04.clients (id, tenant_id, name, note, deleted_at, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: followups; Type: TABLE DATA; Schema: p04; Owner: -
+--
+

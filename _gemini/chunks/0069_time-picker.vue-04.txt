@@ -1,0 +1,142 @@
+				let defaultValue = null
+				if (datetime) {
+					defaultValue = this.compareValueWithStartAndEnd(datetime, this.start, this.end)
+				} else {
+					defaultValue = Date.now()
+					defaultValue = this.compareValueWithStartAndEnd(defaultValue, this.start, this.end)
+				}
+				this.parseValue(defaultValue)
+			},
+
+			/**
+			 * 初始值规则：
+			 * - 用户设置初始值 value
+			 * 	- 设置了起始时间 start、终止时间 end，并 start < value < end，初始值为 value， 否则初始值为 start
+			 * 	- 只设置了起始时间 start，并 start < value，初始值为 value，否则初始值为 start
+			 * 	- 只设置了终止时间 end，并 value < end，初始值为 value，否则初始值为 end
+			 * 	- 无起始终止时间，则初始值为 value
+			 * - 无初始值 value，则初始值为当前本地时间 Date.now()
+			 * @param {Object} value
+			 * @param {Object} dateBase
+			 */
+			compareValueWithStartAndEnd(value, start, end) {
+				let winner = null
+				value = this.superTimeStamp(value)
+				start = this.superTimeStamp(start)
+				end = this.superTimeStamp(end)
+
+				if (start && end) {
+					if (value < start) {
+						winner = new Date(start)
+					} else if (value > end) {
+						winner = new Date(end)
+					} else {
+						winner = new Date(value)
+					}
+				} else if (start && !end) {
+					winner = start <= value ? new Date(value) : new Date(start)
+				} else if (!start && end) {
+					winner = value <= end ? new Date(value) : new Date(end)
+				} else {
+					winner = new Date(value)
+				}
+
+				return winner
+			},
+
+			/**
+			 * 转换为可比较的时间戳，接受日期、时分秒、时间戳
+			 * @param {Object} value
+			 */
+			superTimeStamp(value) {
+				let dateBase = ''
+				if (this.type === 'time' && value && typeof value === 'string') {
+					const now = new Date()
+					const year = now.getFullYear()
+					const month = now.getMonth() + 1
+					const day = now.getDate()
+					dateBase = year + '/' + month + '/' + day + ' '
+				}
+				if (Number(value)) {
+					value = parseInt(value)
+					dateBase = 0
+				}
+				return this.createTimeStamp(dateBase + value)
+			},
+
+			/**
+			 * 解析默认值 value，字符串、时间戳
+			 * @param {Object} defaultTime
+			 */
+			parseValue(value) {
+				if (!value) {
+					return
+				}
+				if (this.type === 'time' && typeof value === "string") {
+					this.parseTimeType(value)
+				} else {
+					let defaultDate = null
+					defaultDate = new Date(value)
+					if (this.type !== 'time') {
+						this.year = defaultDate.getFullYear()
+						this.month = defaultDate.getMonth() + 1
+						this.day = defaultDate.getDate()
+					}
+					if (this.type !== 'date') {
+						this.hour = defaultDate.getHours()
+						this.minute = defaultDate.getMinutes()
+						this.second = defaultDate.getSeconds()
+					}
+				}
+				if (this.hideSecond) {
+					this.second = 0
+				}
+			},
+
+			/**
+			 * 解析可选择时间范围 start、end，年月日字符串、时间戳
+			 * @param {Object} defaultTime
+			 */
+			parseDatetimeRange(point, pointType) {
+				// 时间为空，则重置为初始值
+				if (!point) {
+					if (pointType === 'start') {
+						this.startYear = 1920
+						this.startMonth = 1
+						this.startDay = 1
+						this.startHour = 0
+						this.startMinute = 0
+						this.startSecond = 0
+					}
+					if (pointType === 'end') {
+						this.endYear = 2120
+						this.endMonth = 12
+						this.endDay = 31
+						this.endHour = 23
+						this.endMinute = 59
+						this.endSecond = 59
+					}
+					return
+				}
+				if (this.type === 'time') {
+					const pointArr = point.split(':')
+					this[pointType + 'Hour'] = Number(pointArr[0])
+					this[pointType + 'Minute'] = Number(pointArr[1])
+					this[pointType + 'Second'] = Number(pointArr[2])
+				} else {
+					if (!point) {
+						pointType === 'start' ? this.startYear = this.year - 60 : this.endYear = this.year + 60
+						return
+					}
+					if (Number(point)) {
+						point = parseInt(point)
+					}
+					// datetime 的 end 没有时分秒, 则不限制
+					const hasTime = /[0-9]:[0-9]/
+					if (this.type === 'datetime' && pointType === 'end' && typeof point === 'string' && !hasTime.test(
+							point)) {
+						point = point + ' 23:59:59'
+					}
+					const pointDate = new Date(point)
+					this[pointType + 'Year'] = pointDate.getFullYear()
+					this[pointType + 'Month'] = pointDate.getMonth() + 1

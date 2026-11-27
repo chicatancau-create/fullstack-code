@@ -1,0 +1,102 @@
+    vec3 D1 = refract( V, N, 1.0/uIOR );
+    if ( dot(D1,D1) < 0.5 ) D1 = reflect( V, N );
+    vec3 nIn; float tRaw = cylT( lp, D1, uRi, nIn );
+    bool hit = tRaw > 0.0;
+    float resinPath = hit ? clamp( tRaw, 0.02, 0.34 ) : 0.055;
+    vec3 P1 = lp + D1 * ( hit ? tRaw : 0.055 );
+
+    // 2) 树脂→内部（水或空气）
+    vec3 D2 = D1;
+    float interiorWater = ( P1.y + uShellPos.y ) < uWaterY ? 1.0 : 0.0;
+    if ( hit && length( P1.xz ) > 0.05 ) {
+      float etaIn = mix( 1.0, 1.333, interiorWater );
+      vec3 nn = normalize( vec3(P1.x, 0.0, P1.z) );
+      if ( dot(D1, nn) < 0.0 ) nn = -nn;
+      vec3 r2 = refract( D1, nn, uIOR/etaIn );
+      D2 = dot(r2,r2) > 0.5 ? r2 : reflect( D1, nn );
+    }
+
+    // 3) 背景点：由预渲染深度重建，再沿折射射线前投
+    float dep = texture2D( uPreDepth, clamp(vSUV, 0.0, 1.0) ).x;
+    vec4 ndc = vec4( vSUV*2.0-1.0, dep, 1.0 );
+    vec4 vs = uProjInv*ndc;
+    vec3 Pbg;
+    if ( abs(vs.w) < 1e-6 ) { Pbg = vec3(0.0) - V; }
+    else { vs /= vs.w; Pbg = ( uCamWorld * vec4(vs.xyz,1.0) ).xyz; }
+    float s = clamp( dot( Pbg - (P1+uShellPos), V ), 0.0, 2.2 );
+    vec3 Pb = P1 + uShellPos + D2 * s;
+    vec2 suv = projSafe( Pb, vSUV );
+
+    // 轻微色散：沿位移向量做 RGB 偏移
+    vec2 off = ( suv - vSUV );
+    vec3 refr;
+    refr.r = texture2D( uPre, clamp(suv - off * uDisp, 0.0, 1.0) ).r;
+    refr.g = texture2D( uPre, clamp(suv, 0.0, 1.0) ).g;
+    refr.b = texture2D( uPre, clamp(suv + off * uDisp * 1.6, 0.0, 1.0) ).b;
+
+    // 吸收：越厚越蓝（内部物体的水体吸收已由各自材质完成，这里只算树脂）
+    vec3 att = exp( -uResinAbsorb * ( 0.15 + resinPath*2.4 ) );
+    vec3 refrCol = refr * att * uResinTint;
+
+    // 菲涅尔反射
+    float ndv = clamp( dot( N, -V ), 0.0, 1.0 );
+    float F = 0.04 + 0.96*pow( 1.0 - ndv, 5.0 );
+    vec3 Rv = reflect( V, N );
+    vec3 refl = skyColor( Rv ) * uRefl;
+    vec3 H = normalize( -uSunDir + -V );
+    refl += uSunCol * pow( max(dot(N,H),0.0), 900.0 ) * uSunI * 1.4;
+
+    vec3 col = mix( refrCol, refl, F );
+    // 边缘亮线（树脂棱）
+    col += uSunCol * pow( 1.0-ndv, 9.0 ) * 0.10;
+    gl_FragColor = vec4( nanSafe(col), 1.0 );
+  }`;
+
+const shellProfile = [
+  [RI, Y_BOT + 0.03], [RI, Y_TOP - 0.004],
+  [1.000, Y_TOP + 0.010], [1.046, Y_TOP + 0.014],
+  [RO, Y_TOP + 0.002], [RO, Y_BOT + 0.010],
+  [1.052, Y_BOT - 0.004], [1.004, Y_BOT - 0.008], [0.992, Y_BOT + 0.014]
+].map(([x, y]) => new THREE.Vector2(x, y));
+const shellGeo = new THREE.LatheGeometry(shellProfile, 192);
+const shell = new THREE.Mesh(shellGeo, shellMat);
+shell.renderOrder = 900;
+shell.castShadow = false; shell.receiveShadow = false;
+shell.frustumCulled = false;
+island.add(shell);
+
+/* 弯月面：只在水真正接触到筒壁的角度范围生成 */
+function buildMeniscus() {
+  const SEG = 220, pos = [], nor = [], uv = [], idx = [];
+  const H0 = 0.013, TOP = 0.005;
+  let cols = 0;
+  for (let j = 0; j <= SEG; j++) {
+    const a = j / SEG * Math.PI * 2;
+    const cx = Math.cos(a), cz = Math.sin(a);
+    if (terrainH(cx * 0.99, cz * 0.99) > WATER_Y - 0.006) continue;
+    const base = cols * 3;
+    for (let k = 0; k < 3; k++) {
+      const t = k / 2;                       // 0 = 底部, 1 = 顶部
+      const y = WATER_Y - H0 + (H0 + TOP) * t;
+      const rr = mix(0.9865, 0.9955, t);      // 向外上弯
+      pos.push(cx * rr, y, cz * rr);
+      nor.push(cx, 0.35, cz);
+      uv.push(j / SEG, t);
+    }
+    if (cols > 0) for (let k = 0; k < 2; k++) {
+      const a0 = (cols - 1) * 3 + k, b0 = (cols - 1) * 3 + k + 1;
+      const c0 = cols * 3 + k, d0 = cols * 3 + k + 1;
+      idx.push(a0, b0, d0, a0, d0, c0);
+    }
+    cols++;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx); g.computeBoundingSphere();
+  return g;
+}
+const meniscusMat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false, side: THREE.DoubleSide,
+  uniforms: { uWaterY: { value: WATER_Y }, uTime: U.time, uSunCol: U.sunCol, uSunDir: U.sunDir, uNight: U.night },

@@ -1,0 +1,152 @@
+			const elId = `Uni_${Math.ceil(Math.random() * 10e5).toString(36)}`
+			const elIdBox = `Uni_${Math.ceil(Math.random() * 10e5).toString(36)}`
+			return {
+				textWidth: 0,
+				boxWidth: 0,
+				wrapWidth: '',
+				webviewHide: false,
+				// #ifdef APP-NVUE
+				stopAnimation: false,
+				// #endif
+				elId: elId,
+				elIdBox: elIdBox,
+				show: true,
+				animationDuration: 'none',
+				animationPlayState: 'paused',
+				animationDelay: '0s'
+			}
+		},
+		watch:{
+			text:function(newValue,oldValue){
+				this.initSize();
+			}
+		},
+		computed: {
+			isShowGetMore() {
+				return this.showGetMore === true || this.showGetMore === 'true'
+			},
+			isShowClose() {
+				return (this.showClose === true || this.showClose === 'true') 
+					&& (this.showGetMore === false || this.showGetMore === 'false')
+			}
+		},
+		mounted() {
+			// #ifdef APP-PLUS
+			var pages = getCurrentPages();
+			var page = pages[pages.length - 1];
+			var currentWebview = page.$getAppWebview();
+			currentWebview.addEventListener('hide', () => {
+				this.webviewHide = true
+			})
+			currentWebview.addEventListener('show', () => {
+				this.webviewHide = false
+			})
+			// #endif
+			this.$nextTick(() => {
+				this.initSize()
+			})
+		},
+		// #ifdef APP-NVUE
+		beforeDestroy() {
+			this.stopAnimation = true
+		},
+		// #endif
+		methods: {
+			initSize() {
+				if (this.scrollable) {
+					// #ifndef APP-NVUE
+					let query = [],
+						boxWidth = 0,
+						textWidth = 0;
+					let textQuery = new Promise((resolve, reject) => {
+						uni.createSelectorQuery()
+							// #ifndef MP-ALIPAY
+							.in(this)
+							// #endif
+							.select(`#${this.elId}`)
+							.boundingClientRect()
+							.exec(ret => {
+								this.textWidth = ret[0].width
+								resolve()
+							})
+					})
+					let boxQuery = new Promise((resolve, reject) => {
+						uni.createSelectorQuery()
+							// #ifndef MP-ALIPAY
+							.in(this)
+							// #endif
+							.select(`#${this.elIdBox}`)
+							.boundingClientRect()
+							.exec(ret => {
+								this.boxWidth = ret[0].width
+								resolve()
+							})
+					})
+					query.push(textQuery)
+					query.push(boxQuery)
+					Promise.all(query).then(() => {
+						this.animationDuration = `${this.textWidth / this.speed}s`
+						this.animationDelay = `-${this.boxWidth / this.speed}s`
+						setTimeout(() => {
+							this.animationPlayState = 'running'
+						}, 1000)
+					})
+					// #endif
+					// #ifdef APP-NVUE
+					dom.getComponentRect(this.$refs['animationEle'], (res) => {
+						let winWidth = uni.getSystemInfoSync().windowWidth
+						this.textWidth = res.size.width
+						animation.transition(this.$refs['animationEle'], {
+							styles: {
+								transform: `translateX(-${winWidth}px)`
+							},
+							duration: 0,
+							timingFunction: 'linear',
+							delay: 0
+						}, () => {
+							if (!this.stopAnimation) {
+								animation.transition(this.$refs['animationEle'], {
+									styles: {
+										transform: `translateX(-${this.textWidth}px)`
+									},
+									timingFunction: 'linear',
+									duration: (this.textWidth - winWidth) / this.speed * 1000,
+									delay: 1000
+								}, () => {
+									if (!this.stopAnimation) {
+										this.loopAnimation()
+									}
+								});
+							}
+						});
+					})
+					// #endif
+				}
+				// #ifdef APP-NVUE
+				if (!this.scrollable && (this.single || this.moreText)) {
+					dom.getComponentRect(this.$refs['textBox'], (res) => {
+						this.wrapWidth = res.size.width
+					})
+				}
+				// #endif
+			},
+			loopAnimation() {
+				// #ifdef APP-NVUE
+				animation.transition(this.$refs['animationEle'], {
+					styles: {
+						transform: `translateX(0px)`
+					},
+					duration: 0
+				}, () => {
+					if (!this.stopAnimation) {
+						animation.transition(this.$refs['animationEle'], {
+							styles: {
+								transform: `translateX(-${this.textWidth}px)`
+							},
+							duration: this.textWidth / this.speed * 1000,
+							timingFunction: 'linear',
+							delay: 0
+						}, () => {
+							if (!this.stopAnimation) {
+								this.loopAnimation()
+							}

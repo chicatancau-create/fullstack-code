@@ -1,0 +1,79 @@
+      return reply.code(401).send({ error: 'unauthenticated' });
+    }
+    const userId = request.headers['x-user-id'];
+    if (typeof userId !== 'string' || !/^[a-z0-9_-]{2,40}$/.test(userId)) {
+      request.log.warn({ event: 'auth_failed', reason: 'bad_user', request_id: request.id });
+      return reply.code(401).send({ error: 'missing_user' });
+    }
+    request.userId = userId;
+  }
+
+  async function audit(client, { actor, action, orderId, requestId, before, after }) {
+    await client.query(
+      'INSERT INTO p03.audit_log (actor, action, order_id, request_id, before, after) VALUES ($1,$2,$3,$4,$5,$6)',
+      [actor, action, orderId || null, requestId, before ? JSON.stringify(before) : null, after ? JSON.stringify(after) : null],
+    );
+  }
+
+  async function orderView(client, orderId, userId) {
+    const order = (await client.query('SELECT * FROM p03.orders WHERE id = $1', [orderId])).rows[0];
+    if (!order) return null;
+    const items = (await client.query('SELECT sku, title, unit_price, qty FROM p03.order_items WHERE order_id = $1', [orderId])).rows;
+    const payments = (await client.query('SELECT id, amount, status, attempts FROM p03.payments WHERE order_id = $1 ORDER BY id', [orderId])).rows;
+    const refunds = (await client.query('SELECT id, amount, status, reason FROM p03.refunds WHERE order_id = $1 ORDER BY id', [orderId])).rows;
+    return { ...order, items, payments, refunds, viewer: userId || null };
+  }
+
+  app.addHook('preValidation', async (request, reply) => {
+    if (request.params && request.params.id !== undefined && !/^\d+$/.test(String(request.params.id))) {
+      return reply.code(404).send({ error: 'not_found', request_id: request.id });
+    }
+  });
+
+  app.get('/health', async () => ({ status: 'ok' }));
+  app.get('/ready', async (_request, reply) => {
+    try {
+      await pool.query('SELECT 1');
+      return { status: 'ready', lock_strategy: lockStrategy };
+    } catch {
+      return reply.code(503).send({ status: 'unavailable' });
+    }
+  });
+
+  app.get('/products', async () => {
+    const { rows } = await pool.query(
+      `SELECT p.sku, p.title, p.price_cents, p.active, i.stock
+         FROM p03.products p JOIN p03.inventory i USING (sku) WHERE p.active ORDER BY p.sku`,
+    );
+    return { products: rows };
+  });
+
+  app.post('/orders', { preHandler: requireApiKey }, async (request, reply) => {
+    const idemKey = request.headers['idempotency-key'];
+    if (typeof idemKey !== 'string' || idemKey.length < 4 || idemKey.length > 100) {
+      return reply.code(400).send({ error: 'missing_idempotency_key' });
+    }
+    const { sku, qty } = request.body || {};
+    if (typeof sku !== 'string' || !Number.isInteger(qty) || qty < 1 || qty > 100) {
+      return reply.code(400).send({ error: 'invalid_order' });
+    }
+    const hash = sha256(JSON.stringify({ sku, qty }));
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const existing = await client.query('SELECT id, request_hash FROM p03.orders WHERE user_id = $1 AND idem_key = $2 FOR UPDATE', [request.userId, idemKey]);
+      if (existing.rowCount > 0) {
+        await client.query('COMMIT');
+        if (existing.rows[0].request_hash !== hash) return reply.code(409).send({ error: 'idempotency_conflict' });
+        return reply.code(200).send({ ...(await orderView(client, existing.rows[0].id, request.userId)), idempotent: true });
+      }
+      const reserved = lockStrategy === 'optimistic'
+        ? await reserveOptimistic(client, { sku, qty })
+        : await reserveRow(client, { sku, qty });
+      if (!reserved.ok) {
+        await client.query('ROLLBACK');
+        if (reserved.reason === 'sku_not_found') return reply.code(404).send({ error: 'sku_not_found' });
+        if (reserved.reason === 'out_of_stock') return reply.code(409).send({ error: 'out_of_stock', stock: reserved.stock });
+        return reply.code(409).send({ error: reserved.reason });
+      }
+      const product = reserved.product;

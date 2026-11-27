@@ -1,0 +1,124 @@
+      <h2 class="section-title">实现说明（{{ noteCount }} 字）</h2>
+      <p class="note-text">{{ implNote }}</p>
+    </section>
+  </div>
+</template>
+
+<script setup>
+import { computed, reactive, ref, watch } from 'vue'
+import { STORAGE_KEY, useHabits } from '@/composables/useHabits'
+
+const { state } = useHabits()
+
+const techStack = [
+  { name: 'Vue 3.5 + script setup 语法', cls: '' },
+  { name: 'Vite 8', cls: '' },
+  { name: 'vue-router 5.4（路由懒加载）', cls: '' },
+  { name: '组合式 API：ref / reactive / computed / watch', cls: 'pill-green' },
+  { name: 'CSS 变量 token + scoped style', cls: 'pill-green' },
+  { name: 'localStorage 持久化', cls: 'pill-amber' },
+  { name: '零第三方 UI / 图表库', cls: 'pill-amber' },
+]
+
+const algorithms = [
+  {
+    title: '周视图首日换算（周一为一周之首）',
+    text:
+      'JS 的 getDay() 把周日算作 0，直接当偏移会让热力条错位。统一先归一到周一正午（避开夏令时与跨日边界），' +
+      '月历首行偏移用 (getDay() + 6) % 7 求得：周一为 0、周日为 6。格子总数向上取整到 7 的倍数，' +
+      '跨月的空位保留 null 并照常渲染占位，这样 7 列网格永远对齐表头。',
+    code: `const monday = startOfWeek(date)            // getDay() === 0 ? -6 : 1 - day
+const leading = (first.getDay() + 6) % 7     // 周一开头的前导空位
+const cellCount = Math.ceil((leading + daysInMonth) / 7) * 7`,
+  },
+  {
+    title: '连续天数倒推（当前连续 / 最长连续）',
+    text:
+      '当前连续用倒推：以今天为指针，今天没打卡就先退回昨天（否则当天未打卡就一律为 0），' +
+      '随后只要指针落在打卡集合里就继续往前退并累加。最长连续换成对升序去重数组的顺推，' +
+      '相邻两个日期键相差一天就延长窗口，否则重置为 1，全程取最大值。',
+    code: `// 当前连续：从今天（或昨天）沿 Set 往回走
+if (!set.has(today)) cursor = addDays(cursor, -1)
+while (set.has(key(cursor))) { streak += 1; cursor = addDays(cursor, -1) }
+
+// 最长连续：升序去重后看相邻是否恰好差一天
+current = dates[i] === nextOf(dates[i - 1]) ? current + 1 : 1`,
+  },
+  {
+    title: '热力值聚合（一格一天，一天多习惯）',
+    text:
+      '遍历月历里的每一个日期键，问一遍「今天有几个习惯打了卡」：把每个习惯的打卡数组先转成 Set，' +
+      '再做包含判断，避免对每天 × 每习惯的两层数组做 indexOf。计数结果同时驱动两样东西——' +
+      '色阶分档（0 / 1 / 2 / 3+，单日上限更高时按 max 归一压回四档）和浮层里的习惯名清单。',
+    code: `const membership = habits.map(h => ({ name: h.name, set: new Set(checkins[h.id]) }))
+cells.forEach(key => {
+  const hits = membership.filter(m => key && m.set.has(key))
+  counts[key] = hits.length
+  detail[key] = hits.map(({ name, color }) => ({ name, color }))
+})`,
+  },
+]
+
+const componentTree = `HabitLayout  布局（页头 + .wrap 内容区 + RouterView）
+├─ AppHeader        导航高亮 / 用户名 / 退出登录（读 habit-user）
+├─ HabitBoard       打卡页：列表 + 表单 + 重置入口
+│  ├─ HabitForm     新增与编辑习惯（v-model、名称与目标校验、调色板单选）
+│  ├─ HabitList     列表容器，负责 v-for 与 key，空态提示
+│  └─ HabitRow      单行：周视图 7 格开关、完成计数、编辑 / 删除事件
+├─ HabitStats       统计页：数字卡 + 热力条 + 近 8 周柱状 + 明细表
+│  └─ MonthHeatmap  月热力条（props 下发 / change-month 上报，纯展示）
+└─ HabitAbout       关于页（本文件）
+
+数据入口只有一个：useHabits() → reactive({ habits, checkins, storageError })`
+
+const storageRows = computed(() => [
+  {
+    key: STORAGE_KEY,
+    value: '{ habits, checkins } 业务数据',
+    writer: 'useHabits 内的深度 watch，自动写入',
+    reset: '打卡页「清空全部数据」/「恢复示例数据」',
+  },
+  {
+    key: 'habit-token',
+    value: '登录标记（存在即放行路由守卫）',
+    writer: '登录页 submit 成功后写入',
+    reset: '页头「退出登录」移除',
+  },
+  {
+    key: 'habit-user',
+    value: '用户名，供页头欢迎语',
+    writer: '登录页 submit 成功后写入',
+    reset: '页头「退出登录」移除',
+  },
+])
+
+const implNote =
+  '全页用 script setup 写成。useHabits 以 reactive 维护 habits 与 checkins，深度 watch 自动落盘，组件层不再碰存储。' +
+  '统计派生集中在 stats.js 纯函数；比率先判分母为零再算，返回 0–1 小数，不会出现 NaN。' +
+  '连续天数用倒推：今天未打卡先退一天再逐日累加；最长连续看升序去重后相邻是否差一天。' +
+  '周视图首日为周一，前导空位据此折算并渲染占位，保证 7 列对齐。' +
+  'MonthHeatmap 只收 props、只 emit 换月，未来月禁用由统计页判定；明细浮层靠 CSS 与 tabindex，不监听不碰 DOM。' +
+  '登录页只写 token 与用户名，redirect 限单斜杠开头的站内路径。'
+
+const modelOpen = reactive({
+  habit: true,
+  checkins: false,
+})
+
+const checkinTotal = computed(() =>
+  state.habits.reduce(
+    (sum, habit) => sum + (Array.isArray(state.checkins[habit.id]) ? state.checkins[habit.id].length : 0),
+    0,
+  ),
+)
+
+const noteCount = computed(() => implNote.replace(/\s/g, '').length)
+
+function nowText() {
+  return new Date().toLocaleTimeString('zh-CN', { hour12: false })
+}
+
+const lastSyncedAt = ref(nowText())
+
+// 这一页是「活」的：习惯数或打卡数一变（在打卡页点了开关再切回来），就刷新最后变化时间
+watch([() => state.habits.length, checkinTotal], () => {

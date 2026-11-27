@@ -1,0 +1,18 @@
+              {!canAdmin && <p className="muted">仅 owner/admin 可见审计。</p>}
+              {canAdmin && (audit.length === 0 ? <p className="muted">暂无审计。</p> : (
+                <table>
+                  <thead><tr><th>时间</th><th>动作</th><th>对象</th><th>操作者</th></tr></thead>
+                  <tbody>
+                    {audit.map((event) => (
+                      <tr key={event.id}><td>{new Date(event.created_at).toLocaleString()}</td><td>{event.action}</td><td>{event.target}</td><td>{event.actor}</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+    </main>
+  );
+}

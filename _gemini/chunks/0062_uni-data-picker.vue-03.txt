@@ -1,0 +1,218 @@
+          }
+        }
+        return result
+      },
+      _dispatchEvent(selected) {
+        let item = {}
+        if (selected.length) {
+          var value = new Array(selected.length)
+          for (var i = 0; i < selected.length; i++) {
+            value[i] = selected[i].value
+          }
+          item = selected[selected.length - 1]
+        } else {
+          item.value = ''
+        }
+        if (this.formItem) {
+          this.formItem.setValue(item.value)
+        }
+
+        this.$emit('input', item.value)
+        this.$emit('update:modelValue', item.value)
+        this.$emit('change', {
+          detail: {
+            value: selected
+          }
+        })
+      }
+    }
+  }
+</script>
+
+<style>
+  .uni-data-tree {
+    flex: 1;
+    position: relative;
+    font-size: 14px;
+  }
+
+  .error-text {
+    color: #DD524D;
+  }
+
+  .input-value {
+    /* #ifndef APP-NVUE */
+    display: flex;
+    /* #endif */
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
+    font-size: 14px;
+    /* line-height: 35px; */
+    padding: 0 10px;
+    padding-right: 5px;
+    overflow: hidden;
+    height: 35px;
+    /* #ifndef APP-NVUE */
+    box-sizing: border-box;
+    /* #endif */
+  }
+
+  .input-value-border {
+    border: 1px solid #e5e5e5;
+    border-radius: 5px;
+  }
+
+  .selected-area {
+    flex: 1;
+    overflow: hidden;
+    /* #ifndef APP-NVUE */
+    display: flex;
+    /* #endif */
+    flex-direction: row;
+  }
+
+  .load-more {
+    /* #ifndef APP-NVUE */
+    margin-right: auto;
+    /* #endif */
+    /* #ifdef APP-NVUE */
+    width: 40px;
+    /* #endif */
+  }
+
+  .selected-list {
+    /* #ifndef APP-NVUE */
+    display: flex;
+    /* #endif */
+    flex-direction: row;
+    flex-wrap: nowrap;
+    /* padding: 0 5px; */
+  }
+
+  .selected-item {
+    flex-direction: row;
+    /* padding: 0 1px; */
+    /* #ifndef APP-NVUE */
+    white-space: nowrap;
+    /* #endif */
+  }
+
+  .text-color {
+    color: #333;
+  }
+
+  .placeholder {
+    color: grey;
+    font-size: 12px;
+  }
+
+  .input-split-line {
+    opacity: .5;
+  }
+
+  .arrow-area {
+    position: relative;
+    width: 20px;
+    /* #ifndef APP-NVUE */
+    margin-bottom: 5px;
+    margin-left: auto;
+    display: flex;
+    /* #endif */
+    justify-content: center;
+    transform: rotate(-45deg);
+    transform-origin: center;
+  }
+
+  .input-arrow {
+    width: 7px;
+    height: 7px;
+    border-left: 1px solid #999;
+    border-bottom: 1px solid #999;
+  }
+
+  .uni-data-tree-cover {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, .4);
+    /* #ifndef APP-NVUE */
+    display: flex;
+    /* #endif */
+    flex-direction: column;
+    z-index: 100;
+  }
+
+  .uni-data-tree-dialog {
+    position: fixed;
+    left: 0;
+    /* #ifndef APP-NVUE */
+    top: 20%;
+    /* #endif */
+    /* #ifdef APP-NVUE */
+    top: 200px;
+    /* #endif */
+    right: 0;
+    bottom: 0;
+    background-color: #FFFFFF;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    /* #ifndef APP-NVUE */
+    display: flex;
+    /* #endif */
+    flex-direction: column;
+    z-index: 102;
+    overflow: hidden;
+    /* #ifdef APP-NVUE */
+    width: 750rpx;
+    /* #endif */
+  }
+
+  .dialog-caption {
+    position: relative;
+    /* #ifndef APP-NVUE */
+    display: flex;
+    /* #endif */
+    flex-direction: row;
+    /* border-bottom: 1px solid #f0f0f0; */
+  }
+
+  .title-area {
+    /* #ifndef APP-NVUE */
+    display: flex;
+    /* #endif */
+    align-items: center;
+    /* #ifndef APP-NVUE */
+    margin: auto;
+    /* #endif */
+    padding: 0 10px;
+  }
+
+  .dialog-title {
+    /* font-weight: bold; */
+    line-height: 44px;
+  }
+
+  .dialog-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    /* #ifndef APP-NVUE */
+    display: flex;
+    /* #endif */
+    flex-direction: row;
+    align-items: center;
+    padding: 0 15px;
+  }
+
+  .dialog-close-plus {
+    width: 16px;
+    height: 2px;
+    background-color: #666;
+    border-radius: 2px;
+    transform: rotate(45deg);
+  }
+

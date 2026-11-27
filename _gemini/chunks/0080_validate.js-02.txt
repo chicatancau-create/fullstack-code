@@ -1,0 +1,150 @@
+				result = await this.validateFunction(rule, value, data, allData, vt)
+				if (result !== null) {
+					break
+				}
+			}
+		}
+
+		if (result !== null) {
+			result = message.TAG + result
+		}
+
+		return result
+	}
+
+	async validateFunction(rule, value, data, allData, vt) {
+		let result = null
+		try {
+			let callbackMessage = null
+			const res = await rule.validateFunction(rule, value, allData || data, (message) => {
+				callbackMessage = message
+			})
+			if (callbackMessage || (typeof res === 'string' && res) || res === false) {
+				result = this._getMessage(rule, callbackMessage || res, vt)
+			}
+		} catch (e) {
+			result = this._getMessage(rule, e.message, vt)
+		}
+		return result
+	}
+
+	_getMessage(rule, message, vt) {
+		return formatMessage(rule, message || rule.errorMessage || this._message[vt] || message['default'])
+	}
+
+	_getValidateType(rule) {
+		var result = ''
+		if (rule.required) {
+			result = 'required'
+		} else if (rule.format) {
+			result = 'format'
+		} else if (rule.arrayType) {
+			result = 'arrayTypeFormat'
+		} else if (rule.range) {
+			result = 'range'
+		} else if (rule.maximum !== undefined || rule.minimum !== undefined) {
+			result = 'rangeNumber'
+		} else if (rule.maxLength !== undefined || rule.minLength !== undefined) {
+			result = 'rangeLength'
+		} else if (rule.pattern) {
+			result = 'pattern'
+		} else if (rule.validateFunction) {
+			result = 'validateFunction'
+		}
+		return result
+	}
+}
+
+const RuleValidatorHelper = {
+	required(rule, value, message) {
+		if (rule.required && isEmptyValue(value, rule.format || typeof value)) {
+			return formatMessage(rule, rule.errorMessage || message.required);
+		}
+
+		return null
+	},
+
+	range(rule, value, message) {
+		const {
+			range,
+			errorMessage
+		} = rule;
+
+		let list = new Array(range.length);
+		for (let i = 0; i < range.length; i++) {
+			const item = range[i];
+			if (types.object(item) && item.value !== undefined) {
+				list[i] = item.value;
+			} else {
+				list[i] = item;
+			}
+		}
+
+		let result = false
+		if (Array.isArray(value)) {
+			result = (new Set(value.concat(list)).size === list.length);
+		} else {
+			if (list.indexOf(value) > -1) {
+				result = true;
+			}
+		}
+
+		if (!result) {
+			return formatMessage(rule, errorMessage || message['enum']);
+		}
+
+		return null
+	},
+
+	rangeNumber(rule, value, message) {
+		if (!types.number(value)) {
+			return formatMessage(rule, rule.errorMessage || message.pattern.mismatch);
+		}
+
+		let {
+			minimum,
+			maximum,
+			exclusiveMinimum,
+			exclusiveMaximum
+		} = rule;
+		let min = exclusiveMinimum ? value <= minimum : value < minimum;
+		let max = exclusiveMaximum ? value >= maximum : value > maximum;
+
+		if (minimum !== undefined && min) {
+			return formatMessage(rule, rule.errorMessage || message['number'][exclusiveMinimum ?
+				'exclusiveMinimum' : 'minimum'
+			])
+		} else if (maximum !== undefined && max) {
+			return formatMessage(rule, rule.errorMessage || message['number'][exclusiveMaximum ?
+				'exclusiveMaximum' : 'maximum'
+			])
+		} else if (minimum !== undefined && maximum !== undefined && (min || max)) {
+			return formatMessage(rule, rule.errorMessage || message['number'].range)
+		}
+
+		return null
+	},
+
+	rangeLength(rule, value, message) {
+		if (!types.string(value) && !types.array(value)) {
+			return formatMessage(rule, rule.errorMessage || message.pattern.mismatch);
+		}
+
+		let min = rule.minLength;
+		let max = rule.maxLength;
+		let val = value.length;
+
+		if (min !== undefined && val < min) {
+			return formatMessage(rule, rule.errorMessage || message['length'].minLength)
+		} else if (max !== undefined && val > max) {
+			return formatMessage(rule, rule.errorMessage || message['length'].maxLength)
+		} else if (min !== undefined && max !== undefined && (val < min || val > max)) {
+			return formatMessage(rule, rule.errorMessage || message['length'].range)
+		}
+
+		return null
+	},
+
+	pattern(rule, value, message) {
+		if (!types['pattern'](rule.pattern, value)) {
+			return formatMessage(rule, rule.errorMessage || message.pattern.mismatch);

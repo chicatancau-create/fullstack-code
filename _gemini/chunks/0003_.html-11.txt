@@ -1,0 +1,103 @@
+      float ndv = clamp( dot( N, -V ), 0.0, 1.0 );
+      float F = 0.022 + 0.978*pow( 1.0 - ndv, 5.0 );
+      F = clamp( F*2.0, 0.0, 1.0 );
+
+      vec3 Rv = reflect( V, N );
+      vec3 refl = skyColor( Rv ) * 0.92;
+
+      float depth = uWaterY - hb;
+      vec3 body = mix( uShallow, uDeep, smoothstep( 0.02, 0.42, depth ) );
+      vec3 col = mix( body, refl, F );
+
+      // 阳光/月光闪鳞
+      vec3 H = normalize( -uSunDir + -V );
+      float sp = pow( max( dot( N, H ), 0.0 ), 320.0 );
+      col += uSunCol * sp * uSunI * 0.9;
+
+      // 焦散在水体中的补光（与沙底材质呼应）
+      float cc = caustic( p*4.2 + fbm2(p*0.9)*0.5, t*0.5 );
+      col += uSunCol * cc * 0.035 * ( 1.0 - smoothstep( 0.0, 0.5, depth ) );
+
+      // 泡沫：岸线 + 贴壁
+      float shore = 1.0 - smoothstep( 0.0, 0.030, depth );
+      float wall = smoothstep( 0.955, 0.998, vRho );
+      float streak = 0.55 + 0.45*vn( p*26.0 + vec2(t*0.5, -t*0.35) );
+      float crest = smoothstep( 0.0055, 0.0092, vW - uWaterY ) * uWindI;
+      float foam = clamp( (shore*streak + wall*0.85 + crest*0.5) * uFoam, 0.0, 1.0 );
+      col = mix( col, vec3(0.93,0.96,1.0), foam*0.42 );
+
+      float alpha = clamp( 0.055 + F*0.80 + sp*0.55 + foam*0.7, 0.0, 1.0 );
+      gl_FragColor = vec4( nanSafe(col), alpha );
+    }`
+});
+const water = new THREE.Mesh(discGeometry(0.990, 54, 150, () => WATER_Y), waterMat);
+water.renderOrder = 20;
+island.add(water);
+
+/* 树脂外壳：拉旋体 + 屏幕空间物理折射（外壁→内壁→背景深度） */
+const shellUni = Object.assign(skyUniformValues(), {
+  uPre: U.pre, uPreDepth: U.preDepth, uProjInv: U.projInv,
+  uCamWorld: U.camWorld, uViewProj: U.viewProj,
+  uShellPos: U.shellPos, uRi: { value: RI }, uTime: U.time,
+  uResinAbsorb: { value: new THREE.Vector3(0.62, 0.26, 0.13) },
+  uResinTint: { value: new THREE.Color(0xeaf6f4) },
+  uIOR: { value: 1.491 }, uDisp: { value: 0.0022 }, uScratch: { value: 0.9 },
+  uRefl: { value: 1.0 }, uNight: U.night, uWaterY: { value: WATER_Y }
+});
+const shellMat = new THREE.ShaderMaterial({
+  uniforms: shellUni, transparent: true, blending: THREE.NoBlending,
+  depthWrite: false, side: THREE.FrontSide
+});
+shellMat.vertexShader = /* glsl */`
+  varying vec3 vWPos; varying vec3 vNrm; varying vec2 vSUV;
+  void main(){
+    vec4 wp = modelMatrix*vec4(position,1.0);
+    vWPos = wp.xyz;
+    vNrm = normalize( mat3(modelMatrix)*normal );
+    vec4 cp = projectionMatrix*viewMatrix*wp;
+    vSUV = cp.xy/cp.w*0.5+0.5;
+    gl_Position = cp;
+  }`;
+shellMat.fragmentShader = GLSL_NOISE + GLSL_SAFE + GLSL_SKY + /* glsl */`
+  uniform sampler2D uPre, uPreDepth;
+  uniform mat4 uProjInv, uCamWorld, uViewProj;
+  uniform vec3 uShellPos, uResinAbsorb, uResinTint;
+  uniform float uRi, uIOR, uDisp, uScratch, uRefl, uTime, uWaterY;
+  varying vec3 vWPos; varying vec3 vNrm; varying vec2 vSUV;
+
+  // 与以 Y 为轴、半径 rad 的圆柱求交（取正向最近交点）
+  float cylT(vec3 o, vec3 d, float rad, out vec3 hitN){
+    float a = dot(d.xz,d.xz);
+    float b = 2.0*dot(o.xz,d.xz);
+    float c = dot(o.xz,o.xz) - rad*rad;
+    float disc = b*b - 4.0*a*c;
+    if ( disc <= 0.0 || a < 1e-6 ) { hitN = vec3(0.0); return -1.0; }
+    float sq = sqrt(disc);
+    float t1 = (-b - sq)/(2.0*a);
+    float t2r = (-b + sq)/(2.0*a);
+    float t = t1 > 1e-4 ? t1 : (t2r > 1e-4 ? t2r : -1.0);
+    if ( t < 0.0 || t > 0.6 ) { hitN = vec3(0.0); return -1.0; }
+    vec3 hp = o + d*t;
+    float hl = length(hp.xz);
+    hitN = hl > 1e-4 ? vec3(hp.x, 0.0, hp.z)/hl : vec3(0.0, 0.0, 1.0);
+    hitN *= ( dot(d, hitN) > 0.0 ? -1.0 : 1.0 );
+    return t;
+  }
+
+  vec2 projSafe(vec3 P, vec2 fallback){
+    vec4 c = uViewProj*vec4(P,1.0);
+    if ( c.w <= 1e-4 ) return fallback;
+    return clamp((c.xy/c.w)*0.5+0.5, 0.0, 1.0);
+  }
+
+  void main(){
+    vec3 V = normalize( vWPos - cameraPosition );
+    vec3 N = normalize( vNrm );
+
+    // 树脂表面微划痕/指纹扰动
+    vec3 lp = vWPos - uShellPos;
+    float g1 = vn( lp.xz*13.0 + vec2(lp.y*4.0, -lp.y*3.0) );
+    float g2 = vn( lp.zx*9.0 + vec2(13.0, 7.0) + lp.y );
+    N = normalize( N + vec3(g1-0.5, g2-0.5, vn(lp.xy*55.0)-0.5)*0.018*uScratch );
+
+    // 1) 空气→树脂

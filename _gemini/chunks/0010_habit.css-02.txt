@@ -1,0 +1,203 @@
+input::placeholder,
+textarea::placeholder {
+  color: #a8b2c1;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 76px;
+}
+
+/* checkbox / radio 保持自身尺寸，不做块级铺满 */
+input[type="checkbox"],
+input[type="radio"] {
+  width: auto;
+  padding: 0;
+  accent-color: var(--accent);
+}
+
+input[type="date"] {
+  width: auto;
+}
+
+/* ---------- 8. 表格 ---------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  background: var(--card);
+}
+
+caption {
+  text-align: left;
+  color: var(--muted);
+  font-size: 12.5px;
+  padding-bottom: 8px;
+}
+
+th,
+td {
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+/* 表头底色 #eaf0fa，偶数行 #fafbfe */
+thead th,
+thead tr {
+  background: #eaf0fa;
+  color: var(--brand);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+tbody tr:nth-child(even) {
+  background: #fafbfe;
+}
+
+/* ---------- 9. 代码块 ---------- */
+pre {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: #f0f3f9;
+  color: var(--brand);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #eef2fa;
+  color: var(--brand);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+}
+
+pre code {
+  padding: 0;
+  background: none;
+}
+
+/* ---------- 10. 顶部校名胶囊 ---------- */
+.school-pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 18px;
+  background: var(--brand);
+  color: #fff;
+  white-space: nowrap;
+}
+
+.school-pill .school {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.school-pill .college {
+  font-size: 13px;
+  font-weight: 400;
+  opacity: 0.88;
+}
+
+/* ---------- 11. 焦点可见（无障碍） ---------- */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* 焦点环在深色底上使用浅色，保证对比度 */
+.btn-primary:focus-visible,
+.btn-danger:focus-visible,
+.school-pill:focus-visible {
+  outline-color: #fff;
+}
+
+/* 跳转主内容链接：平时视觉隐藏，键盘聚焦时出现 */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 10;
+  padding: 8px 16px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius-btn);
+}
+
+.skip-link:focus {
+  left: 12px;
+}
+
+/* ---------- 12. 窄屏降级 ---------- */
+@media (max-width: 720px) {
+  body {
+    font-size: 14.5px;
+  }
+
+  .wrap {
+    padding: 0 14px;
+  }
+
+  .card {
+    padding: 15px 16px;
+    border-radius: 10px;
+  }
+
+  /* 表格改为横向滚动，避免撑破屏幕 */
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  th,
+  td {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+
+  /* 表单在窄屏改成整行，控件不再挤压 */
+  .field {
+    margin-bottom: 12px;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  .btn {
+    padding: 7px 12px;
+  }
+
+  pre {
+    padding: 12px;
+    font-size: 12.5px;
+  }
+}
+
+/* ---------- 13. 动效兜底 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

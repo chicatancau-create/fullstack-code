@@ -1,0 +1,87 @@
+      const taskId = Number(item?.id);
+      if (!Number.isInteger(taskId) || taskId < 1) {
+        results.push({ id: item?.id ?? null, ok: false, error: 'invalid_id' });
+        continue;
+      }
+      if (item?.status !== 'todo' && item?.status !== 'doing' && item?.status !== 'done') {
+        results.push({ id: taskId, ok: false, error: 'invalid_status' });
+        continue;
+      }
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const current = await client.query(
+          'SELECT id, title, status FROM p02.tasks WHERE id = $1 AND workspace_id = $2 FOR UPDATE',
+          [taskId, workspaceId],
+        );
+        if (current.rowCount === 0) {
+          await client.query('ROLLBACK');
+          results.push({ id: taskId, ok: false, error: 'not_found' });
+          continue;
+        }
+        const previous = current.rows[0].status;
+        if (previous === item.status) {
+          await client.query('COMMIT');
+          results.push({ id: taskId, ok: true, status: previous, changed: false });
+          continue;
+        }
+        const updated = await client.query(
+          'UPDATE p02.tasks SET status = $2 WHERE id = $1 RETURNING id, title, status',
+          [taskId, item.status],
+        );
+        await client.query(
+          `INSERT INTO p02.task_events (task_id, workspace_id, actor_id, from_status, to_status)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [taskId, workspaceId, request.user.id, previous, item.status],
+        );
+        await client.query('COMMIT');
+        results.push({ id: updated.rows[0].id, ok: true, title: updated.rows[0].title, status: updated.rows[0].status, changed: true });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    }
+    return { results };
+  });
+
+  app.patch('/tasks/:taskId', { preHandler: requireUser }, async (request, reply) => {
+    const status = request.body?.status;
+    if (status !== 'todo' && status !== 'doing' && status !== 'done') return reply.code(400).send({ error: 'invalid_status' });
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const task = await client.query(
+        `SELECT t.id, t.title, t.status, t.workspace_id FROM p02.tasks t
+         JOIN p02.members m ON m.workspace_id = t.workspace_id
+         WHERE t.id = $1 AND m.user_id = $2 FOR UPDATE`,
+        [Number(request.params.taskId), request.user.id],
+      );
+      if (task.rowCount === 0) {
+        await client.query('ROLLBACK');
+        return reply.code(404).send({ error: 'not_found' });
+      }
+      const previous = task.rows[0].status;
+      if (previous === status) {
+        await client.query('COMMIT');
+        return { id: task.rows[0].id, title: task.rows[0].title, status, changed: false };
+      }
+      const updated = await client.query('UPDATE p02.tasks SET status = $2 WHERE id = $1 RETURNING id, title, status', [task.rows[0].id, status]);
+      await client.query(
+        `INSERT INTO p02.task_events (task_id, workspace_id, actor_id, from_status, to_status)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [task.rows[0].id, task.rows[0].workspace_id, request.user.id, previous, status],
+      );
+      await client.query('COMMIT');
+      return { ...updated.rows[0], changed: true };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  });
+
+  return app;
+}

@@ -1,0 +1,73 @@
+export function overallSummary(habits, checkins, todayKey = toDateKey()) {
+  const list = normalizeHabits(habits)
+  const today = isValidDateKey(todayKey) ? todayKey : toDateKey()
+  const refDate = fromDateKey(today)
+  const weekKeys = getWeekDates(refDate).map((date) => toDateKey(date))
+  const weekSet = new Set(weekKeys)
+
+  const rows = list.map((habit) => {
+    const dates = datesOf(checkins, habit.id)
+    const target = targetOf(habit.target)
+    const weekDone = dates.filter((key) => weekSet.has(key) && key <= today).length
+    return {
+      id: habit.id,
+      name: habit.name || '未命名习惯',
+      target,
+      color: habit.color || FALLBACK_COLOR,
+      total: dates.length,
+      weekDone,
+      weekRate: safeRate(weekDone, target),
+      currentStreak: calcCurrentStreak(dates, refDate),
+      longestStreak: calcLongestStreak(dates),
+    }
+  })
+
+  const allKeys = [...new Set(rows.flatMap((row) => datesOf(checkins, row.id)))].sort()
+  const rateSum = rows.reduce((sum, row) => sum + row.weekRate, 0)
+
+  const perHabit = rows.map(({ total, ...rest }) => rest)
+
+  return {
+    habitCount: perHabit.length,
+    totalCheckins: rows.reduce((sum, row) => sum + row.total, 0),
+    thisWeekDone: rows.reduce((sum, row) => sum + row.weekDone, 0),
+    // 没有习惯时 rateSum / 0 会得到 NaN，这里显式返回 0
+    avgRate: perHabit.length ? clampRate(rateSum / perHabit.length) : 0,
+    bestStreak: calcLongestStreak(allKeys),
+    currentStreak: calcCurrentStreak(allKeys, refDate),
+    perHabit,
+  }
+}
+
+/* ------------------------------------------------------------ 近 N 周 ----- */
+
+/**
+ * 近 n 周完成率（含当周），返回按时间正序的数组，方便直接画柱状图。
+ * 本周尚未过完，分母仍按整周目标天数计算，因此当周柱形偏低属预期。
+ */
+export function recentWeeks(habits, checkins, refDate = new Date(), n = DEFAULT_RECENT_WEEKS) {
+  const list = normalizeHabits(habits)
+  const totalTarget = list.reduce((sum, habit) => sum + targetOf(habit.target), 0)
+  const membership = list.map((habit) => new Set(datesOf(checkins, habit.id)))
+  const count = Math.min(52, Math.max(1, Number.isFinite(Number(n)) ? Math.round(Number(n)) : DEFAULT_RECENT_WEEKS))
+  const base = startOfWeek(toDate(refDate))
+
+  const weeks = []
+  for (let back = count - 1; back >= 0; back -= 1) {
+    const monday = addDays(base, -7 * back)
+    const keys = getWeekDates(monday).map((date) => toDateKey(date))
+    const weekSet = new Set(keys)
+    const done = membership.reduce(
+      (sum, set) => sum + keys.filter((key) => set.has(key)).length,
+      0,
+    )
+    weeks.push({
+      weekKey: keys[0],
+      label: shortLabelOf(keys[0]),
+      done,
+      rate: safeRate(done, totalTarget),
+    })
+  }
+
+  return weeks
+}

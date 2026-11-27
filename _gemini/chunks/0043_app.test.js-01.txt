@@ -1,0 +1,84 @@
+import test, { before, after, beforeEach } from 'node:test';
+import assert from 'node:assert/strict';
+import { createPool } from '../src/db.mjs';
+import { buildApp } from '../src/app.js';
+
+let pool;
+let app;
+
+before(async () => {
+  pool = createPool(6);
+  app = buildApp({ pool });
+  await app.ready();
+});
+
+after(async () => {
+  await app.close();
+  await pool.end();
+});
+
+beforeEach(async () => {
+  await pool.query("DROP TRIGGER IF EXISTS fail_audit ON p04.audit_events");
+  await pool.query('TRUNCATE p04.users, p04.tenants RESTART IDENTITY CASCADE');
+});
+
+async function register(email, name = '测试用户', password = 'correct-horse-1') {
+  const response = await app.inject({ method: 'POST', url: '/auth/register', payload: { email, name, password } });
+  assert.equal(response.statusCode, 201, response.body);
+  return response.json();
+}
+
+async function login(email, password = 'correct-horse-1') {
+  const response = await app.inject({ method: 'POST', url: '/auth/login', payload: { email, password } });
+  assert.equal(response.statusCode, 200, response.body);
+  return response.json().token;
+}
+
+const h = (token) => ({ authorization: `Bearer ${token}` });
+
+async function makeTenant(token, plan = 'team', name = '团队') {
+  const response = await app.inject({ method: 'POST', url: '/tenants', headers: h(token), payload: { name, plan } });
+  assert.equal(response.statusCode, 201, response.body);
+  return response.json();
+}
+
+async function invite(token, tenantId, email, role = 'member') {
+  return app.inject({ method: 'POST', url: `/tenants/${tenantId}/invitations`, headers: h(token), payload: { email, role } });
+}
+
+async function accept(token, inviteToken) {
+  return app.inject({ method: 'POST', url: '/invitations/accept', headers: h(token), payload: { token: inviteToken } });
+}
+
+test('注册、登录、鉴权与会话失效', async () => {
+  await register('owner@example.com');
+  assert.equal((await app.inject({ method: 'POST', url: '/auth/register', payload: { email: 'owner@example.com', name: '重复', password: 'correct-horse-1' } })).statusCode, 409);
+  assert.equal((await app.inject({ method: 'POST', url: '/auth/register', payload: { email: 'bad', name: 'X', password: 'short' } })).statusCode, 400);
+  assert.equal((await app.inject({ method: 'POST', url: '/auth/login', payload: { email: 'owner@example.com', password: 'wrong-password' } })).statusCode, 401);
+  assert.equal((await app.inject({ method: 'GET', url: '/tenants' })).statusCode, 401);
+  const token = await login('owner@example.com');
+  assert.equal((await app.inject({ method: 'GET', url: '/tenants', headers: h(token) })).statusCode, 200);
+  assert.equal((await app.inject({ method: 'POST', url: '/auth/logout', headers: h(token) })).statusCode, 204);
+  assert.equal((await app.inject({ method: 'GET', url: '/tenants', headers: h(token) })).statusCode, 401);
+});
+
+test('创建组织成为 owner，免费计划席位为 2，并写审计', async () => {
+  await register('owner@example.com');
+  const token = await login('owner@example.com');
+  const tenant = await makeTenant(token, 'free');
+  assert.equal(tenant.plan, 'free');
+  assert.equal(tenant.seat_limit, 2);
+  const members = await app.inject({ method: 'GET', url: `/tenants/${tenant.id}/members`, headers: h(token) });
+  assert.deepEqual(members.json().members.map((m) => [m.email, m.role]), [['owner@example.com', 'owner']]);
+  const events = await app.inject({ method: 'GET', url: `/tenants/${tenant.id}/audit`, headers: h(token) });
+  assert.deepEqual(events.json().events.map((e) => e.action), ['tenant.create']);
+  assert.equal(events.json().events[0].metadata.plan, 'free');
+});
+
+test('普通成员不能邀请，owner/admin 可以；待接受邀请占用席位', async () => {
+  await register('owner@example.com');
+  await register('member@example.com');
+  const ownerToken = await login('owner@example.com');
+  const memberToken = await login('member@example.com');
+  const tenant = await makeTenant(ownerToken, 'team');
+  const memberInvite = await invite(ownerToken, tenant.id, 'member@example.com');

@@ -1,0 +1,87 @@
+<template>
+  <view class="uni-data-tree">
+    <view class="uni-data-tree-input" @click="handleInput">
+      <slot :data="selectedPaths" :error="error">
+        <view class="input-value" :class="{'input-value-border': border}">
+          <text v-if="error!=null" class="error-text">{{error!.errMsg}}</text>
+          <scroll-view v-if="selectedPaths.length" class="selected-path" scroll-x="true">
+            <view class="selected-list">
+              <template v-for="(item, index) in selectedPaths">
+                <text class="text-color">{{item[mappingTextName]}}</text>
+                <text v-if="index<selectedPaths.length-1" class="input-split-line">{{split}}</text>
+              </template>
+            </view>
+          </scroll-view>
+          <text v-else-if="error==null&&!loading" class="placeholder">{{placeholder}}</text>
+          <view v-if="!readonly" class="arrow-area">
+            <view class="input-arrow"></view>
+          </view>
+        </view>
+      </slot>
+      <view v-if="loading && !isOpened" class="selected-loading">
+        <slot name="picker-loading" :loading="loading"></slot>
+      </view>
+    </view>
+    <view class="uni-data-tree-cover" v-if="isOpened" @click="handleClose"></view>
+    <view class="uni-data-tree-dialog" v-if="isOpened">
+      <view class="uni-popper__arrow"></view>
+      <view class="dialog-caption">
+        <view class="dialog-title-view">
+          <text class="dialog-title">{{popupTitle}}</text>
+        </view>
+        <view class="dialog-close" @click="handleClose">
+          <view class="dialog-close-plus" data-id="close"></view>
+          <view class="dialog-close-plus dialog-close-rotate" data-id="close"></view>
+        </view>
+      </view>
+      <view ref="pickerView" class="uni-data-pickerview">
+        <view v-if="error!=null" class="error">
+          <text class="error-text">{{error!.errMsg}}</text>
+        </view>
+        <scroll-view v-if="!isCloudDataList" :scroll-x="true">
+          <view class="selected-node-list">
+            <template v-for="(item, index) in selectedNodes">
+              <text class="selected-node-item" :class="{'selected-node-item-active':index==selectedIndex}"
+                @click="onTabSelect(index)">
+                {{item[mappingTextName]}}
+              </text>
+            </template>
+          </view>
+        </scroll-view>
+        <list-view class="list-view" :scroll-y="true">
+          <list-item class="list-item" v-for="(item, _) in currentDataList" @click="onNodeClick(item)">
+            <text class="item-text" :class="{'item-text-disabled': item['disable']}">{{item[mappingTextName]}}</text>
+            <text class="check" v-if="item[mappingValueName] == selectedNodes[selectedIndex][mappingValueName]"></text>
+          </list-item>
+        </list-view>
+        <view class="loading-cover" v-if="loading">
+          <slot name="pickerview-loading" :loading="loading"></slot>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+  import { dataPicker } from "../uni-data-pickerview/uni-data-picker.uts"
+
+  /**
+   * DataPicker 级联选择
+   * @description 支持单列、和多列级联选择。列数没有限制，如果屏幕显示不全，顶部tab区域会左右滚动。
+   * @tutorial https://ext.dcloud.net.cn/plugin?id=3796
+   * @property {String} popup-title 弹出窗口标题
+   * @property {Array} localdata 本地数据，参考
+   * @property {Boolean} border = [true|false] 是否有边框
+   * @property {Boolean} readonly = [true|false] 是否仅读
+   * @property {Boolean} preload = [true|false] 是否预加载数据
+   * @value true 开启预加载数据，点击弹出窗口后显示已加载数据
+   * @value false 关闭预加载数据，点击弹出窗口后开始加载数据
+   * @property {Boolean} step-searh = [true|false] 是否分布查询
+   * @value true 启用分布查询，仅查询当前选中节点
+   * @value false 关闭分布查询，一次查询出所有数据
+   * @property {String|DBFieldString} self-field 分布查询当前字段名称
+   * @property {String|DBFieldString} parent-field 分布查询父字段名称
+   * @property {String|DBCollectionString} collection 表名
+   * @property {String|DBFieldString} field 查询字段，多个字段用 `,` 分割
+   * @property {String} orderby 排序字段及正序倒叙设置
+   * @property {String|JQLString} where 查询条件

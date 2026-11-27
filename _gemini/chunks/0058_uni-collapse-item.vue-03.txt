@@ -1,0 +1,38 @@
+				transition-property: height, border-bottom-width;
+				transition-duration: 0.3s;
+				/* #ifndef APP-NVUE */
+				will-change: height;
+				/* #endif */
+			}
+
+
+
+			&-content {
+				position: absolute;
+				font-size: 13px;
+				color: #303133;
+				// transition: height 0.3s;
+				border-bottom-color: transparent;
+				border-bottom-style: solid;
+				border-bottom-width: 0;
+
+				&.uni-collapse-item--border {
+					border-bottom-width: 1px;
+					border-bottom-color: red;
+					border-bottom-color: #ebeef5;
+				}
+
+				&.open {
+					position: relative;
+				}
+			}
+		}
+
+		&--animation {
+			transition-property: transform;
+			transition-duration: 0.3s;
+			transition-timing-function: ease;
+		}
+
+	}
+</style>

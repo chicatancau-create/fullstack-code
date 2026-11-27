@@ -1,0 +1,73 @@
+  assert.equal((await accept(memberToken, memberInvite.json().token)).statusCode, 200);
+  assert.equal((await invite(memberToken, tenant.id, 'other@example.com')).statusCode, 403);
+
+  const adminInvite = await invite(ownerToken, tenant.id, 'admin@example.com', 'admin');
+  assert.equal(adminInvite.statusCode, 201);
+  await register('admin@example.com');
+  const adminToken = await login('admin@example.com');
+  await accept(adminToken, adminInvite.json().token);
+  assert.equal((await invite(adminToken, tenant.id, 'third@example.com')).statusCode, 201);
+});
+
+test('免费计划仅剩一个席位时并发邀请只成功一个', async () => {
+  await register('owner@example.com');
+  const token = await login('owner@example.com');
+  const tenant = await makeTenant(token, 'free');
+  const responses = await Promise.all(
+    ['a@example.com', 'b@example.com', 'c@example.com', 'd@example.com'].map((email) => invite(token, tenant.id, email)),
+  );
+  const ok = responses.filter((r) => r.statusCode === 201);
+  const full = responses.filter((r) => r.statusCode === 409 && r.json().error === 'seats_full');
+  assert.equal(ok.length, 1);
+  assert.equal(full.length, 3);
+  const pending = await pool.query("SELECT count(*)::int AS n FROM p04.invitations WHERE tenant_id = $1 AND status = 'pending'", [tenant.id]);
+  assert.equal(pending.rows[0].n, 1);
+});
+
+test('邀请必须由被邀请邮箱接受，重复接受幂等，撤销后不能接受', async () => {
+  await register('owner@example.com');
+  await register('bob@example.com');
+  await register('alice@example.com');
+  const ownerToken = await login('owner@example.com');
+  const bobToken = await login('bob@example.com');
+  const aliceToken = await login('alice@example.com');
+  const tenant = await makeTenant(ownerToken, 'team');
+  const inv = await invite(ownerToken, tenant.id, 'bob@example.com');
+  assert.equal((await accept(aliceToken, inv.json().token)).statusCode, 403);
+  assert.equal((await accept(bobToken, inv.json().token)).statusCode, 200);
+  const again = await accept(bobToken, inv.json().token);
+  assert.equal(again.statusCode, 200);
+  assert.equal(again.json().idempotent, true);
+  assert.equal((await pool.query('SELECT count(*)::int AS n FROM p04.memberships WHERE tenant_id = $1', [tenant.id])).rows[0].n, 2);
+
+  const revoked = await invite(ownerToken, tenant.id, 'alice@example.com');
+  const revoke = await app.inject({ method: 'POST', url: `/invitations/${revoked.json().id}/revoke`, headers: h(ownerToken) });
+  assert.equal(revoke.statusCode, 200);
+  assert.equal((await accept(aliceToken, revoked.json().token)).statusCode, 409);
+});
+
+test('重复邀请同一邮箱返回 409，过期邀请不能接受', async () => {
+  await register('owner@example.com');
+  await register('bob@example.com');
+  const token = await login('owner@example.com');
+  const tenant = await makeTenant(token, 'team');
+  assert.equal((await invite(token, tenant.id, 'bob@example.com')).statusCode, 201);
+  assert.equal((await invite(token, tenant.id, 'bob@example.com')).statusCode, 409);
+  const inv = await invite(token, tenant.id, 'carol@example.com');
+  await pool.query("UPDATE p04.invitations SET expires_at = now() - interval '1 minute' WHERE id = $1", [inv.json().id]);
+  await register('carol@example.com');
+  const carolToken = await login('carol@example.com');
+  assert.equal((await accept(carolToken, inv.json().token)).statusCode, 409);
+});
+
+test('降级计划在成员超限时被阻断，移除成员后允许降级', async () => {
+  await register('owner@example.com');
+  for (const email of ['b@example.com', 'c@example.com', 'd@example.com']) await register(email);
+  const ownerToken = await login('owner@example.com');
+  const tenant = await makeTenant(ownerToken, 'team');
+  for (const email of ['b@example.com', 'c@example.com', 'd@example.com']) {
+    const inv = await invite(ownerToken, tenant.id, email);
+    const token = await login(email);
+    assert.equal((await accept(token, inv.json().token)).statusCode, 200);
+  }
+  const blocked = await app.inject({ method: 'PATCH', url: `/tenants/${tenant.id}/plan`, headers: h(ownerToken), payload: { plan: 'free' } });

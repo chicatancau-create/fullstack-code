@@ -1,0 +1,152 @@
+						if (this.returnType === "date") {
+							value[0] = new Date(value[0])
+							value[1] = new Date(value[1])
+						}
+					}
+				}
+
+				this.$emit('update:modelValue', value)
+				this.$emit('input', value)
+				this.$emit('change', value)
+				this.isEmitValue = true
+			},
+			createTimestamp(date) {
+				date = fixIosDateFormat(date)
+				return Date.parse(new Date(date))
+			},
+			singleChange(e) {
+				this.calendarDate = this.inputDate = e.fulldate
+				if (this.hasTime) return
+				this.confirmSingleChange()
+			},
+			confirmSingleChange() {
+				if (!checkDate(this.inputDate)) {
+					const now = new Date()
+					this.calendarDate = this.inputDate = getDate(now)
+					this.pickerTime = getTime(now, this.hideSecond)
+				}
+
+				let startLaterInputDate = false
+				let startDate, startTime
+				if (this.start) {
+					let startString = this.start
+					if (typeof this.start === 'number') {
+						startString = getDateTime(this.start, this.hideSecond)
+					}
+					[startDate, startTime] = startString.split(' ')
+					if (this.start && !dateCompare(startDate, this.inputDate)) {
+						startLaterInputDate = true
+						this.inputDate = startDate
+					}
+				}
+
+				let endEarlierInputDate = false
+				let endDate, endTime
+				if (this.end) {
+					let endString = this.end
+					if (typeof this.end === 'number') {
+						endString = getDateTime(this.end, this.hideSecond)
+					}
+					[endDate, endTime] = endString.split(' ')
+					if (this.end && !dateCompare(this.inputDate, endDate)) {
+						endEarlierInputDate = true
+						this.inputDate = endDate
+					}
+				}
+				if (this.hasTime) {
+					if (startLaterInputDate) {
+						this.pickerTime = startTime || getDefaultSecond(this.hideSecond)
+					}
+					if (endEarlierInputDate) {
+						this.pickerTime = endTime || getDefaultSecond(this.hideSecond)
+					}
+					if (!this.pickerTime) {
+						this.pickerTime = getTime(Date.now(), this.hideSecond)
+					}
+					this.displayValue = `${this.inputDate} ${this.pickerTime}`
+				} else {
+					this.displayValue = this.inputDate
+				}
+				this.setEmit(this.displayValue)
+				this.pickerVisible = false
+			},
+			leftChange(e) {
+				const {
+					before,
+					after
+				} = e.range
+				this.rangeChange(before, after)
+				const obj = {
+					before: e.range.before,
+					after: e.range.after,
+					data: e.range.data,
+					fulldate: e.fulldate
+				}
+				this.startMultipleStatus = Object.assign({}, this.startMultipleStatus, obj)
+				this.$emit('calendarClick', e)
+			},
+			rightChange(e) {
+				const {
+					before,
+					after
+				} = e.range
+				this.rangeChange(before, after)
+				const obj = {
+					before: e.range.before,
+					after: e.range.after,
+					data: e.range.data,
+					fulldate: e.fulldate
+				}
+				this.endMultipleStatus = Object.assign({}, this.endMultipleStatus, obj)
+				this.$emit('calendarClick', e)
+			},
+			mobileChange(e) {
+				if (this.isRange) {
+					const {
+						before,
+						after
+					} = e.range
+					if (!before) {
+						return;
+					}
+
+					this.handleStartAndEnd(before, after, true)
+					if (this.hasTime) {
+						const {
+							startTime,
+							endTime
+						} = e.timeRange
+						this.tempRange.startTime = startTime
+						this.tempRange.endTime = endTime
+					}
+					this.confirmRangeChange()
+				} else {
+					if (this.hasTime) {
+						this.displayValue = e.fulldate + ' ' + e.time
+					} else {
+						this.displayValue = e.fulldate
+					}
+					this.setEmit(this.displayValue)
+				}
+				this.$refs.mobile.close()
+			},
+			rangeChange(before, after) {
+				if (!(before && after)) return
+				this.handleStartAndEnd(before, after, true)
+				if (this.hasTime) return
+				this.confirmRangeChange()
+			},
+			confirmRangeChange() {
+				if (!this.tempRange.startDate || !this.tempRange.endDate) {
+					this.pickerVisible = false
+					return
+				}
+				if (!checkDate(this.tempRange.startDate)) {
+					this.tempRange.startDate = getDate(Date.now())
+				}
+				if (!checkDate(this.tempRange.endDate)) {
+					this.tempRange.endDate = getDate(Date.now())
+				}
+
+				let start, end
+

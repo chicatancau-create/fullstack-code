@@ -1,0 +1,91 @@
+  const qm = new THREE.Mesh(merge(posts), woodMat);
+  qm.castShadow = true;
+  g.add(pm, qm);
+
+  // 桥头灯
+  const lampY = deckY + 0.115;
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.007, 0.12, 6), woodMat);
+  pole.position.set(toX, deckY + 0.058, toZ); pole.castShadow = true;
+  g.add(pole);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.026, 0.026, 0.026), emissiveMat(0xffc070, 0));
+  head.position.set(toX, lampY, toZ);
+  g.add(head);
+  lampPier.position.set(toX, lampY, toZ);
+  return g;
+}
+island.add(makePier(hut.pos.x - 0.10, hut.pos.z, -0.44, -0.16, WATER_Y + 0.058));
+
+/* ---------------------------------------------------------------- 岩石 */
+TEX.rockNormal.repeat.set(2, 2);
+const rockMats = [0x6a6157, 0x7d7264, 0x514c47].map((c, k) => {
+  const m = new THREE.MeshStandardMaterial({
+    color: c, roughness: 0.92, metalness: 0, normalMap: TEX.rockNormal, flatShading: true
+  });
+  applyUnderwater(m, { caustic: 0.8, wetRough: 0.35, tag: 'rock' + k });
+  return m;
+});
+function makeRock(size, mi = 0) {
+  const g = new THREE.IcosahedronGeometry(size, 1);
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    tmpV.fromBufferAttribute(p, i);
+    const n = 1 + 0.42 * fbm(tmpV.x * 5.5, tmpV.z * 5.5 + tmpV.y * 3, 3, 77);
+    tmpV.multiplyScalar(n);
+    tmpV.y *= rr(0.55, 0.85);
+    p.setXYZ(i, tmpV.x, tmpV.y, tmpV.z);
+  }
+  g.computeVertexNormals();
+  const mesh = new THREE.Mesh(g, rockMats[mi % rockMats.length]);
+  mesh.castShadow = true; mesh.receiveShadow = true;
+  return mesh;
+}
+for (let i = 0; i < 9; i++) {
+  const a = rr(0, Math.PI * 2), rad = rr(0.35, 0.90);
+  const x = Math.cos(a) * rad, z = Math.sin(a) * rad;
+  const s = rr(0.022, 0.055);
+  const rock = makeRock(s, i);
+  rock.position.set(x, terrainH(x, z) + s * 0.35, z);
+  rock.rotation.set(rr(-0.4, 0.4), rr(0, 6.28), rr(-0.3, 0.3));
+  island.add(rock);
+}
+/* ---------------------------------------------------------------- 珊瑚 / 海草 */
+const coralColA = new THREE.Color(0xf2766b), coralColB = new THREE.Color(0xe9a44f),
+      coralColC = new THREE.Color(0xb96fd6), coralColD = new THREE.Color(0x7fd9c2);
+
+const UPV = new THREE.Vector3(0, 1, 0);
+function branchCoral(out, pos, dir, len, r0, depth, col) {
+  const q = new THREE.Quaternion().setFromUnitVectors(UPV, dir.clone().normalize());
+  const g = new THREE.CylinderGeometry(r0 * 0.62, r0, len, 6, 1, depth === 0);
+  const m = M().compose(pos, q, new THREE.Vector3(1, 1, 1));
+  const tipY = pos.y + len * 0.5;
+  out.push(stamp(xform(g, m), col, (x, y) => Math.max(0, (y - pos.y + len * 0.5)) / (len * 1.2) * 0.25));
+  if (depth <= 0) return;
+  const n = 2 + (rnd() > 0.55 ? 1 : 0);
+  for (let i = 0; i < n; i++) {
+    const nd = dir.clone()
+      .applyAxisAngle(new THREE.Vector3(1, 0, 0.3).normalize(), rr(-0.75, 0.75))
+      .applyAxisAngle(UPV, rr(-1.1, 1.1))
+      .addScaledVector(UPV, rr(0.15, 0.55)).normalize();
+    const np = pos.clone().addScaledVector(dir, len * rr(0.62, 1.0));
+    branchCoral(out, np, nd, len * rr(0.52, 0.78), r0 * 0.66, depth - 1, col);
+  }
+}
+function fanCoral(out, pos, nor, size, col) {
+  const SEG = 9, ROW = 5, p = [], idx = [], uvs = [], flex = [];
+  const right = new THREE.Vector3().crossVectors(nor, UPV).normalize();
+  const up = new THREE.Vector3().crossVectors(right, nor).normalize();
+  for (let r = 0; r <= ROW; r++) {
+    const t = r / ROW, w = Math.sin(t * Math.PI * 0.92) * size * 0.55;
+    for (let s = 0; s <= SEG; s++) {
+      const u = s / SEG - 0.5;
+      const v = new THREE.Vector3().copy(pos)
+        .addScaledVector(up, t * size).addScaledVector(right, u * 2 * w)
+        .addScaledVector(nor, Math.sin(t * 3.1) * size * 0.06 + (1 - t) * size * 0.05);
+      p.push(v.x, v.y, v.z); uvs.push(s / SEG, t); flex.push(t);
+    }
+  }
+  for (let r = 0; r < ROW; r++) for (let s = 0; s < SEG; s++) {
+    const a = r * (SEG + 1) + s;
+    idx.push(a, a + SEG + 1, a + SEG + 2, a, a + SEG + 2, a + 1);
+  }
+  const g = new THREE.BufferGeometry();

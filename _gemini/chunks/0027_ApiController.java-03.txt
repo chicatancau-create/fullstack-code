@@ -1,0 +1,62 @@
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("workspace_id", id, "user_id", target.getFirst(), "role", "member"));
+    }
+
+    @GetMapping("/workspaces/{id}/members")
+    public Map<String, Object> members(HttpServletRequest request, @PathVariable long id) {
+        requireMember(id, userId(request));
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "SELECT u.id, u.email, m.role FROM memberships m JOIN users u ON u.id = m.user_id WHERE m.workspace_id = ? ORDER BY u.id", id);
+        return Map.of("members", rows);
+    }
+
+    @PostMapping("/workspaces/{id}/tasks")
+    public ResponseEntity<Map<String, Object>> createTask(HttpServletRequest request, @PathVariable long id, @RequestBody Task body) {
+        requireMember(id, userId(request));
+        if (body.title() == null || body.title().trim().isEmpty() || body.title().trim().length() > 200) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "invalid_title");
+        }
+        try {
+            jdbc.update("INSERT INTO tasks (workspace_id, title) VALUES (?, ?)", id, body.title().trim());
+        } catch (DuplicateKeyException error) {
+            throw new ApiException(HttpStatus.CONFLICT, "duplicate_title");
+        }
+        Map<String, Object> task = jdbc.queryForMap("SELECT id, title, status FROM tasks WHERE workspace_id = ? AND title = ?", id, body.title().trim());
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("id", ((Number) task.get("id")).longValue(), "title", task.get("title"), "status", task.get("status")));
+    }
+
+    @GetMapping("/workspaces/{id}/tasks")
+    public Map<String, Object> tasks(HttpServletRequest request, @PathVariable long id) {
+        requireMember(id, userId(request));
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "SELECT id, title, status FROM tasks WHERE workspace_id = ? ORDER BY id", id);
+        return Map.of("tasks", rows);
+    }
+
+    @PostMapping("/workspaces/{id}/invitations")
+    public ResponseEntity<Map<String, Object>> invite(HttpServletRequest request, @PathVariable long id, @RequestBody Invite body) {
+        requireOwner(id, userId(request));
+        if (body.email() == null || !body.email().matches(EMAIL) || body.role() == null
+                || !(body.role().equals("owner") || body.role().equals("member"))) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "invalid_invitation");
+        }
+        String email = body.email().toLowerCase();
+        List<Long> existingUser = jdbc.queryForList("SELECT id FROM users WHERE email = ?", Long.class, email);
+        if (!existingUser.isEmpty() && roleOf(id, existingUser.getFirst()) != null) {
+            throw new ApiException(HttpStatus.CONFLICT, "already_member");
+        }
+        Integer pending = jdbc.queryForObject("SELECT COUNT(*) FROM invitations WHERE workspace_id = ? AND email = ? AND status = 'pending'",
+                Integer.class, id, email);
+        if (pending != null && pending > 0) throw new ApiException(HttpStatus.CONFLICT, "already_invited");
+        byte[] raw = new byte[24];
+        random.nextBytes(raw);
+        String token = HexFormat.of().formatHex(raw);
+        String hash = AuthFilter.sha256(token);
+        jdbc.update("INSERT INTO invitations (workspace_id, email, role, token_hash, expires_at, created_by) VALUES (?, ?, ?, ?, ?, ?)",
+                id, email, body.role(), hash, java.sql.Timestamp.from(Instant.now().plusSeconds(7 * 86400)), userId(request));
+        Long inviteId = jdbc.queryForObject("SELECT id FROM invitations WHERE token_hash = ?", Long.class, hash);
+        audit(id, userId(request), "invitation.create", "invitation:" + inviteId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("id", inviteId, "email", email, "role", body.role(), "token", token));
+    }
+
+    @PostMapping("/invitations/accept")
+    @Transactional

@@ -1,0 +1,220 @@
+						});
+					}
+				}
+				switch (api) {
+					case 'navigateTo':
+						uni.navigateTo(callback)
+						break
+					case 'redirectTo':
+						uni.redirectTo(callback)
+						break
+					case 'reLaunch':
+						uni.reLaunch(callback)
+						break
+					case 'switchTab':
+						uni.switchTab(callback)
+						break
+					default:
+						uni.navigateTo(callback)
+				}
+			}
+		}
+	};
+</script>
+
+<style lang="scss">
+	$uni-font-size-sm:12px;
+	$uni-font-size-base:14px;
+	$uni-font-size-lg:16px;
+	$uni-spacing-col-lg: 12px;
+	$uni-spacing-row-lg: 15px;
+	$uni-img-size-sm:20px;
+	$uni-img-size-base:26px;
+	$uni-img-size-lg:40px;
+	$uni-border-color:#e5e5e5;
+	$uni-bg-color-hover:#f1f1f1;
+	$uni-text-color-grey:#999;
+	$list-item-pd: $uni-spacing-col-lg $uni-spacing-row-lg;
+
+	.uni-list-item {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		font-size: $uni-font-size-lg;
+		position: relative;
+		justify-content: space-between;
+		align-items: center;
+		background-color: #fff;
+		flex-direction: row;
+		/* #ifdef H5 */
+		cursor: pointer;
+		/* #endif */
+	}
+
+	.uni-list-item--disabled {
+		opacity: 0.3;
+	}
+
+	.uni-list-item--hover {
+		background-color: $uni-bg-color-hover;
+	}
+
+	.uni-list-item__container {
+		position: relative;
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: row;
+		padding: $list-item-pd;
+		padding-left: $uni-spacing-row-lg;
+		flex: 1;
+		overflow: hidden;
+		// align-items: center;
+	}
+
+	.container--right {
+		padding-right: 0;
+	}
+
+	// .border--left {
+	// 	margin-left: $uni-spacing-row-lg;
+	// }
+	.uni-list--border {
+		position: absolute;
+		top: 0;
+		right: 0;
+		left: 0;
+		/* #ifdef APP-NVUE */
+		border-top-color: $uni-border-color;
+		border-top-style: solid;
+		border-top-width: 0.5px;
+		/* #endif */
+	}
+
+	/* #ifndef APP-NVUE */
+	.uni-list--border:after {
+		position: absolute;
+		top: 0;
+		right: 0;
+		left: 0;
+		height: 1px;
+		content: '';
+		-webkit-transform: scaleY(0.5);
+		transform: scaleY(0.5);
+		background-color: $uni-border-color;
+	}
+
+	/* #endif */
+	.uni-list-item__content {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		padding-right: 8px;
+		flex: 1;
+		color: #3b4144;
+		// overflow: hidden;
+		flex-direction: column;
+		justify-content: space-between;
+		overflow: hidden;
+	}
+
+	.uni-list-item__content--center {
+		justify-content: center;
+	}
+
+	.uni-list-item__content-title {
+		font-size: $uni-font-size-base;
+		color: #3b4144;
+		overflow: hidden;
+	}
+
+	.uni-list-item__content-note {
+		margin-top: 6rpx;
+		color: $uni-text-color-grey;
+		font-size: $uni-font-size-sm;
+		overflow: hidden;
+	}
+
+	.uni-list-item__extra {
+		// width: 25%;
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: row;
+		justify-content: flex-end;
+		align-items: center;
+	}
+
+	.uni-list-item__header {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.uni-list-item__icon {
+		margin-right: 18rpx;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.uni-list-item__icon-img {
+		/* #ifndef APP-NVUE */
+		display: block;
+		/* #endif */
+		height: $uni-img-size-base;
+		width: $uni-img-size-base;
+		margin-right: 10px;
+	}
+
+	.uni-icon-wrapper {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		align-items: center;
+		padding: 0 10px;
+	}
+
+	.flex--direction {
+		flex-direction: column;
+		/* #ifndef APP-NVUE */
+		align-items: initial;
+		/* #endif */
+	}
+
+	.flex--justify {
+		/* #ifndef APP-NVUE */
+		justify-content: initial;
+		/* #endif */
+	}
+
+	.uni-list--lg {
+		height: $uni-img-size-lg;
+		width: $uni-img-size-lg;
+	}
+
+	.uni-list--base {
+		height: $uni-img-size-base;
+		width: $uni-img-size-base;
+	}
+
+	.uni-list--sm {
+		height: $uni-img-size-sm;
+		width: $uni-img-size-sm;
+	}
+
+	.uni-list-item__extra-text {
+		color: $uni-text-color-grey;
+		font-size: $uni-font-size-sm;
+	}
+
+	.uni-ellipsis-1 {
+		/* #ifndef APP-NVUE */
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		/* #endif */
+		/* #ifdef APP-NVUE */
+		lines: 1;

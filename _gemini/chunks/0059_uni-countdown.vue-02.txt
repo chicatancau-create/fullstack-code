@@ -1,0 +1,105 @@
+			this.seconds = this.toSeconds(this.timestamp, this.day, this.hour, this.minute, this.second)
+			this.countDown()
+		},
+		// #ifndef VUE3
+		destroyed() {
+			clearInterval(this.timer)
+		},
+		// #endif
+		// #ifdef VUE3
+		unmounted() {
+			clearInterval(this.timer)
+		},
+		// #endif
+		methods: {
+			toSeconds(timestamp, day, hours, minutes, seconds) {
+				if (timestamp) {
+					return timestamp - parseInt(new Date().getTime() / 1000, 10)
+				}
+				return day * 60 * 60 * 24 + hours * 60 * 60 + minutes * 60 + seconds
+			},
+			timeUp() {
+				clearInterval(this.timer)
+				this.$emit('timeup')
+			},
+			countDown() {
+				let seconds = this.seconds
+				let [day, hour, minute, second] = [0, 0, 0, 0]
+				if (seconds > 0) {
+					day = Math.floor(seconds / (60 * 60 * 24))
+					hour = Math.floor(seconds / (60 * 60)) - (day * 24)
+					minute = Math.floor(seconds / 60) - (day * 24 * 60) - (hour * 60)
+					second = Math.floor(seconds) - (day * 24 * 60 * 60) - (hour * 60 * 60) - (minute * 60)
+				} else {
+					this.timeUp()
+				}
+				if (day < 10) {
+					day = '0' + day
+				}
+				if (hour < 10) {
+					hour = '0' + hour
+				}
+				if (minute < 10) {
+					minute = '0' + minute
+				}
+				if (second < 10) {
+					second = '0' + second
+				}
+				this.d = day
+				this.h = hour
+				this.i = minute
+				this.s = second
+			},
+			startData() {
+				this.seconds = this.toSeconds(this.timestamp, this.day, this.hour, this.minute, this.second)
+				if (this.seconds <= 0) {
+					this.seconds = this.toSeconds(0, 0, 0, 0, 0)
+					this.countDown()
+					return
+				}
+				clearInterval(this.timer)
+				this.countDown()
+				this.timer = setInterval(() => {
+					this.seconds--
+					if (this.seconds < 0) {
+						this.timeUp()
+						return
+					}
+					this.countDown()
+				}, 1000)
+			},
+			update(){
+				this.startData();
+			},
+			changeFlag() {
+				if (!this.syncFlag) {
+					this.seconds = this.toSeconds(this.timestamp, this.day, this.hour, this.minute, this.second)
+					this.startData();
+					this.syncFlag = true;
+				}
+			}
+		}
+	}
+</script>
+<style lang="scss" scoped>
+	$font-size: 14px;
+
+	.uni-countdown {
+		display: flex;
+		flex-direction: row;
+		justify-content: flex-start;
+		align-items: center;
+
+		&__splitor {
+			margin: 0 2px;
+			font-size: $font-size;
+			color: #333;
+		}
+
+		&__number {
+			border-radius: 3px;
+			text-align: center;
+			font-size: $font-size;
+		}
+	}
+</style>

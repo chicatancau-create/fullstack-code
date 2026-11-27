@@ -1,0 +1,136 @@
+COPY p03.outbox (event_id, type, payload, status, attempts, created_at, sent_at, last_error) FROM stdin;
+mq-paid-1	order.paid	{"amount": 100, "user_id": "mq-user", "event_id": "mq-paid-1", "order_id": 1}	sent	1	2026-11-09 11:24:20.341542+08	2026-11-09 11:24:20.34742+08	
+pay-1	order.paid	{"amount": 100, "user_id": "mq-runtime", "event_id": "pay-1", "order_id": 2}	sent	1	2026-11-09 11:24:23.027452+08	2026-11-09 11:24:23.243674+08	
+pay-2	order.paid	{"amount": 100, "user_id": "worker-split", "event_id": "pay-2", "order_id": 3}	sent	1	2026-11-09 11:24:24.704166+08	2026-11-09 11:24:25.042873+08	
+pay-3	order.paid	{"amount": 100, "user_id": "fault-user", "event_id": "pay-3", "order_id": 5}	sent	0	2026-11-09 11:24:26.696391+08	2026-11-09 11:24:27.171145+08	
+\.
+
+
+--
+-- Data for Name: payment_attempts; Type: TABLE DATA; Schema: p03; Owner: -
+--
+
+COPY p03.payment_attempts (id, payment_id, attempt_no, result, note, latency_ms, created_at) FROM stdin;
+1	1	1	succeeded	gateway_ok	1	2026-11-09 11:24:23.027452+08
+2	2	1	succeeded	gateway_ok	0	2026-11-09 11:24:24.704166+08
+3	3	1	succeeded	gateway_ok	0	2026-11-09 11:24:26.696391+08
+\.
+
+
+--
+-- Data for Name: payment_events; Type: TABLE DATA; Schema: p03; Owner: -
+--
+
+COPY p03.payment_events (event_id, order_id, result, applied, note, received_at, fingerprint) FROM stdin;
+mq-paid-1	1	success	t	paid	2026-11-09 11:24:20.341542+08	86e23d4c68f41d85fe9206b9d541dcef93e8b50fad533552577be101d12044bf
+\.
+
+
+--
+-- Data for Name: payments; Type: TABLE DATA; Schema: p03; Owner: -
+--
+
+COPY p03.payments (id, order_id, amount, status, provider_ref, attempts, created_at, updated_at) FROM stdin;
+1	2	100	succeeded	mock-2-100	1	2026-11-09 11:24:23.027452+08	2026-11-09 11:24:23.027452+08
+2	3	100	succeeded	mock-3-100	1	2026-11-09 11:24:24.704166+08	2026-11-09 11:24:24.704166+08
+3	5	100	succeeded	mock-5-100	1	2026-11-09 11:24:26.696391+08	2026-11-09 11:24:26.696391+08
+\.
+
+
+--
+-- Data for Name: products; Type: TABLE DATA; Schema: p03; Owner: -
+--
+
+COPY p03.products (sku, title, price_cents, active) FROM stdin;
+sku-1	机械键盘	299	t
+load-sku	压测商品	1000	t
+mq-sku	MQ 商品	100	t
+mq-runtime-sku	MQ 运行期商品	100	t
+worker-sku	Worker 商品	100	t
+fault-sku	故障演练商品	100	t
+\.
+
+
+--
+-- Data for Name: refunds; Type: TABLE DATA; Schema: p03; Owner: -
+--
+
+COPY p03.refunds (id, order_id, payment_id, amount, status, reason, created_at, settled_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: schema_migrations; Type: TABLE DATA; Schema: p03; Owner: -
+--
+
+COPY p03.schema_migrations (filename, applied_at) FROM stdin;
+001_init.sql	2026-11-07 21:54:30.616181+08
+002_outbox.sql	2026-11-07 22:33:01.843633+08
+003_full_model.sql	2026-11-09 08:42:16.204653+08
+004_event_fingerprint.sql	2026-11-09 08:43:14.908171+08
+\.
+
+
+--
+-- Name: audit_log_id_seq; Type: SEQUENCE SET; Schema: p03; Owner: -
+--
+
+SELECT pg_catalog.setval('p03.audit_log_id_seq', 159, true);
+
+
+--
+-- Name: orders_id_seq; Type: SEQUENCE SET; Schema: p03; Owner: -
+--
+
+SELECT pg_catalog.setval('p03.orders_id_seq', 5, true);
+
+
+--
+-- Name: payment_attempts_id_seq; Type: SEQUENCE SET; Schema: p03; Owner: -
+--
+
+SELECT pg_catalog.setval('p03.payment_attempts_id_seq', 3, true);
+
+
+--
+-- Name: payments_id_seq; Type: SEQUENCE SET; Schema: p03; Owner: -
+--
+
+SELECT pg_catalog.setval('p03.payments_id_seq', 3, true);
+
+
+--
+-- Name: refunds_id_seq; Type: SEQUENCE SET; Schema: p03; Owner: -
+--
+
+SELECT pg_catalog.setval('p03.refunds_id_seq', 1, false);
+
+
+--
+-- Name: audit_log audit_log_pkey; Type: CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.audit_log
+    ADD CONSTRAINT audit_log_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: inbox inbox_pkey; Type: CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.inbox
+    ADD CONSTRAINT inbox_pkey PRIMARY KEY (consumer, event_id);
+
+
+--
+-- Name: inventory inventory_pkey; Type: CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.inventory
+    ADD CONSTRAINT inventory_pkey PRIMARY KEY (sku);
+
+
+--
+-- Name: notifications notifications_pkey; Type: CONSTRAINT; Schema: p03; Owner: -
+--
+

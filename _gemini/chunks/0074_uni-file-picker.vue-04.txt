@@ -1,0 +1,181 @@
+					this.$emit('fail', {
+						tempFiles: this.backObject(errorData),
+						tempFilePaths: errorTempFilePath
+					})
+				}
+			},
+
+			/**
+			 * 获取进度
+			 * @param {Object} progressEvent
+			 * @param {Object} index
+			 * @param {Object} type
+			 */
+			setProgress(progressEvent, index, type) {
+				const fileLenth = this.files.length
+				const percentNum = (index / fileLenth) * 100
+				const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+				let idx = index
+				if (!type) {
+					idx = this.files.findIndex(p => p.uuid === progressEvent.tempFile.uuid)
+				}
+				if (idx === -1 || !this.files[idx]) return
+				// fix by mehaotian 100 就会消失，-1 是为了让进度条消失
+				this.files[idx].progress = percentCompleted - 1
+				// 上传中
+				this.$emit('progress', {
+					index: idx,
+					progress: parseInt(percentCompleted),
+					tempFile: this.files[idx]
+				})
+			},
+
+			/**
+			 * 删除文件
+			 * @param {Object} index
+			 */
+			delFile(index) {
+				this.$emit('delete', {
+					index,
+					tempFile: this.files[index],
+					tempFilePath: this.files[index].url
+				})
+				this.files.splice(index, 1)
+				this.$nextTick(() => {
+					this.setEmit()
+				})
+			},
+
+			/**
+			 * 获取文件名和后缀
+			 * @param {Object} name
+			 */
+			getFileExt(name) {
+				const last_len = name.lastIndexOf('.')
+				const len = name.length
+				return {
+					name: name.substring(0, last_len),
+					ext: name.substring(last_len + 1, len)
+				}
+			},
+
+			/**
+			 * 处理返回事件
+			 */
+			setEmit() {
+				let data = []
+				if (this.returnType === 'object') {
+					data = this.backObject(this.files)[0]
+					this.localValue = data?data:null
+				} else {
+					data = this.backObject(this.files)
+					if (!this.localValue) {
+						this.localValue = []
+					}
+					this.localValue = [...data]
+				}
+				// #ifdef VUE3
+				this.$emit('update:modelValue', this.localValue)
+				// #endif
+				// #ifndef VUE3
+				this.$emit('input', this.localValue)
+				// #endif
+			},
+
+			/**
+			 * 处理返回参数
+			 * @param {Object} files
+			 */
+			backObject(files) {
+				let newFilesData = []
+				files.forEach(v => {
+					newFilesData.push({
+						extname: v.extname,
+						fileType: v.fileType,
+						image: v.image,
+						name: v.name,
+						path: v.path,
+						size: v.size,
+						fileID:v.fileID,
+						url: v.url,
+						// 修改删除一个文件后不能再上传的bug, #694
+            uuid: v.uuid,
+            status: v.status,
+            cloudPath: v.cloudPath
+					})
+				})
+				return newFilesData
+			},
+			async getTempFileURL(fileList) {
+				fileList = {
+					fileList: [].concat(fileList)
+				}
+				const urls = await uniCloud.getTempFileURL(fileList)
+				return urls.fileList[0].tempFileURL || ''
+			},
+			/**
+			 * 获取父元素实例
+			 */
+			getForm(name = 'uniForms') {
+				let parent = this.$parent;
+				let parentName = parent.$options.name;
+				while (parentName !== name) {
+					parent = parent.$parent;
+					if (!parent) return false;
+					parentName = parent.$options.name;
+				}
+				return parent;
+			}
+		}
+	}
+</script>
+
+<style>
+	.uni-file-picker {
+		/* #ifndef APP-NVUE */
+		box-sizing: border-box;
+		overflow: hidden;
+		width: 100%;
+		/* #endif */
+		flex: 1;
+	}
+
+	.uni-file-picker__header {
+		padding-top: 5px;
+		padding-bottom: 10px;
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		justify-content: space-between;
+	}
+
+	.file-title {
+		font-size: 14px;
+		color: #333;
+	}
+
+	.file-count {
+		font-size: 14px;
+		color: #999;
+	}
+
+	.is-add {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		align-items: center;
+		justify-content: center;
+	}
+
+	.icon-add {
+		width: 50px;
+		height: 5px;
+		background-color: #f1f1f1;
+		border-radius: 2px;
+	}
+
+	.rotate {
+		position: absolute;
+		transform: rotate(90deg);
+	}
+</style>

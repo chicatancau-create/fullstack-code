@@ -1,0 +1,87 @@
+  vertexShader: `varying vec2 vUv; varying vec3 vWPos; varying vec3 vN;
+    void main(){ vUv=uv; vec4 wp=modelMatrix*vec4(position,1.0); vWPos=wp.xyz;
+      vN=normalize(mat3(modelMatrix)*normal); gl_Position=projectionMatrix*viewMatrix*wp; }`,
+  fragmentShader: `uniform float uTime,uWaterY,uNight; uniform vec3 uSunCol,uSunDir; varying vec2 vUv; varying vec3 vWPos; varying vec3 vN;
+    void main(){
+      vec3 V = normalize(vWPos-cameraPosition);
+      float ndv = clamp(dot(normalize(vN),-V),0.0,1.0);
+      float edge = pow(1.0-ndv, 1.6);
+      float band = smoothstep(0.0,0.55,vUv.y)*(1.0-smoothstep(0.62,1.0,vUv.y));
+      vec3 dark = mix(vec3(0.02,0.10,0.14), vec3(0.0,0.02,0.05), uNight);
+      vec3 col = mix(dark, vec3(0.85,0.95,1.0), vUv.y*vUv.y*0.85 + edge*0.5);
+      col += uSunCol*edge*0.35;
+      float a = clamp(0.18 + band*0.42 + edge*0.55 + pow(vUv.y,3.0)*0.6, 0.0, 1.0);
+      gl_FragColor = vec4(col, a);
+    }`
+});
+const meniscus = new THREE.Mesh(buildMeniscus(), meniscusMat);
+meniscus.renderOrder = 25;
+island.add(meniscus);
+/* ---------------------------------------------------------------- 道具构建 */
+let _seed = 20261019;
+function rnd() { _seed = (Math.imul(_seed, 1664525) + 1013904223) & 0x7fffffff; return _seed / 0x7fffffff; }
+const rr = (a, b) => a + (b - a) * rnd();
+const tmpV = new THREE.Vector3();
+
+function stamp(g, color, flexFn) {
+  const n = g.attributes.position.count, p = g.attributes.position;
+  const c = new Float32Array(n * 3), f = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    c[i * 3] = color.r; c[i * 3 + 1] = color.g; c[i * 3 + 2] = color.b;
+    f[i] = flexFn ? flexFn(p.getX(i), p.getY(i), p.getZ(i)) : 0;
+  }
+  if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(n * 2, 2));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(c, 3));
+  if (!g.attributes.aFlex) g.setAttribute('aFlex', new THREE.Float32BufferAttribute(f, 1));
+  return g;
+}
+// 统一为非索引，保证 mergeGeometries 属性一致
+const np = (g) => (g.index ? g.toNonIndexed() : g);
+function xform(g, m) { return np(g).clone().applyMatrix4(m); }
+function merge(list) {
+  const g = BGU.mergeGeometries(list, false);
+  if (!g) throw new Error('mergeGeometries 失败：几何体属性/索引不兼容');
+  return g;
+}
+const M = () => new THREE.Matrix4();
+
+const barkTex = TEX.bark.clone();
+barkTex.needsUpdate = true;
+barkTex.wrapS = barkTex.wrapT = THREE.RepeatWrapping;
+barkTex.rotation = Math.PI / 2; barkTex.repeat.set(5, 2);
+
+const trunkMat = new THREE.MeshStandardMaterial({ map: barkTex, roughness: 0.86, metalness: 0 });
+applyUnderwater(trunkMat, { caustic: 0.3, wetRough: 0.5, tag: 'trunk' });
+
+const leafMat = new THREE.MeshStandardMaterial({
+  map: TEX.leaf, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.58, metalness: 0,
+  transparent: false
+});
+applyUnderwater(leafMat, { caustic: 0.45, wetRough: 0.4, wind: 0.026, windFreq: 1.35, tag: 'leaf' });
+
+const woodMat = new THREE.MeshStandardMaterial({
+  map: TEX.plank, normalMap: TEX.plankNormal, normalScale: new THREE.Vector2(0.8, 0.8),
+  roughness: 0.82, metalness: 0, color: 0xe8dcc4
+});
+applyUnderwater(woodMat, { caustic: 0.4, wetRough: 0.45, tag: 'wood' });
+
+const thatchMat = new THREE.MeshStandardMaterial({ map: TEX.thatch, roughness: 0.95, metalness: 0 });
+applyUnderwater(thatchMat, { caustic: 0.3, wetRough: 0.6, tag: 'thatch' });
+
+const glassEmis = [];
+function emissiveMat(color, intensity = 0) {
+  const m = new THREE.MeshStandardMaterial({
+    color: 0x120c07, emissive: new THREE.Color(color), emissiveIntensity: intensity,
+    roughness: 0.4, metalness: 0, side: THREE.DoubleSide
+  });
+  glassEmis.push(m);
+  return m;
+}
+
+/* 棕榈叶：沿 +X 生长，下垂在 -Y */
+function frondGeometry(len = 0.40, wmax = 0.145, droop = 0.30) {
+  const N = 14, pos = [], uv = [], idx = [], flex = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    const w = wmax * Math.sin(Math.PI * Math.pow(t, 0.62)) * (1 - t * t * 0.35) * 0.5;
+    const x = t * len, y = -droop * len * t * t;

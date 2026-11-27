@@ -1,0 +1,148 @@
+				// this.formItem && this.formItem.setValue(detail.value)
+				// TODO 兼容 vue2
+				this.$emit('input', detail.value);
+				// // TOTO 兼容 vue3
+				this.$emit('update:modelValue', detail.value);
+				this.$emit('change', {
+					detail
+				})
+				if (this.multiple) {
+					// 如果 v-model 没有绑定 ，则走内部逻辑
+					// if (this.value.length === 0) {
+					this.dataList = this.getDataList(detail.value, true)
+					// }
+				} else {
+					this.dataList = this.getDataList(detail.value)
+				}
+			},
+
+			/**
+			 * 获取渲染的新数组
+			 * @param {Object} value 选中内容
+			 */
+			getDataList(value) {
+				// 解除引用关系，破坏原引用关系，避免污染源数据
+				let dataList = JSON.parse(JSON.stringify(this.range))
+				let list = []
+				if (this.multiple) {
+					if (!Array.isArray(value)) {
+						value = []
+					}
+				}
+				dataList.forEach((item, index) => {
+					item.disabled = item.disable || item.disabled || false
+					if (this.multiple) {
+						if (value.length > 0) {
+							let have = value.find(val => val === item[this.map.value])
+							item.selected = have !== undefined
+						} else {
+							item.selected = false
+						}
+					} else {
+						item.selected = value === item[this.map.value]
+					}
+
+					list.push(item)
+				})
+				return this.setRange(list)
+			},
+			/**
+			 * 处理最大最小值
+			 * @param {Object} list
+			 */
+			setRange(list) {
+				let selectList = list.filter(item => item.selected)
+				let min = Number(this.min) || 0
+				let max = Number(this.max) || ''
+				list.forEach((item, index) => {
+					if (this.multiple) {
+						if (selectList.length <= min) {
+							let have = selectList.find(val => val[this.map.value] === item[this.map.value])
+							if (have !== undefined) {
+								item.disabled = true
+							}
+						}
+
+						if (selectList.length >= max && max !== '') {
+							let have = selectList.find(val => val[this.map.value] === item[this.map.value])
+							if (have === undefined) {
+								item.disabled = true
+							}
+						}
+					}
+					this.setStyles(item, index)
+					list[index] = item
+				})
+				return list
+			},
+			/**
+			 * 设置 class
+			 * @param {Object} item
+			 * @param {Object} index
+			 */
+			setStyles(item, index) {
+				//  设置自定义样式
+				item.styleBackgroud = this.setStyleBackgroud(item)
+				item.styleIcon = this.setStyleIcon(item)
+				item.styleIconText = this.setStyleIconText(item)
+				item.styleRightIcon = this.setStyleRightIcon(item)
+			},
+
+			/**
+			 * 获取选中值
+			 * @param {Object} range
+			 */
+			getSelectedValue(range) {
+				if (!this.multiple) return this.dataValue
+				let selectedArr = []
+				range.forEach((item) => {
+					if (item.selected) {
+						selectedArr.push(item[this.map.value])
+					}
+				})
+				return this.dataValue.length > 0 ? this.dataValue : selectedArr
+			},
+
+			/**
+			 * 设置背景样式
+			 */
+			setStyleBackgroud(item) {
+				let styles = {}
+				let selectedColor = this.selectedColor ? this.selectedColor : '#2979ff'
+				if (this.selectedColor) {
+					if (this.mode !== 'list') {
+						styles['border-color'] = item.selected ? selectedColor : '#DCDFE6'
+					}
+					if (this.mode === 'tag') {
+						styles['background-color'] = item.selected ? selectedColor : '#f5f5f5'
+					}
+				}
+				let classles = ''
+				for (let i in styles) {
+					classles += `${i}:${styles[i]};`
+				}
+				return classles
+			},
+			setStyleIcon(item) {
+				let styles = {}
+				let classles = ''
+				if (this.selectedColor) {
+					let selectedColor = this.selectedColor ? this.selectedColor : '#2979ff'
+					styles['background-color'] = item.selected ? selectedColor : '#fff'
+					styles['border-color'] = item.selected ? selectedColor : '#DCDFE6'
+
+					if (!item.selected && item.disabled) {
+						styles['background-color'] = '#F2F6FC'
+						styles['border-color'] = item.selected ? selectedColor : '#DCDFE6'
+					}
+				}
+				for (let i in styles) {
+					classles += `${i}:${styles[i]};`
+				}
+				return classles
+			},
+			setStyleIconText(item) {
+				let styles = {}
+				let classles = ''
+				if (this.selectedColor) {
+					let selectedColor = this.selectedColor ? this.selectedColor : '#2979ff'

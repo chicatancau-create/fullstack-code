@@ -1,0 +1,72 @@
+      const row = order.rows[0];
+      assertTransition(row.status, target);
+      if (extra.sql) {
+        await client.query(extra.sql, [row.id]);
+      } else {
+        await client.query('UPDATE p03.orders SET status = $2, version = version + 1 WHERE id = $1', [row.id, target]);
+      }
+      await audit(client, { actor: request.userId, action, orderId: row.id, requestId: request.id, before: { status: row.status }, after: { status: target } });
+      await client.query('COMMIT');
+      return orderView(pool, row.id, request.userId);
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  app.post('/orders/:id/ship', { preHandler: requireApiKey }, async (request, reply) =>
+    transition(request, reply, 'shipped', 'order.ship', {
+      sql: "UPDATE p03.orders SET status = 'shipped', shipped_at = now(), version = version + 1 WHERE id = $1",
+    }));
+
+  app.post('/orders/:id/complete', { preHandler: requireApiKey }, async (request, reply) =>
+    transition(request, reply, 'completed', 'order.complete', {
+      sql: "UPDATE p03.orders SET status = 'completed', completed_at = now(), version = version + 1 WHERE id = $1",
+    }));
+
+  app.post('/orders/:id/pay', { preHandler: requireApiKey }, async (request, reply) => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const order = await client.query('SELECT * FROM p03.orders WHERE id = $1 AND user_id = $2 FOR UPDATE', [Number(request.params.id), request.userId]);
+      if (order.rowCount === 0) { await client.query('ROLLBACK'); return reply.code(404).send({ error: 'not_found' }); }
+      const row = order.rows[0];
+      assertTransition(row.status, 'paid');
+      const payment = await client.query(
+        "INSERT INTO p03.payments (order_id, amount, status) VALUES ($1,$2,'pending') RETURNING id, attempts",
+        [row.id, row.amount],
+      );
+      const attemptNo = payment.rows[0].attempts + 1;
+      const started = Date.now();
+      const result = await gateway.charge({ orderId: row.id, amount: row.amount });
+      await client.query(
+        'INSERT INTO p03.payment_attempts (payment_id, attempt_no, result, note, latency_ms) VALUES ($1,$2,$3,$4,$5)',
+        [payment.rows[0].id, attemptNo, result.ok ? 'succeeded' : 'failed', result.note, Date.now() - started],
+      );
+      await client.query('UPDATE p03.payments SET attempts = attempts + 1, status = $2, provider_ref = $3, updated_at = now() WHERE id = $1',
+        [payment.rows[0].id, result.ok ? 'succeeded' : 'failed', result.providerRef]);
+      if (result.ok) {
+        await client.query("UPDATE p03.orders SET status = 'paid', paid_at = now(), version = version + 1 WHERE id = $1", [row.id]);
+        const eventId = `pay-${payment.rows[0].id}`;
+        await client.query(
+          `INSERT INTO p03.outbox (event_id, type, payload) VALUES ($1,'order.paid',$2::jsonb) ON CONFLICT (event_id) DO NOTHING`,
+          [eventId, JSON.stringify({ event_id: eventId, order_id: row.id, user_id: row.user_id, amount: row.amount })],
+        );
+        await audit(client, { actor: request.userId, action: 'order.pay', orderId: row.id, requestId: request.id, before: { status: row.status }, after: { status: 'paid', payment_id: payment.rows[0].id } });
+        await client.query('COMMIT');
+        return reply.code(200).send(await orderView(pool, row.id, request.userId));
+      }
+      await audit(client, { actor: request.userId, action: 'order.pay_failed', orderId: row.id, requestId: request.id, after: { note: result.note } });
+      await client.query('COMMIT');
+      return reply.code(402).send({ error: 'payment_failed', note: result.note, order_id: row.id });
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  });
+
+  app.post('/orders/:id/refund', { preHandler: requireApiKey }, async (request, reply) => {

@@ -1,0 +1,188 @@
+					};
+				}
+			},
+			errorMessage: {
+				type: [String, Boolean],
+				default: ''
+			},
+			// #ifdef MP-ALIPAY
+			enableNative: {
+				type: Boolean,
+				default: false
+			}
+			// #endif
+		},
+		data() {
+			return {
+				focused: false,
+				val: '',
+				showMsg: '',
+				border: false,
+				isFirstBorder: false,
+				showClearIcon: false,
+				showPassword: false,
+				focusShow: false,
+				localMsg: '',
+				isEnter: false // 用于判断当前是否是使用回车操作
+			};
+		},
+		computed: {
+			// 输入框内是否有值
+			isVal() {
+				const val = this.val;
+				// fixed by mehaotian 处理值为0的情况，字符串0不在处理范围
+				if (val || val === 0) {
+					return true;
+				}
+				return false;
+			},
+
+			msg() {
+				// console.log('computed', this.form, this.formItem);
+				// if (this.form) {
+				// 	return this.errorMessage || this.formItem.errMsg;
+				// }
+				// TODO 处理头条 formItem 中 errMsg 不更新的问题
+				return this.localMsg || this.errorMessage;
+			},
+			// 因为uniapp的input组件的maxlength组件必须要数值，这里转为数值，用户可以传入字符串数值
+			inputMaxlength() {
+				return Number(this.maxlength);
+			},
+
+			// 处理外层样式的style
+			boxStyle() {
+				return `color:${
+					this.inputBorder && this.msg ? '#e43d33' : this.styles.color
+				};`;
+			},
+			// input 内容的类和样式处理
+			inputContentClass() {
+				return obj2strClass({
+					'is-input-border': this.inputBorder,
+					'is-input-error-border': this.inputBorder && this.msg,
+					'is-textarea': this.type === 'textarea',
+					'is-disabled': this.disabled,
+					'is-focused': this.focusShow
+				});
+			},
+			inputContentStyle() {
+				const focusColor = this.focusShow
+					? this.primaryColor
+					: this.styles.borderColor;
+				const borderColor =
+					this.inputBorder && this.msg ? '#dd524d' : focusColor;
+				return obj2strStyle({
+					'border-color': borderColor || '#e5e5e5',
+					'background-color': this.disabled
+						? this.styles.disableColor
+						: this.styles.backgroundColor
+				});
+			},
+			// input右侧样式
+			inputStyle() {
+				const paddingRight =
+					this.type === 'password' || this.clearable || this.prefixIcon
+						? ''
+						: '10px';
+				return obj2strStyle({
+					'padding-right': paddingRight,
+					'padding-left': this.prefixIcon ? '' : '10px'
+				});
+			}
+		},
+		watch: {
+			value(newVal) {
+				this.val = newVal;
+			},
+			modelValue(newVal) {
+				this.val = newVal;
+			},
+			focus(newVal) {
+				this.$nextTick(() => {
+					this.focused = this.focus;
+					this.focusShow = this.focus;
+				});
+			}
+		},
+		created() {
+			this.init();
+			// TODO 处理头条vue3 computed 不监听 inject 更改的问题（formItem.errMsg）
+			if (this.form && this.formItem) {
+				this.$watch('formItem.errMsg', newVal => {
+					this.localMsg = newVal;
+				});
+			}
+		},
+		mounted() {
+			this.$nextTick(() => {
+				this.focused = this.focus;
+				this.focusShow = this.focus;
+			});
+		},
+		methods: {
+			/**
+			 * 初始化变量值
+			 */
+			init() {
+				if (this.value || this.value === 0) {
+					this.val = this.value;
+				} else if (
+					this.modelValue ||
+					this.modelValue === 0 ||
+					this.modelValue === ''
+				) {
+					this.val = this.modelValue;
+				} else {
+					this.val = null;
+				}
+			},
+
+			/**
+			 * 点击图标时触发
+			 * @param {Object} type
+			 */
+			onClickIcon(type) {
+				this.$emit('iconClick', type);
+			},
+
+			/**
+			 * 显示隐藏内容，密码框时生效
+			 */
+			onEyes() {
+				this.showPassword = !this.showPassword;
+				this.$emit('eyes', this.showPassword);
+			},
+
+			/**
+			 * 输入时触发
+			 * @param {Object} event
+			 */
+			onInput(event) {
+				let value = event.detail.value;
+				// 判断是否去除空格
+				if (this.trim) {
+					if (typeof this.trim === 'boolean' && this.trim) {
+						value = this.trimStr(value);
+					}
+					if (typeof this.trim === 'string') {
+						value = this.trimStr(value, this.trim);
+					}
+				}
+				if (this.errMsg) this.errMsg = '';
+				this.val = value;
+				// TODO 兼容 vue2
+				this.$emit('input', value);
+				// TODO　兼容　vue3
+				this.$emit('update:modelValue', value);
+			},
+
+			/**
+			 * 外部调用方法
+			 * 获取焦点时触发
+			 * @param {Object} event
+			 */
+			onFocus() {
+				this.$nextTick(() => {
+					this.focused = true;
+				});

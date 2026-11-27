@@ -1,0 +1,49 @@
+  const badName = await app.inject({ method: 'POST', url: '/tenants', headers: h(owner), payload: { name: 'x' } });
+  assert.equal(badName.statusCode, 400);
+  const badPlan = await app.inject({ method: 'POST', url: '/tenants', headers: h(owner), payload: { name: '合法组织', plan: 'gold' } });
+  assert.equal(badPlan.statusCode, 400);
+  const t = await tenant(owner, 'free');
+  assert.equal((await app.inject({ method: 'PATCH', url: `/tenants/${t.id}/plan`, headers: h(owner), payload: { plan: 'gold' } })).statusCode, 400);
+  assert.equal((await app.inject({ method: 'PATCH', url: '/tenants/9999/plan', headers: h(owner), payload: { plan: 'team' } })).statusCode, 404);
+  const member = await join(owner, t.id, 'member@example.com');
+  assert.equal((await app.inject({ method: 'PATCH', url: `/tenants/${t.id}/plan`, headers: h(member.token), payload: { plan: 'team' } })).statusCode, 403);
+  const changed = await app.inject({ method: 'PATCH', url: `/tenants/${t.id}/plan`, headers: h(owner), payload: { plan: 'team' } });
+  assert.equal(changed.statusCode, 200);
+  const row = (await pool.query("SELECT before, after FROM p04.audit_events WHERE action='tenant.plan_change'")).rows[0];
+  assert.deepEqual(row.before, { plan: 'free', seat_limit: 2 });
+  assert.deepEqual(row.after, { plan: 'team', seat_limit: 5 });
+});
+
+test('邀请与成员删除的边界', async () => {
+  await register('owner@example.com');
+  const owner = await login('owner@example.com');
+  const t = await tenant(owner);
+  const bad = await app.inject({ method: 'POST', url: `/tenants/${t.id}/invitations`, headers: h(owner), payload: { email: 'bad', role: 'member' } });
+  assert.equal(bad.statusCode, 400);
+  const badRole = await app.inject({ method: 'POST', url: `/tenants/${t.id}/invitations`, headers: h(owner), payload: { email: 'x@example.com', role: 'owner' } });
+  assert.equal(badRole.statusCode, 400);
+  assert.equal((await app.inject({ method: 'POST', url: '/invitations/9999/revoke', headers: h(owner) })).statusCode, 404);
+
+  const member = await join(owner, t.id, 'member@example.com');
+  assert.equal((await app.inject({ method: 'POST', url: `/invitations/${member.invitationId}/revoke`, headers: h(member.token) })).statusCode, 403);
+  assert.equal((await app.inject({ method: 'POST', url: `/invitations/${member.invitationId}/revoke`, headers: h(owner) })).statusCode, 409);
+  assert.equal((await app.inject({ method: 'DELETE', url: `/tenants/${t.id}/members/9999`, headers: h(owner) })).statusCode, 404);
+  const me = (await pool.query("SELECT id FROM p04.users WHERE email='owner@example.com'")).rows[0].id;
+  assert.equal((await app.inject({ method: 'DELETE', url: `/tenants/${t.id}/members/${me}`, headers: h(owner) })).statusCode, 409);
+  assert.equal((await app.inject({ method: 'DELETE', url: `/tenants/${t.id}/members/9999`, headers: h(member.token) })).statusCode, 403);
+});
+
+test('客户、跟进、任务与通知的边界与只读校验', async () => {
+  await register('owner@example.com');
+  const owner = await login('owner@example.com');
+  const t = await tenant(owner);
+  const member = await join(owner, t.id, 'member@example.com');
+
+  const badClient = await app.inject({ method: 'POST', url: `/tenants/${t.id}/clients`, headers: h(owner), payload: { name: '' } });
+  assert.equal(badClient.statusCode, 400);
+  assert.equal((await app.inject({ method: 'DELETE', url: `/tenants/${t.id}/clients/9999`, headers: h(owner) })).statusCode, 404);
+
+  const c = await app.inject({ method: 'POST', url: `/tenants/${t.id}/clients`, headers: h(owner), payload: { name: '客户' } });
+  const clientId = c.json().id;
+  assert.equal((await app.inject({ method: 'POST', url: `/tenants/${t.id}/clients/${clientId}/followups`, headers: h(owner), payload: { summary: '' } })).statusCode, 400);
+  assert.equal((await app.inject({ method: 'POST', url: `/tenants/${t.id}/clients/${clientId}/followups`, headers: h(owner), payload: { summary: '回访', next_at: 'not-a-date' } })).statusCode, 400);

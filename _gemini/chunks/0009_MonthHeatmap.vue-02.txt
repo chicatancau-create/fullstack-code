@@ -1,0 +1,207 @@
+  const matched = /^(\d{4})-(\d{2})$/.exec(props.monthKey)
+  if (!matched) return '—'
+  return `${matched[1]}年${Number(matched[2])}月`
+})
+
+// 图例最后一格之外的提示文案，非法 monthKey 时不显示，避免拼出「— 之后」这种怪文案
+const monthAfterText = computed(() => (monthLabel.value === '—' ? '' : '可继续往前翻看历史月份'))
+
+const todayValid = computed(() => isValidDateKey(props.todayKey))
+
+function countOf(cellKey) {
+  if (!cellKey) return 0
+  const num = Number(props.counts?.[cellKey])
+  return Number.isFinite(num) && num > 0 ? num : 0
+}
+
+function detailOf(cellKey) {
+  if (!cellKey) return []
+  const list = props.detail?.[cellKey]
+  return Array.isArray(list) ? list : []
+}
+
+function isFuture(cellKey) {
+  // 日期键是 YYYY-MM-DD，字典序即时间序
+  return Boolean(cellKey) && todayValid.value && cellKey > props.todayKey
+}
+
+function hasDetail(cellKey) {
+  return Boolean(cellKey) && !isFuture(cellKey) && detailOf(cellKey).length > 0
+}
+
+function isFocusable(cellKey) {
+  return hasDetail(cellKey)
+}
+
+/**
+ * 色阶分档：max <= 3 时严格用课定的 0/1/2/3+ 四档；
+ * 习惯多、单日 max 更大时按 max 归一，仍压回 4 档保证肉眼可辨。
+ */
+function heatLevel(cellKey) {
+  const count = countOf(cellKey)
+  if (count <= 0) return 0
+  const max = maxSafe.value
+  if (max <= 3) return Math.min(count, 3)
+  return Math.min(3, Math.max(1, Math.ceil((count / max) * 3)))
+}
+
+function cellClass(cellKey, index) {
+  if (!cellKey) return ['is-blank']
+  return [
+    `heat-${heatLevel(cellKey)}`,
+    {
+      'is-today': Boolean(todayValid.value) && cellKey === props.todayKey,
+      'is-future': isFuture(cellKey),
+      'tip-below': index < WEEK_LABELS.length,
+      'tip-left': index % WEEK_LABELS.length === 0,
+      'tip-right': index % WEEK_LABELS.length === WEEK_LABELS.length - 1,
+    },
+  ]
+}
+
+function dayNumberOf(cellKey) {
+  return Number(cellKey.slice(8, 10)) || 1
+}
+
+function tipTitle(cellKey) {
+  return isValidDateKey(cellKey) ? formatFullDate(cellKey) : cellKey
+}
+
+function cellAriaLabel(cellKey) {
+  if (!cellKey) return '空白格'
+  if (isFuture(cellKey)) return `${cellKey} 尚未到来`
+  const count = countOf(cellKey)
+  return count ? `${cellKey}，${count} 个习惯完成打卡` : `${cellKey}，没有打卡`
+}
+</script>
+
+<style scoped>
+.heatmap {
+  overflow: visible;
+}
+
+.hm-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.hm-head .section-title {
+  margin-bottom: 0;
+}
+
+.hm-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.hm-month {
+  min-width: 92px;
+  color: var(--brand);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.hm-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 10px 0 4px;
+}
+
+.hm-edge {
+  margin-left: auto;
+}
+
+/* 表头与网格共用同一套 7 列轨道，保证周一到周日不错位 */
+.hm-weekdays,
+.hm-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.hm-weekdays {
+  margin-top: 8px;
+}
+
+.hm-weekday {
+  padding: 2px 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.hm-grid {
+  margin-top: 4px;
+}
+
+.hm-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-height: 62px;
+  padding: 5px 7px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.hm-cell:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+
+.hm-day {
+  color: var(--text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hm-count {
+  align-self: flex-end;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--brand);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* 四档色阶：数值按课定 token，第 3 档起文字转白 */
+.heat-0 {
+  background-color: #eef1f7;
+}
+
+.heat-1 {
+  background-color: #cfe0ff;
+}
+
+.heat-2 {
+  background-color: #7ea6ec;
+}
+
+.heat-3 {
+  background-color: var(--accent);
+}
+
+.heat-2 .hm-day,
+.heat-3 .hm-day {
+  color: #fff;
+}
+
+.heat-3 .hm-count {
+  background: rgba(255, 255, 255, 0.85);
+}
+

@@ -1,0 +1,42 @@
+    public Map<String, Object> acceptInvitation(HttpServletRequest request, @RequestBody Accept body) {
+        if (body.token() == null || body.token().length() < 16) throw new ApiException(HttpStatus.BAD_REQUEST, "invalid_token");
+        String hash = AuthFilter.sha256(body.token());
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "SELECT id, workspace_id, email, role, status, expires_at FROM invitations WHERE token_hash = ? FOR UPDATE", hash);
+        if (rows.isEmpty()) throw new ApiException(HttpStatus.NOT_FOUND, "not_found");
+        Map<String, Object> invite = rows.getFirst();
+        String currentEmail = jdbc.queryForObject("SELECT email FROM users WHERE id = ?", String.class, userId(request));
+        if (!String.valueOf(invite.get("email")).equalsIgnoreCase(currentEmail)) throw new ApiException(HttpStatus.FORBIDDEN, "email_mismatch");
+        long workspaceId = ((Number) invite.get("workspace_id")).longValue();
+        String status = String.valueOf(invite.get("status"));
+        if ("accepted".equals(status)) {
+            String existing = roleOf(workspaceId, userId(request));
+            if (existing == null) throw new ApiException(HttpStatus.CONFLICT, "membership_removed");
+            return Map.of("workspace_id", workspaceId, "role", existing, "idempotent", true);
+        }
+        java.sql.Timestamp expires = (java.sql.Timestamp) invite.get("expires_at");
+        if (!"pending".equals(status) || expires.toInstant().isBefore(Instant.now())) {
+            if ("pending".equals(status)) jdbc.update("UPDATE invitations SET status = 'revoked' WHERE id = ?", invite.get("id"));
+            throw new ApiException(HttpStatus.CONFLICT, "invitation_inactive");
+        }
+        jdbc.update("INSERT INTO memberships (workspace_id, user_id, role) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE role = memberships.role",
+                workspaceId, userId(request), invite.get("role"));
+        jdbc.update("UPDATE invitations SET status = 'accepted', accepted_at = NOW() WHERE id = ?", invite.get("id"));
+        audit(workspaceId, userId(request), "invitation.accept", "invitation:" + invite.get("id"));
+        return Map.of("workspace_id", workspaceId, "role", invite.get("role"), "idempotent", false);
+    }
+
+    @DeleteMapping("/workspaces/{id}/members/{userId}")
+    public ResponseEntity<Map<String, Object>> removeMember(HttpServletRequest request, @PathVariable long id, @PathVariable long userId) {
+        memberships.removeMember(id, userId(request), userId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping("/workspaces/{id}/audit")
+    public Map<String, Object> auditList(HttpServletRequest request, @PathVariable long id) {
+        requireOwner(id, userId(request));
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "SELECT a.id, a.action, a.target, a.metadata, a.created_at, u.email AS actor FROM audit_events a JOIN users u ON u.id = a.actor_id WHERE a.workspace_id = ? ORDER BY a.id DESC LIMIT 100", id);
+        return Map.of("events", rows);
+    }
+}

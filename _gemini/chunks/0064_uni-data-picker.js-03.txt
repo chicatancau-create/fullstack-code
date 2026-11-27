@@ -1,0 +1,158 @@
+      const field = options.field || this.field
+      if (field) {
+        db = db.field(field)
+      }
+
+      const orderby = options.orderby || this.orderby
+      if (orderby) {
+        db = db.orderBy(orderby)
+      }
+
+      const current = options.pageCurrent !== undefined ? options.pageCurrent : this.page.current
+      const size = options.pageSize !== undefined ? options.pageSize : this.page.size
+      const getCount = options.getcount !== undefined ? options.getcount : this.getcount
+      const getTree = options.gettree !== undefined ? options.gettree : this.gettree
+
+      const getOptions = {
+        getCount,
+        getTree
+      }
+      if (options.getTreePath) {
+        getOptions.getTreePath = options.getTreePath
+      }
+
+      db = db.skip(size * (current - 1)).limit(size).get(getOptions)
+
+      return db
+    },
+
+    _cloudDataPostField() {
+      let fields = [this.field];
+      if (this.parentField) {
+        fields.push(`${this.parentField} as parent_value`);
+      }
+      return fields.join(',');
+    },
+
+    _cloudDataTreeWhere() {
+      let result = []
+      let selected = this.selected
+      let parentField = this.parentField
+      if (parentField) {
+        result.push(`${parentField} == null || ${parentField} == ""`)
+      }
+      if (selected.length) {
+        for (var i = 0; i < selected.length - 1; i++) {
+          result.push(`${parentField} == '${selected[i].value}'`)
+        }
+      }
+
+      let where = []
+      if (this.where) {
+        where.push(`(${this.where})`)
+      }
+
+      if (result.length) {
+        where.push(`(${result.join(' || ')})`)
+      }
+
+      return where.join(' && ')
+    },
+
+    _cloudDataNodeWhere() {
+      let where = []
+      let selected = this.selected;
+      if (selected.length) {
+        where.push(`${this.parentField} == '${selected[selected.length - 1].value}'`);
+      }
+
+      where = where.join(' || ');
+
+      if (this.where) {
+        return `(${this.where}) && (${where})`
+      }
+
+      return where
+    },
+
+    _getWhereByForeignKey() {
+      let result = []
+      let whereField = this._getForeignKeyByField();
+      if (whereField) {
+        result.push(`${whereField} == '${this.dataValue}'`)
+      }
+
+      if (this.where) {
+        return `(${this.where}) && (${result.join(' || ')})`
+      }
+
+      return result.join(' || ')
+    },
+
+    _getForeignKeyByField() {
+      let fields = this.field.split(',');
+      let whereField = null;
+      for (let i = 0; i < fields.length; i++) {
+        const items = fields[i].split('as');
+        if (items.length < 2) {
+          continue;
+        }
+        if (items[1].trim() === 'value') {
+          whereField = items[0].trim();
+          break;
+        }
+      }
+      return whereField;
+    },
+
+    _updateBindData(node) {
+      const {
+        dataList,
+        hasNodes
+      } = this._filterData(this._treeData, this.selected)
+
+      let isleaf = this._stepSearh === false && !hasNodes
+
+      if (node) {
+        node.isleaf = isleaf
+      }
+
+      this.dataList = dataList
+      this.selectedIndex = dataList.length - 1
+
+      if (!isleaf && this.selected.length < dataList.length) {
+        this.selected.push({
+          value: null,
+          text: "请选择"
+        })
+      }
+
+      return {
+        isleaf,
+        hasNodes
+      }
+    },
+
+    _updateSelected() {
+      let dl = this.dataList
+      let sl = this.selected
+      let textField = this.map.text
+      let valueField = this.map.value
+      for (let i = 0; i < sl.length; i++) {
+        let value = sl[i].value
+        let dl2 = dl[i]
+        for (let j = 0; j < dl2.length; j++) {
+          let item2 = dl2[j]
+          if (item2[valueField] === value) {
+            sl[i].text = item2[textField]
+            break
+          }
+        }
+      }
+    },
+
+    _filterData(data, paths) {
+      let dataList = []
+      let hasNodes = true
+
+      dataList.push(data.filter((item) => {

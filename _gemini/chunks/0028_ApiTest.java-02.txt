@@ -1,0 +1,64 @@
+        MvcResult malformed = mvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON).content("{bad"))
+                .andReturn();
+        assertThat(malformed.getResponse().getStatus()).isEqualTo(400);
+    }
+
+    @Test
+    void ownerCreatesWorkspaceAndMemberIsolationHolds() throws Exception {
+        register("owner@example.com");
+        register("bob@example.com");
+        register("eve@example.com");
+        String owner = login("owner@example.com");
+        String bob = login("bob@example.com");
+        String eve = login("eve@example.com");
+
+        MvcResult created = postJson("/workspaces", owner, Map.of("name", "研发团队"));
+        assertThat(created.getResponse().getStatus()).isEqualTo(201);
+        long workspaceId = body(created).get("id").asLong();
+
+        MvcResult add = postJson("/workspaces/" + workspaceId + "/members", owner, Map.of("email", "bob@example.com"));
+        assertThat(add.getResponse().getStatus()).isEqualTo(201);
+        MvcResult addAgain = postJson("/workspaces/" + workspaceId + "/members", owner, Map.of("email", "bob@example.com"));
+        assertThat(addAgain.getResponse().getStatus()).isEqualTo(409);
+        MvcResult memberAttempt = postJson("/workspaces/" + workspaceId + "/members", bob, Map.of("email", "eve@example.com"));
+        assertThat(memberAttempt.getResponse().getStatus()).isEqualTo(403);
+
+        MvcResult tasks = postJson("/workspaces/" + workspaceId + "/tasks", bob, Map.of("title", "写迁移文档"));
+        assertThat(tasks.getResponse().getStatus()).isEqualTo(201);
+        MvcResult duplicateTask = postJson("/workspaces/" + workspaceId + "/tasks", bob, Map.of("title", "写迁移文档"));
+        assertThat(duplicateTask.getResponse().getStatus()).isEqualTo(409);
+
+        MvcResult outsider = mvc.perform(get("/workspaces/" + workspaceId + "/tasks").header("Authorization", "Bearer " + eve))
+                .andReturn();
+        assertThat(outsider.getResponse().getStatus()).isEqualTo(404);
+
+        MvcResult list = mvc.perform(get("/workspaces/" + workspaceId + "/tasks").header("Authorization", "Bearer " + bob)).andReturn();
+        assertThat(body(list).get("tasks")).hasSize(1);
+    }
+
+    @Test
+    void invitationFlowWritesAuditAndEnforcesEmail() throws Exception {
+        register("owner@example.com");
+        register("bob@example.com");
+        register("alice@example.com");
+        String owner = login("owner@example.com");
+        String bob = login("bob@example.com");
+        String alice = login("alice@example.com");
+        long workspaceId = body(postJson("/workspaces", owner, Map.of("name", "Invite Team"))).get("id").asLong();
+
+        MvcResult invite = postJson("/workspaces/" + workspaceId + "/invitations", owner, Map.of("email", "bob@example.com", "role", "member"));
+        assertThat(invite.getResponse().getStatus()).isEqualTo(201);
+        String inviteToken = body(invite).get("token").asText();
+        MvcResult wrongEmail = postJson("/invitations/accept", alice, Map.of("token", inviteToken));
+        assertThat(wrongEmail.getResponse().getStatus()).isEqualTo(403);
+        MvcResult accepted = postJson("/invitations/accept", bob, Map.of("token", inviteToken));
+        assertThat(accepted.getResponse().getStatus()).isEqualTo(200);
+        assertThat(body(accepted).get("idempotent").asBoolean()).isFalse();
+        MvcResult again = postJson("/invitations/accept", bob, Map.of("token", inviteToken));
+        assertThat(again.getResponse().getStatus()).isEqualTo(200);
+        assertThat(body(again).get("idempotent").asBoolean()).isTrue();
+        MvcResult duplicate = postJson("/workspaces/" + workspaceId + "/invitations", owner, Map.of("email", "bob@example.com", "role", "member"));
+        assertThat(duplicate.getResponse().getStatus()).isEqualTo(409);
+
+        MvcResult audit = mvc.perform(get("/workspaces/" + workspaceId + "/audit").header("Authorization", "Bearer " + owner)).andReturn();
+        assertThat(audit.getResponse().getStatus()).isEqualTo(200);

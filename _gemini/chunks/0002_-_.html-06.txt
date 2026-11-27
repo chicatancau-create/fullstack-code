@@ -1,0 +1,91 @@
+/* ============ 布局保留区（防止穿插重叠） ============ */
+const reserved = [
+  { x: -8, z: -6, r: 8.2 }, { x: -17, z: 7, r: 3.6 }, { x: 3, z: -16, r: 3.8 },
+  { x: 17, z: -8, r: 3.4 }, { x: 20, z: 12, r: 4.2 }, { x: -19, z: -11, r: 2.8 },
+  { x: 21, z: 2, r: 2.6 }, { x: -2, z: -21, r: 2.4 }, { x: 6, z: 16.5, r: 1.8 }
+];
+const lanternPos = [[2.3, 20], [-3.2, 13], [-7.5, 1.5], [15.5, 9.3], [3.5, 15.8], [-14, 3]];
+for (const [x, z] of lanternPos) reserved.push({ x, z, r: 1.1 });
+const beds = [[-3, 18, 2.2], [6, -3, 2], [-13, -13, 2.4], [12, -14, 2.2], [19, -3, 2]];
+for (const [x, z, r] of beds) reserved.push({ x, z, r: r + 0.4 });
+function freeSpot(x, z, pad = 0.6) {
+  if (Math.hypot(x, z) > 23.2) return false;
+  if (cellH(x, z) !== 0) return false;
+  if (pathDist(x, z) < 1.9) return false;
+  for (const o of reserved) if (Math.hypot(x - o.x, z - o.z) < o.r + pad) return false;
+  return true;
+}
+
+/* ============ 主建筑：双层檐四角攒尖顶凉亭 ============ */
+(function pavilion() {
+  const cx = -8, cz = -6;
+  const V = (x, y, z, sx, sy, sz, c, ry = 0) => vox(cx + x, y, cz + z, sx, sy, sz, c, ry);
+  const RED = 0xc0392b, RED_D = 0x96271c, GOLD = 0xd9a441, TEAL = 0x1f7a6d,
+        TILE = 0x1f6fb2, TILE_D = 0x185a92, STONE = 0xb9b3a4;
+  V(0, 0.35, 0, 11, 0.7, 11, STONE);
+  V(0, 0.72, 0, 11.3, 0.12, 11.3, 0x948d7c);
+  for (let k = 0; k < 3; k++) V(0, 0.12 + k * 0.23, 5.9 + (2 - k) * 0.75, 3.2, 0.24, 0.8, 0xa8a291);
+  const colPos = [[-3.2, -3.2], [3.2, -3.2], [-3.2, 3.2], [3.2, 3.2]];
+  for (const [px, pz] of colPos) {
+    V(px, 0.85, pz, 0.85, 0.3, 0.85, 0x8f8878);
+    V(px, 3.15, pz, 0.55, 4.6, 0.55, RED);
+    V(px, 5.42, pz, 0.7, 0.18, 0.7, GOLD);
+    /* 斗拱：三层出跳 */
+    V(px, 5.62, pz, 1.0, 0.22, 1.0, TEAL);
+    V(px, 5.82, pz, 1.5, 0.2, 0.55, GOLD);
+    V(px, 6.0, pz, 0.55, 0.2, 1.5, TEAL);
+    V(px, 6.18, pz, 1.9, 0.16, 0.42, RED_D);
+  }
+  /* 额枋 */
+  for (const s of [-1, 1]) {
+    V(0, 5.25, 3.2 * s, 7.0, 0.42, 0.34, RED);
+    V(3.2 * s, 5.25, 0, 0.34, 0.42, 7.0, RED);
+    V(0, 4.85, 3.2 * s, 7.0, 0.16, 0.26, GOLD);
+    V(3.2 * s, 4.85, 0, 0.26, 0.16, 7.0, GOLD);
+  }
+  /* 三面坐凳栏杆（南面留门） */
+  const sides = [
+    { ax: 'x', fix: -3.2, from: -3.2, to: 3.2 },
+    { ax: 'z', fix: -3.2, from: -3.2, to: 3.2 },
+    { ax: 'z', fix: 3.2, from: -3.2, to: 3.2 }
+  ];
+  for (const s of sides) {
+    for (let t = s.from + 0.45; t <= s.to - 0.4; t += 0.5) {
+      const x = s.ax === 'x' ? t : s.fix, z = s.ax === 'x' ? s.fix : t;
+      V(x, 1.28, z, 0.13, 0.66, 0.13, RED_D);
+    }
+    const mx = s.ax === 'x' ? 0 : s.fix, mz = s.ax === 'x' ? s.fix : 0;
+    const lx = s.ax === 'x' ? 6.4 : 0.2, lz = s.ax === 'x' ? 0.2 : 6.4;
+    V(mx, 1.66, mz, lx, 0.16, lz, RED);
+    V(mx, 0.92, mz, lx, 0.14, lz, STONE);
+  }
+  /* 内槽天花 */
+  V(0, 5.52, 0, 7.4, 0.16, 7.4, RED_D);
+  /* 下檐：四角攒尖，逐层收分 */
+  function roof(baseY, half, layers, rise, apex) {
+    for (let k = 0; k < layers; k++) {
+      const hw = half * (1 - (k / layers) * (1 - apex / half));
+      const y = baseY + k * rise;
+      for (let x = -hw; x <= hw + 0.01; x += 0.62) for (let z = -hw; z <= hw + 0.01; z += 0.62) {
+        const edge = Math.max(Math.abs(x), Math.abs(z)) > hw - 0.62;
+        V(x, y, z, 0.64, 0.34, 0.64, edge ? TILE_D : TILE);
+      }
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+        V(sx * hw, y + 0.22, sz * hw, 0.52, 0.4, 0.52, GOLD);
+        if (k === 0) {
+          V(sx * (hw + 0.28), y + 0.42, sz * (hw + 0.28), 0.42, 0.34, 0.42, TILE);
+          V(sx * (hw + 0.28), y - 0.28, sz * (hw + 0.28), 0.14, 0.22, 0.14, GOLD);
+        }
+      }
+    }
+    return baseY + layers * rise;
+  }
+  const lowerTop = roof(6.35, 5.9, 7, 0.34, 1.7);
+  /* 上层平座与檐柱 */
+  V(0, lowerTop + 0.1, 0, 5.4, 0.24, 5.4, RED_D);
+  for (const [px, pz] of [[-1.9, -1.9], [1.9, -1.9], [-1.9, 1.9], [1.9, 1.9]])
+    V(px, lowerTop + 0.95, pz, 0.4, 1.5, 0.4, RED);
+  /* 上层格子窗（细单元） */
+  for (const s of [-1, 1]) {
+    for (let t = -1.55; t <= 1.56; t += 0.31) {
+      V(t, lowerTop + 0.95, 1.9 * s, 0.1, 1.26, 0.1, GOLD);

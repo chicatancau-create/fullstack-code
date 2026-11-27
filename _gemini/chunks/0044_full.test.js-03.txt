@@ -1,0 +1,11 @@
+  }
+  assert.ok(minimum, '扩容扫描应能找到脱离 over 的最小 worker 数');
+  assert.equal(minimum.tier, 'peak');
+  assert.ok(minimum.capacity_rps >= minimum.peak_rps);
+  const doubled = capacityEstimate({ ...overArgs, workers: minimum.workers * 2 });
+  assert.equal(doubled.tier, 'normal');
+  const policies = await pool.query("SELECT tablename FROM pg_policies WHERE schemaname='p04' ORDER BY tablename");
+  assert.deepEqual(policies.rows.map((r) => r.tablename), ['clients', 'followups', 'jobs']);
+  const rls = await pool.query("SELECT relname, relrowsecurity FROM pg_class WHERE relnamespace='p04'::regnamespace AND relname IN ('clients','followups','jobs')");
+  assert.equal(rls.rows.every((r) => r.relrowsecurity), true);
+});

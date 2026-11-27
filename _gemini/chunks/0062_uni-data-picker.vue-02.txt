@@ -1,0 +1,172 @@
+        type: [Object, Array],
+        default () {
+          return {}
+        }
+      },
+      popupTitle: {
+        type: String,
+        default: '请选择'
+      },
+      placeholder: {
+        type: String,
+        default: '请选择'
+      },
+      heightMobile: {
+        type: String,
+        default: ''
+      },
+      readonly: {
+        type: Boolean,
+        default: false
+      },
+      clearIcon: {
+        type: Boolean,
+        default: true
+      },
+      border: {
+        type: Boolean,
+        default: true
+      },
+      split: {
+        type: String,
+        default: '/'
+      },
+      ellipsis: {
+        type: Boolean,
+        default: true
+      }
+    },
+    data() {
+      return {
+        isOpened: false,
+        inputSelected: []
+      }
+    },
+    created() {
+      this.$nextTick(() => {
+        this.load();
+      })
+    },
+    watch: {
+			localdata: {
+				handler() {
+					this.load()
+				},
+        deep: true
+			},
+    },
+    methods: {
+      clear() {
+        this._dispatchEvent([]);
+      },
+      onPropsChange() {
+        this._treeData = [];
+        this.selectedIndex = 0;
+
+        this.load();
+      },
+      load() {
+        if (this.readonly) {
+          this._processReadonly(this.localdata, this.dataValue);
+          return;
+        }
+
+        // 回显本地数据
+        if (this.isLocalData) {
+          this.loadData();
+          this.inputSelected = this.selected.slice(0);
+        } else if (this.isCloudDataList || this.isCloudDataTree) { // 回显 Cloud 数据
+          this.loading = true;
+          this.getCloudDataValue().then((res) => {
+            this.loading = false;
+            this.inputSelected = res;
+          }).catch((err) => {
+            this.loading = false;
+            this.errorMessage = err;
+          })
+        }
+      },
+      show() {
+        this.isOpened = true
+        setTimeout(() => {
+          this.$refs.pickerView.updateData({
+            treeData: this._treeData,
+            selected: this.selected,
+            selectedIndex: this.selectedIndex
+          })
+        }, 200)
+        this.$emit('popupopened')
+      },
+      hide() {
+        this.isOpened = false
+        this.$emit('popupclosed')
+      },
+      handleInput() {
+        if (this.readonly) {
+					this.$emit('inputclick')
+          return
+        }
+        this.show()
+      },
+      handleClose(e) {
+        this.hide()
+      },
+      onnodeclick(e) {
+        this.$emit('nodeclick', e)
+      },
+      ondatachange(e) {
+        this._treeData = this.$refs.pickerView._treeData
+      },
+      onchange(e) {
+        this.hide()
+        this.$nextTick(() => {
+          this.inputSelected = e;
+        })
+        this._dispatchEvent(e)
+      },
+      _processReadonly(dataList, value) {
+        var isTree = dataList.findIndex((item) => {
+          return item.children
+        })
+        if (isTree > -1) {
+          let inputValue
+          if (Array.isArray(value)) {
+            inputValue = value[value.length - 1]
+            if (typeof inputValue === 'object' && inputValue.value) {
+              inputValue = inputValue.value
+            }
+          } else {
+            inputValue = value
+          }
+          this.inputSelected = this._findNodePath(inputValue, this.localdata)
+          return
+        }
+
+        if (!this.hasValue) {
+          this.inputSelected = []
+          return
+        }
+
+        let result = []
+        for (let i = 0; i < value.length; i++) {
+          var val = value[i]
+          var item = dataList.find((v) => {
+            return v.value == val
+          })
+          if (item) {
+            result.push(item)
+          }
+        }
+        if (result.length) {
+          this.inputSelected = result
+        }
+      },
+      _filterForArray(data, valueArray) {
+        var result = []
+        for (let i = 0; i < valueArray.length; i++) {
+          var value = valueArray[i]
+          var found = data.find((item) => {
+            return item.value == value
+          })
+          if (found) {
+            result.push(found)

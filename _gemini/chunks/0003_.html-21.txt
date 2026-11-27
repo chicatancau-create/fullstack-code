@@ -1,0 +1,112 @@
+    A.p.addScaledVector(A.v, dt);
+    if (rho > 0.93) { const q = 0.93 / rho; A.p.x *= q; A.p.z *= q; }
+
+    _sc.copy(A.v).normalize();
+    A.f.lerp(_sc, Math.min(1, dt * 5)).normalize();
+    _v1.crossVectors(UPV, A.f);
+    if (_v1.lengthSq() < 1e-7) _v1.set(1, 0, 0);
+    _v1.normalize();
+    const bank = Math.max(-0.55, Math.min(0.55, (A.f.x * A.v.z - A.f.z * A.v.x) * 5.5));
+    _v1.applyAxisAngle(A.f, bank);
+    _v2.crossVectors(A.f, _v1).normalize();
+    _fm.makeBasis(_v1, _v2, A.f);
+    _fm.setPosition(A.p);
+    _fm.scale(_sc.setScalar(A.s));
+    fishMesh.setMatrixAt(i, _fm);
+    fishPhase.array[i] = A.ph;
+  }
+  fishMesh.instanceMatrix.needsUpdate = true;
+  fishPhase.needsUpdate = true;
+}
+
+/* ---------------------------------------------------------------- UI */
+const todSlider = document.getElementById('tod'), todNameEl = document.getElementById('todName');
+const fpsEl = document.getElementById('fps'), qualityEl = document.getElementById('quality');
+const swOrbit = document.getElementById('swOrbit');
+todSlider.addEventListener('input', (e) => {
+  TOD.t = TOD.target = e.target.value / 1000;
+  applyTime(TOD.t);
+});
+document.querySelectorAll('.ticks b').forEach((el) => {
+  el.addEventListener('click', () => { TOD.target = Number(el.dataset.t) / 1000; });
+});
+swOrbit.addEventListener('click', () => {
+  controls.autoRotate = !controls.autoRotate;
+  swOrbit.classList.toggle('on', controls.autoRotate);
+});
+qualityEl.addEventListener('change', () => {
+  qKey = qualityEl.value; quality = QUALITY[qKey];
+  gtaoPass.enabled = quality.gtao;
+  smaaPass.enabled = quality.smaa;
+  setSize();
+});
+addEventListener('keydown', (e) => {
+  if (e.key === '1' || e.key === '2' || e.key === '3') TOD.target = (Number(e.key) - 1) / 2;
+  else if (e.code === 'Space') { e.preventDefault(); swOrbit.click(); }
+  else if (e.key === 'h' || e.key === 'H') {
+    document.querySelectorAll('.panel,.brand,.keys').forEach((n) => {
+      n.style.opacity = (n.style.opacity === '0') ? '1' : '0';
+    });
+  }
+});
+controls.addEventListener('start', () => {
+  if (controls.autoRotate) { controls.autoRotate = false; swOrbit.classList.remove('on'); }
+});
+
+/* ---------------------------------------------------------------- 主循环 */
+const clock = new THREE.Clock();
+let firstFrame = true, fpsAcc = 0, fpsN = 0;
+function tick() {
+  const dt = Math.min(0.05, clock.getDelta());
+  const time = clock.elapsedTime;
+  U.time.value = time;
+  U.starT.value = time;
+  gradePass.uniforms.uTime.value = time;
+
+  const wa = time * 0.05 + Math.sin(time * 0.11) * 0.7;
+  U.wind.value.set(Math.cos(wa), Math.sin(wa));
+
+  if (Math.abs(TOD.t - TOD.target) > 1e-4) {
+    TOD.t += (TOD.target - TOD.t) * Math.min(1, dt * 2.6);
+    applyTime(TOD.t);
+    todSlider.value = String(Math.round(TOD.t * 1000));
+  }
+
+  island.position.y = Math.sin(time * 0.45) * 0.017 + Math.sin(time * 0.29 + 1.7) * 0.009;
+
+  controls.update();
+  camera.updateMatrixWorld();
+  U.projInv.value.copy(camera.projectionMatrixInverse);
+  U.camWorld.value.copy(camera.matrixWorld);
+  U.viewProj.value.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+  U.shellPos.value.copy(island.position);
+
+  updateFish(dt, time);
+
+  if (envDirty && envSkip <= 0) { updateEnvironment(); envDirty = false; envSkip = 2; }
+  else envSkip--;
+
+  // 屏幕空间折射预通道（不含树脂外壳）
+  renderer.shadowMap.needsUpdate = true;
+  shell.visible = false;
+  renderer.setRenderTarget(preRT);
+  renderer.render(scene, camera);
+  renderer.setRenderTarget(null);
+  shell.visible = true;
+
+  composer.render(dt);
+
+  fpsAcc += dt; fpsN++;
+  if (fpsAcc > 0.5) {
+    fpsEl.textContent = Math.round(fpsN / fpsAcc) + ' fps · ' + renderer.info.render.calls + ' draw';
+    fpsAcc = 0; fpsN = 0;
+  }
+  if (firstFrame) {
+    firstFrame = false;
+    bootEl.classList.add('gone');
+    setTimeout(() => bootEl.remove(), 900);
+  }
+}
+
+/* ---------------------------------------------------------------- 启动 */
+try {

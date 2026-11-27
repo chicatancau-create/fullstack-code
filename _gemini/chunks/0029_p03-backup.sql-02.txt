@@ -1,0 +1,155 @@
+    payload jsonb NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    attempts integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    sent_at timestamp with time zone,
+    last_error text DEFAULT ''::text NOT NULL,
+    CONSTRAINT outbox_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'sent'::text, 'dead'::text])))
+);
+
+
+--
+-- Name: payment_attempts; Type: TABLE; Schema: p03; Owner: -
+--
+
+CREATE TABLE p03.payment_attempts (
+    id integer NOT NULL,
+    payment_id integer NOT NULL,
+    attempt_no integer NOT NULL,
+    result text NOT NULL,
+    note text DEFAULT ''::text NOT NULL,
+    latency_ms integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT payment_attempts_result_check CHECK ((result = ANY (ARRAY['succeeded'::text, 'failed'::text])))
+);
+
+
+--
+-- Name: payment_attempts_id_seq; Type: SEQUENCE; Schema: p03; Owner: -
+--
+
+CREATE SEQUENCE p03.payment_attempts_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: payment_attempts_id_seq; Type: SEQUENCE OWNED BY; Schema: p03; Owner: -
+--
+
+ALTER SEQUENCE p03.payment_attempts_id_seq OWNED BY p03.payment_attempts.id;
+
+
+--
+-- Name: payment_events; Type: TABLE; Schema: p03; Owner: -
+--
+
+CREATE TABLE p03.payment_events (
+    event_id text NOT NULL,
+    order_id integer NOT NULL,
+    result text NOT NULL,
+    applied boolean DEFAULT false NOT NULL,
+    note text DEFAULT ''::text NOT NULL,
+    received_at timestamp with time zone DEFAULT now() NOT NULL,
+    fingerprint text DEFAULT ''::text NOT NULL,
+    CONSTRAINT payment_events_result_check CHECK ((result = ANY (ARRAY['success'::text, 'failed'::text])))
+);
+
+
+--
+-- Name: payments; Type: TABLE; Schema: p03; Owner: -
+--
+
+CREATE TABLE p03.payments (
+    id integer NOT NULL,
+    order_id integer NOT NULL,
+    amount integer NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    provider_ref text,
+    attempts integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT payments_amount_check CHECK ((amount > 0)),
+    CONSTRAINT payments_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'succeeded'::text, 'failed'::text, 'refunded'::text])))
+);
+
+
+--
+-- Name: payments_id_seq; Type: SEQUENCE; Schema: p03; Owner: -
+--
+
+CREATE SEQUENCE p03.payments_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: payments_id_seq; Type: SEQUENCE OWNED BY; Schema: p03; Owner: -
+--
+
+ALTER SEQUENCE p03.payments_id_seq OWNED BY p03.payments.id;
+
+
+--
+-- Name: products; Type: TABLE; Schema: p03; Owner: -
+--
+
+CREATE TABLE p03.products (
+    sku text NOT NULL,
+    title text NOT NULL,
+    price_cents integer NOT NULL,
+    active boolean DEFAULT true NOT NULL,
+    CONSTRAINT products_price_cents_check CHECK ((price_cents > 0))
+);
+
+
+--
+-- Name: refunds; Type: TABLE; Schema: p03; Owner: -
+--
+
+CREATE TABLE p03.refunds (
+    id integer NOT NULL,
+    order_id integer NOT NULL,
+    payment_id integer,
+    amount integer NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    reason text DEFAULT ''::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    settled_at timestamp with time zone,
+    CONSTRAINT refunds_amount_check CHECK ((amount > 0)),
+    CONSTRAINT refunds_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'succeeded'::text, 'failed'::text])))
+);
+
+
+--
+-- Name: refunds_id_seq; Type: SEQUENCE; Schema: p03; Owner: -
+--
+
+CREATE SEQUENCE p03.refunds_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: refunds_id_seq; Type: SEQUENCE OWNED BY; Schema: p03; Owner: -
+--
+
+ALTER SEQUENCE p03.refunds_id_seq OWNED BY p03.refunds.id;
+
+
+--
+-- Name: schema_migrations; Type: TABLE; Schema: p03; Owner: -
+--
+

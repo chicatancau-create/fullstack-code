@@ -1,0 +1,10 @@
+      `SELECT a.id, a.action, a.target, a.metadata, a.created_at, u.email AS actor
+       FROM p04.audit_events a JOIN p04.users u ON u.id = a.actor_id
+       WHERE a.tenant_id = $1 ORDER BY a.id DESC LIMIT 100`,
+      [tenantId],
+    );
+    return { events: result.rows };
+  });
+
+  return app;
+}

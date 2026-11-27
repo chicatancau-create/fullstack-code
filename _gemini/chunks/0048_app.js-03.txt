@@ -1,0 +1,71 @@
+      await client.query('DELETE FROM p02.members WHERE workspace_id = $1 AND user_id = $2', [workspaceId, targetId]);
+      await client.query('COMMIT');
+      return reply.code(204).send();
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  });
+
+  app.patch('/workspaces/:id/members/:userId', { preHandler: requireUser }, async (request, reply) => {
+    const workspaceId = Number(request.params.id);
+    const targetId = Number(request.params.userId);
+    const role = request.body?.role;
+    if (role !== 'owner' && role !== 'member') return reply.code(400).send({ error: 'invalid_role' });
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('SELECT id FROM p02.workspaces WHERE id = $1 FOR UPDATE', [workspaceId]);
+      const requester = await client.query('SELECT role FROM p02.members WHERE workspace_id = $1 AND user_id = $2', [workspaceId, request.user.id]);
+      if (requester.rows[0]?.role !== 'owner') { await client.query('ROLLBACK'); return reply.code(404).send({ error: 'not_found' }); }
+      const target = await client.query('SELECT role FROM p02.members WHERE workspace_id = $1 AND user_id = $2', [workspaceId, targetId]);
+      if (target.rowCount === 0) { await client.query('ROLLBACK'); return reply.code(404).send({ error: 'not_found' }); }
+      if (target.rows[0].role === 'owner' && role === 'member') {
+        const owners = await client.query("SELECT count(*)::int AS n FROM p02.members WHERE workspace_id = $1 AND role = 'owner'", [workspaceId]);
+        if (owners.rows[0].n <= 1) { await client.query('ROLLBACK'); return reply.code(409).send({ error: 'last_owner' }); }
+      }
+      await client.query('UPDATE p02.members SET role = $3 WHERE workspace_id = $1 AND user_id = $2', [workspaceId, targetId, role]);
+      await client.query('COMMIT');
+      return { workspace_id: workspaceId, user_id: targetId, role };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  });
+
+  app.get('/workspaces/:id/tasks', { preHandler: requireUser }, async (request, reply) => {
+    const workspaceId = Number(request.params.id);
+    if (!(await memberOf(workspaceId, request.user.id))) return reply.code(404).send({ error: 'not_found' });
+    const result = await pool.query('SELECT id, title, status FROM p02.tasks WHERE workspace_id = $1 ORDER BY id', [workspaceId]);
+    return { tasks: result.rows };
+  });
+
+  app.post('/workspaces/:id/tasks', { preHandler: requireUser }, async (request, reply) => {
+    const workspaceId = Number(request.params.id);
+    if (!(await memberOf(workspaceId, request.user.id))) return reply.code(404).send({ error: 'not_found' });
+    const title = typeof request.body?.title === 'string' ? request.body.title.trim() : '';
+    if (title.length < 1 || title.length > 80) return reply.code(400).send({ error: 'invalid_title' });
+    try {
+      const result = await pool.query('INSERT INTO p02.tasks (workspace_id, title) VALUES ($1, $2) RETURNING id, title, status', [workspaceId, title]);
+      return reply.code(201).send(result.rows[0]);
+    } catch (error) {
+      if (error.code === '23505') return reply.code(409).send({ error: 'duplicate_title' });
+      throw error;
+    }
+  });
+
+  app.patch('/workspaces/:id/tasks/batch', { preHandler: requireUser }, async (request, reply) => {
+    const workspaceId = Number(request.params.id);
+    if (!Number.isInteger(workspaceId) || workspaceId < 1) return reply.code(400).send({ error: 'invalid_workspace' });
+    if (!(await memberOf(workspaceId, request.user.id))) return reply.code(404).send({ error: 'not_found' });
+    const updates = request.body?.updates;
+    if (!Array.isArray(updates) || updates.length < 1 || updates.length > 50) {
+      return reply.code(400).send({ error: 'invalid_updates' });
+    }
+
+    const results = [];
+    for (const item of updates) {

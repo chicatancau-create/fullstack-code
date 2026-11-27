@@ -1,0 +1,45 @@
+  assert.equal((await app.inject({ method: 'POST', url: '/payments/callback', headers: { 'x-signature': 'deadbeef' }, payload: body })).statusCode, 401);
+  const badResult = { event_id: 'evt-bad2', order_id: order.id, result: 'maybe', timestamp: Date.now() };
+  assert.equal((await app.inject({ method: 'POST', url: '/payments/callback', headers: { 'x-signature': sign(badResult) }, payload: badResult })).statusCode, 400);
+  assert.equal((await app.inject({ method: 'POST', url: '/payments/callback', headers: { 'x-signature': sign({ ...body, order_id: 999999 }) }, payload: { ...body, order_id: 999999 } })).statusCode, 404);
+});
+
+test('创建后修改商品价格和标题，订单快照保持不变', async () => {
+  const order = (await createOrder({}, { sku: 'sku-1', qty: 1 })).json();
+  await pool.query("UPDATE p03.inventory SET unit_price = 999, title = '改名商品' WHERE sku = 'sku-1'");
+  const fetched = await app.inject({ method: 'GET', url: `/orders/${order.id}`, headers: API });
+  assert.equal(fetched.statusCode, 200);
+  assert.equal(fetched.json().unit_price, 299);
+  assert.equal(fetched.json().amount, 299);
+  assert.equal(fetched.json().items[0].title, '机械键盘');
+  assert.equal(fetched.json().items[0].unit_price, 299);
+});
+
+test('订单详情按用户隔离，其他用户拿到 404', async () => {
+  const order = (await createOrder({}, { sku: 'sku-1', qty: 1 })).json();
+  const other = await app.inject({ method: 'GET', url: `/orders/${order.id}`, headers: { 'x-api-key': 'test-key', 'x-user-id': 'bob' } });
+  assert.equal(other.statusCode, 404);
+  const otherCancel = await app.inject({ method: 'POST', url: `/orders/${order.id}/cancel`, headers: { 'x-api-key': 'test-key', 'x-user-id': 'bob' } });
+  assert.equal(otherCancel.statusCode, 404);
+});
+
+test('取消与支付并发时终态一致，库存与状态不矛盾', async () => {
+  const order = (await createOrder({}, { sku: 'sku-1', qty: 2 })).json();
+  const body = { event_id: crypto.randomUUID(), order_id: order.id, result: 'success', timestamp: Date.now() };
+  const [cancel, pay] = await Promise.all([
+    app.inject({ method: 'POST', url: `/orders/${order.id}/cancel`, headers: API }),
+    app.inject({ method: 'POST', url: '/payments/callback', headers: { 'x-signature': sign(body) }, payload: body }),
+  ]);
+  const status = await orderStatus(order.id);
+  assert.ok(['paid', 'cancelled'].includes(status));
+  if (status === 'cancelled') {
+    assert.equal(cancel.statusCode, 200);
+    assert.equal(pay.statusCode, 202);
+    assert.equal(await stock('sku-1'), 10);
+  } else {
+    assert.equal(cancel.statusCode, 409);
+    assert.equal(pay.statusCode, 200);
+    assert.equal(pay.json().applied, true);
+    assert.equal(await stock('sku-1'), 8);
+  }
+});

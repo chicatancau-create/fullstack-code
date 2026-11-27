@@ -1,0 +1,131 @@
+        where: this._cloudDataTreeWhere(),
+        getTree: true
+      } as GetCommandOptions
+      if (this._checkIsNotNull(this.gettree)) {
+        commandOptions.startwith = `${this.selfField}=='${this.dataValue as string}'`
+      }
+      this._loadCloudData(commandOptions, (data : Array<UTSJSONObject>) => {
+        this.treeData = data
+        if (this.selectedPaths.length > 0) {
+          this._pushSelectedTreeNodes(this.selectedPaths, data)
+        } else {
+          this._pushSelectedNodes(data)
+        }
+      })
+    },
+
+    // 加载 Cloud 数据 (节点)
+    loadCloudDataNode(nodeData : UTSJSONObject) {
+      const commandOptions = {
+        field: this._cloudDataPostField(),
+        where: this._cloudDataNodeWhere()
+      } as GetCommandOptions
+      this._loadCloudData(commandOptions, (data : Array<UTSJSONObject>) => {
+        nodeData['children'] = data
+        if (data.length == 0) {
+          nodeData['isleaf'] = true
+          this.onFinish()
+        } else {
+          this._pushSelectedNodes(data)
+        }
+      })
+    },
+
+    // 回显 Cloud Tree Path
+    loadCloudDataPath() {
+      if (!this.hasCloudDataValue) {
+        return
+      }
+
+      const command : GetCommandOptions = {}
+
+      // 单列
+      if (this.isCloudDataList) {
+        // 根据 field's as value标识匹配 where 条件
+        let where : Array<string> = [];
+        let whereField = this._getForeignKeyByField();
+        if (whereField.length > 0) {
+          where.push(`${whereField} == '${this.dataValue as string}'`)
+        }
+
+        let whereString = where.join(' || ')
+        if (this._checkIsNotNull(this.where)) {
+          whereString = `(${this.where}) && (${whereString})`
+        }
+
+        command.field = this._cloudDataPostField()
+        command.where = whereString
+      }
+
+      // 树形
+      if (this.isCloudDataTree) {
+        command.field = this._cloudDataPostField()
+        command.getTreePath = {
+          startWith: `${this.selfField}=='${this.dataValue as string}'`
+        }
+      }
+
+      this._loadCloudData(command, (data : Array<UTSJSONObject>) => {
+        this._extractTreePath(data, this.selectedPaths)
+      })
+    },
+
+    _loadCloudData(options ?: GetCommandOptions, callback ?: ((data : Array<UTSJSONObject>) => void)) {
+      if (this.loading) {
+        return
+      }
+      this.loading = true
+
+      this.error = null
+
+      this._getCommand(options).then((response : UniCloudDBGetResult) => {
+        callback?.(response.data)
+      }).catch((err : any | null) => {
+        this.error = err as UniCloudError
+      }).finally(() => {
+        this.loading = false
+      })
+    },
+
+    _cloudDataPostField() : string {
+      let fields = [this.field];
+      if (this.parentField.length > 0) {
+        fields.push(`${this.parentField} as parent_value`)
+      }
+      return fields.join(',')
+    },
+
+    _cloudDataTreeWhere() : string {
+      let result : Array<string> = []
+      let selectedNodes = this.selectedNodes.length > 0 ? this.selectedNodes : this.selectedPaths
+      let parentField = this.parentField
+      if (parentField.length > 0) {
+        result.push(`${parentField} == null || ${parentField} == ""`)
+      }
+      if (selectedNodes.length > 0) {
+        for (var i = 0; i < selectedNodes.length - 1; i++) {
+          const parentFieldValue = selectedNodes[i].getString('value', '')
+          result.push(`${parentField} == '${parentFieldValue}'`)
+        }
+      }
+
+      let where : Array<string> = []
+      if (this._checkIsNotNull(this.where)) {
+        where.push(`(${this.where as string})`)
+      }
+
+      if (result.length > 0) {
+        where.push(`(${result.join(' || ')})`)
+      }
+
+      return where.join(' && ')
+    },
+
+    _cloudDataNodeWhere() : string {
+      const where : Array<string> = []
+      if (this.selectedNodes.length > 0) {
+        const value = this.selectedNodes[this.selectedNodes.length - 1].getString('value', '')
+        where.push(`${this.parentField} == '${value}'`)
+      }
+
+      let whereString = where.join(' || ')

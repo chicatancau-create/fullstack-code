@@ -1,0 +1,131 @@
+<template>
+  <div class="habit-row">
+    <div class="identity">
+      <span class="color-dot" :style="{ background: habit.color }" aria-hidden="true"></span>
+      <div class="identity-text">
+        <strong class="name">{{ habit.name }}</strong>
+        <span class="pill pill-goal">目标 {{ habit.target }} 天/周</span>
+      </div>
+    </div>
+
+    <div class="cells" role="group" :aria-label="`${habit.name} 本周打卡`">
+      <button
+        v-for="cell in cells"
+        :key="cell.dateKey"
+        type="button"
+        class="cell"
+        :class="{ checked: cell.checked, future: cell.isFuture, today: cell.isToday }"
+        :style="cell.checked ? { background: habit.color } : null"
+        :disabled="cell.isFuture"
+        :aria-pressed="cell.checked"
+        :title="cell.title"
+        @click="onCellClick(cell)"
+      ><span v-if="cell.checked" class="tick">✓</span></button>
+    </div>
+
+    <div class="stats">
+      <span class="pill pill-progress">本周 {{ weekDone }}/{{ habit.target }}</span>
+      <div class="progress" aria-hidden="true">
+        <span class="progress-bar" :style="barStyle"></span>
+      </div>
+      <span class="stat-text">{{ weekRate }}%</span>
+      <span class="stat-text">连续 {{ currentStreak }} 天</span>
+      <span class="stat-text">最长 {{ longestStreak }} 天</span>
+    </div>
+
+    <div class="row-actions">
+      <button v-if="!confirmingDelete" type="button" class="btn-mini" @click="emit('edit', habit)">编辑</button>
+      <button
+        type="button"
+        class="btn-mini btn-danger"
+        :class="{ confirming: confirmingDelete }"
+        @click="onRemoveClick"
+      >{{ confirmingDelete ? '确认删除' : '删除' }}</button>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { calcCurrentStreak, calcLongestStreak, formatShortDate, isValidDateKey, toDateKey } from '@/utils/date'
+
+const props = defineProps({
+  habit: { type: Object, required: true },
+  weekKeys: { type: Array, default: () => [] },
+  dates: { type: Array, default: () => [] },
+})
+
+const emit = defineEmits(['toggle', 'edit', 'remove'])
+
+const todayKey = toDateKey()
+
+const checkedSet = computed(() => new Set(props.dates.filter(isValidDateKey)))
+
+const cells = computed(() =>
+  props.weekKeys.map((dateKey) => {
+    const checked = checkedSet.value.has(dateKey)
+    const isFuture = dateKey > todayKey
+    const label = isValidDateKey(dateKey) ? formatShortDate(dateKey) : dateKey
+    let hint = '未打卡，点击打卡'
+    if (isFuture) hint = '未来日期不可打卡'
+    else if (checked) hint = '已打卡，点击取消'
+    return {
+      dateKey,
+      checked,
+      isFuture,
+      isToday: dateKey === todayKey,
+      title: `${label} · ${hint}`,
+    }
+  }),
+)
+
+const weekDone = computed(
+  () => props.weekKeys.filter((dateKey) => checkedSet.value.has(dateKey)).length,
+)
+const weekRate = computed(() => Math.round((weekDone.value / props.habit.target) * 100))
+const barStyle = computed(() => ({ width: `${Math.min(weekRate.value, 100)}%` }))
+const currentStreak = computed(() => calcCurrentStreak(props.dates))
+const longestStreak = computed(() => calcLongestStreak(props.dates))
+
+const confirmingDelete = ref(false)
+let deleteTimer = null
+
+// 父页切换查看的周后，旧的「再点一次确认删除」语境已失效，立即清掉行内确认态
+watch(() => props.weekKeys, () => {
+  clearDeleteTimer()
+  confirmingDelete.value = false
+})
+
+function clearDeleteTimer() {
+  if (deleteTimer !== null) {
+    clearTimeout(deleteTimer)
+    deleteTimer = null
+  }
+}
+
+function onCellClick(cell) {
+  if (cell.isFuture) return
+  emit('toggle', props.habit.id, cell.dateKey)
+}
+
+function onRemoveClick() {
+  if (confirmingDelete.value) {
+    clearDeleteTimer()
+    confirmingDelete.value = false
+    emit('remove', props.habit)
+    return
+  }
+  confirmingDelete.value = true
+  deleteTimer = setTimeout(() => {
+    confirmingDelete.value = false
+    deleteTimer = null
+  }, 2500)
+}
+
+onBeforeUnmount(clearDeleteTimer)
+</script>
+
+<style scoped>
+.habit-row {
+  display: grid;
+  /* 四列轨道全部写成「与本列内容无关」的尺寸，HabitList.vue 的 .list-head 用同一份声明，

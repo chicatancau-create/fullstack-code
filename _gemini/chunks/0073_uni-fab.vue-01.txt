@@ -1,0 +1,124 @@
+<template>
+	<view class="uni-cursor-point">
+		<view v-if="popMenu && (leftBottom||rightBottom||leftTop||rightTop) && content.length > 0" :class="{
+        'uni-fab--leftBottom': leftBottom,
+        'uni-fab--rightBottom': rightBottom,
+        'uni-fab--leftTop': leftTop,
+        'uni-fab--rightTop': rightTop
+      }" class="uni-fab"
+				:style="nvueBottom"
+			>
+			<view :class="{
+          'uni-fab__content--left': horizontal === 'left',
+          'uni-fab__content--right': horizontal === 'right',
+          'uni-fab__content--flexDirection': direction === 'vertical',
+          'uni-fab__content--flexDirectionStart': flexDirectionStart,
+          'uni-fab__content--flexDirectionEnd': flexDirectionEnd,
+		  'uni-fab__content--other-platform': !isAndroidNvue
+        }" :style="{ width: boxWidth, height: boxHeight, backgroundColor: styles.backgroundColor }"
+				class="uni-fab__content" elevation="5">
+				<view v-if="flexDirectionStart || horizontalLeft" class="uni-fab__item uni-fab__item--first" />
+				<view v-for="(item, index) in content" :key="index" :class="{ 'uni-fab__item--active': isShow }"
+					class="uni-fab__item" @click="_onItemClick(index, item)">
+					<image :src="item.active ? item.selectedIconPath : item.iconPath" class="uni-fab__item-image"
+						mode="aspectFit" />
+					<text class="uni-fab__item-text"
+						:style="{ color: item.active ? styles.selectedColor : styles.color }">{{ item.text }}</text>
+				</view>
+				<view v-if="flexDirectionEnd || horizontalRight" class="uni-fab__item uni-fab__item--first" />
+			</view>
+		</view>
+		<view :class="{
+		  'uni-fab__circle--leftBottom': leftBottom,
+		  'uni-fab__circle--rightBottom': rightBottom,
+		  'uni-fab__circle--leftTop': leftTop,
+		  'uni-fab__circle--rightTop': rightTop,
+		  'uni-fab__content--other-platform': !isAndroidNvue
+		}" class="uni-fab__circle uni-fab__plus" :style="{ 'background-color': styles.buttonColor, 'bottom': nvueBottom }" @click="_onClick">
+			<uni-icons class="fab-circle-icon" :type="styles.icon" :color="styles.iconColor" size="32"
+				:class="{'uni-fab__plus--active': isShow && content.length > 0}"></uni-icons>
+			<!-- <view class="fab-circle-v"  :class="{'uni-fab__plus--active': isShow && content.length > 0}"></view>
+			<view class="fab-circle-h" :class="{'uni-fab__plus--active': isShow  && content.length > 0}"></view> -->
+		</view>
+	</view>
+</template>
+
+<script>
+	let platform = 'other'
+	// #ifdef APP-NVUE
+	platform = uni.getSystemInfoSync().platform
+	// #endif
+
+	/**
+	 * Fab 悬浮按钮
+	 * @description 点击可展开一个图形按钮菜单
+	 * @tutorial https://ext.dcloud.net.cn/plugin?id=144
+	 * @property {Object} pattern 可选样式配置项
+	 * @property {Object} horizontal = [left | right] 水平对齐方式
+	 * 	@value left 左对齐
+	 * 	@value right 右对齐
+	 * @property {Object} vertical = [bottom | top] 垂直对齐方式
+	 * 	@value bottom 下对齐
+	 * 	@value top 上对齐
+	 * @property {Object} direction = [horizontal | vertical] 展开菜单显示方式
+	 * 	@value horizontal 水平显示
+	 * 	@value vertical 垂直显示
+	 * @property {Array} content 展开菜单内容配置项
+	 * @property {Boolean} popMenu 是否使用弹出菜单
+	 * @event {Function} trigger 展开菜单点击事件，返回点击信息
+	 * @event {Function} fabClick 悬浮按钮点击事件
+	 */
+	export default {
+		name: 'UniFab',
+		emits: ['fabClick', 'trigger'],
+		props: {
+			pattern: {
+				type: Object,
+				default () {
+					return {}
+				}
+			},
+			horizontal: {
+				type: String,
+				default: 'left'
+			},
+			vertical: {
+				type: String,
+				default: 'bottom'
+			},
+			direction: {
+				type: String,
+				default: 'horizontal'
+			},
+			content: {
+				type: Array,
+				default () {
+					return []
+				}
+			},
+			show: {
+				type: Boolean,
+				default: false
+			},
+			popMenu: {
+				type: Boolean,
+				default: true
+			}
+		},
+		data() {
+			return {
+				fabShow: false,
+				isShow: false,
+				isAndroidNvue: platform === 'android',
+				styles: {
+					color: '#3c3e49',
+					selectedColor: '#007AFF',
+					backgroundColor: '#fff',
+					buttonColor: '#007AFF',
+					iconColor: '#fff',
+					icon: 'plusempty'
+				}
+			}
+		},
+		computed: {
+			contentWidth(e) {

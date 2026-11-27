@@ -1,0 +1,84 @@
+      throw error;
+    } finally {
+      client.release();
+    }
+  });
+
+  app.post('/tenants/:id/jobs', auth, async (request, reply) => {
+    const tenantId = Number(request.params.id);
+    const role = await roleIn(pool, tenantId, request.user.id);
+    if (!role) return reply.code(404).send({ error: 'not_found' });
+    if (role !== 'owner' && role !== 'admin') return reply.code(403).send({ error: 'forbidden' });
+    const { kind, dedupe_key: dedupeKey, payload = {}, run_at: runAt = new Date().toISOString(), priority = 0 } = request.body || {};
+    if (typeof kind !== 'string' || typeof dedupeKey !== 'string' || !dedupeKey) return reply.code(400).send({ error: 'invalid_job' });
+    if (!Number.isInteger(priority) || priority < 0 || priority > 100) return reply.code(400).send({ error: 'invalid_priority' });
+    const result = await pool.query(
+      `INSERT INTO p04.jobs (tenant_id, kind, dedupe_key, payload, run_at, priority)
+       VALUES ($1,$2,$3,$4::jsonb,$5,$6)
+       ON CONFLICT (tenant_id, dedupe_key) DO UPDATE SET payload=EXCLUDED.payload, run_at=EXCLUDED.run_at, priority=EXCLUDED.priority
+       RETURNING id, kind, status, priority, run_at`,
+      [tenantId, kind, dedupeKey, JSON.stringify(payload), runAt, priority],
+    );
+    await audit(pool, tenantId, request.user.id, 'job.enqueue', `job:${result.rows[0].id}`, { kind, priority }, request.id);
+    return reply.code(202).send(result.rows[0]);
+  });
+
+  app.get('/tenants/:id/jobs', auth, async (request, reply) => {
+    const tenantId = Number(request.params.id);
+    const role = await roleIn(pool, tenantId, request.user.id);
+    if (!role) return reply.code(404).send({ error: 'not_found' });
+    if (role !== 'owner' && role !== 'admin') return reply.code(403).send({ error: 'forbidden' });
+    const result = await pool.query(
+      `SELECT id, kind, status, priority, attempts, run_at, last_error FROM p04.jobs
+        WHERE tenant_id = $1 ORDER BY priority DESC, run_at, id LIMIT 50`, [tenantId],
+    );
+    return { jobs: result.rows };
+  });
+
+  app.get('/tenants/:id/notifications', auth, async (request, reply) => {
+    const tenantId = Number(request.params.id);
+    const role = await roleIn(pool, tenantId, request.user.id);
+    if (!role) return reply.code(404).send({ error: 'not_found' });
+    const result = await pool.query(
+      `SELECT n.id, n.message, n.created_at FROM p04.job_notifications n
+        WHERE n.tenant_id = $1 ORDER BY n.id DESC LIMIT 50`, [tenantId],
+    );
+    return { notifications: result.rows };
+  });
+
+  app.get('/tenants/:id/notifications/stream', auth, async (request, reply) => {
+    const tenantId = Number(request.params.id);
+    const role = await roleIn(pool, tenantId, request.user.id);
+    if (!role) return reply.code(404).send({ error: 'not_found' });
+    const raw = reply.raw;
+    reply.hijack();
+    raw.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
+    raw.flushHeaders();
+    raw.write(': connected\n\n');
+    let last = 0;
+    const timer = setInterval(async () => {
+      try {
+        const rows = (await pool.query(
+          `SELECT id, message, created_at FROM p04.job_notifications
+            WHERE tenant_id = $1 AND id > $2 ORDER BY id`, [tenantId, last],
+        )).rows;
+        for (const row of rows) {
+          raw.write(`id: ${row.id}\ndata: ${JSON.stringify(row)}\n\n`);
+          last = row.id;
+        }
+      } catch {
+        clearInterval(timer);
+        raw.end();
+      }
+    }, 2000);
+    request.raw.on('close', () => clearInterval(timer));
+    raw.on('close', () => clearInterval(timer));
+  });
+
+  app.get('/tenants/:id/audit', auth, async (request, reply) => {
+    const tenantId = Number(request.params.id);
+    const role = await roleIn(pool, tenantId, request.user.id);
+    if (role !== 'owner' && role !== 'admin') {
+      return reply.code(role ? 403 : 404).send({ error: role ? 'forbidden' : 'not_found' });
+    }
+    const result = await pool.query(

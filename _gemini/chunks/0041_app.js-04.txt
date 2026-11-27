@@ -1,0 +1,72 @@
+        return reply.code(409).send({ error: 'seats_full', limit: tenant.rows[0].seat_limit });
+      }
+      const token = crypto.randomBytes(24).toString('hex');
+      const invitation = await client.query(
+        `INSERT INTO p04.invitations (tenant_id, email, role, token_hash, expires_at, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, email, role, expires_at`,
+        [tenantId, email.toLowerCase(), role, sha256(token), nowPlus(INVITE_DAYS * 24), request.user.id],
+      );
+      await audit(client, tenantId, request.user.id, 'invitation.create', `invitation:${invitation.rows[0].id}`, { email: email.toLowerCase(), role }, request.id);
+      await client.query('COMMIT');
+      return reply.code(201).send({ ...invitation.rows[0], token });
+    } catch (error) {
+      await client.query('ROLLBACK');
+      if (error.code === '23505') return reply.code(409).send({ error: 'already_invited' });
+      throw error;
+    } finally {
+      client.release();
+    }
+  });
+
+  app.post('/invitations/accept', auth, async (request, reply) => {
+    const { token } = request.body || {};
+    if (typeof token !== 'string' || token.length < 16) return reply.code(400).send({ error: 'invalid_token' });
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const invitation = await client.query(
+        'SELECT * FROM p04.invitations WHERE token_hash = $1 FOR UPDATE',
+        [sha256(token)],
+      );
+      if (invitation.rowCount === 0) { await client.query('ROLLBACK'); return reply.code(404).send({ error: 'not_found' }); }
+      const row = invitation.rows[0];
+      if (row.email !== request.user.email.toLowerCase()) { await client.query('ROLLBACK'); return reply.code(403).send({ error: 'email_mismatch' }); }
+      if (row.status === 'accepted') {
+        const member = await client.query('SELECT role FROM p04.memberships WHERE tenant_id = $1 AND user_id = $2', [row.tenant_id, request.user.id]);
+        if (member.rowCount === 0) {
+          await client.query('COMMIT');
+          return reply.code(409).send({ error: 'membership_removed' });
+        }
+        await client.query('COMMIT');
+        return { tenant_id: row.tenant_id, role: member.rows[0].role, idempotent: true };
+      }
+      if (row.status !== 'pending' || row.expires_at.getTime() <= Date.now()) {
+        if (row.status === 'pending') await client.query("UPDATE p04.invitations SET status = 'expired' WHERE id = $1", [row.id]);
+        await client.query('COMMIT');
+        return reply.code(409).send({ error: 'invitation_inactive' });
+      }
+      await client.query('SELECT id FROM p04.tenants WHERE id = $1 FOR UPDATE', [row.tenant_id]);
+      await client.query(
+        `INSERT INTO p04.memberships (tenant_id, user_id, role) VALUES ($1, $2, $3)
+         ON CONFLICT (tenant_id, user_id) DO UPDATE SET role = CASE WHEN p04.memberships.role = 'owner' THEN 'owner' ELSE EXCLUDED.role END`,
+        [row.tenant_id, request.user.id, row.role],
+      );
+      await client.query("UPDATE p04.invitations SET status = 'accepted', accepted_at = now() WHERE id = $1", [row.id]);
+      await audit(client, row.tenant_id, request.user.id, 'invitation.accept', `invitation:${row.id}`, { role: row.role }, request.id);
+      await client.query('COMMIT');
+      return { tenant_id: row.tenant_id, role: row.role, idempotent: false };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  });
+
+  app.post('/invitations/:id/revoke', auth, async (request, reply) => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const invitation = await client.query('SELECT * FROM p04.invitations WHERE id = $1 FOR UPDATE', [Number(request.params.id)]);
+      if (invitation.rowCount === 0) { await client.query('ROLLBACK'); return reply.code(404).send({ error: 'not_found' }); }
+      const row = invitation.rows[0];

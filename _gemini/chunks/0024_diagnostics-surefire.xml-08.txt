@@ -1,0 +1,26 @@
+    <property name="java.library.path" value="D:\JAVA\jdk\bin;C:\WINDOWS\Sun\Java\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\Users\Admin\.qoder\bin;C:\Users\Admin\.qoder\plugins\cache\qoderapp-bundler\qoder-context\1.0.97.fb328997\bin;C:\Users\Admin\bin;C:\Users\Admin\.qoder\bin\git\mingw64\bin;C:\Users\Admin\.qoder\bin\git\usr\local\bin;C:\Users\Admin\.qoder\bin\git\usr\bin;C:\Users\Admin\.qoder\bin\git\usr\bin;C:\Users\Admin\.qoder\bin\git\mingw64\bin;C:\Users\Admin\.qoder\bin\git\usr\bin;C:\Users\Admin\bin;C:\Users\Admin\.qoder\bin;C:\Users\Admin\AppData\Roaming\npm;C:\Users\Admin\AppData\Local\pnpm;C:\WINDOWS\System32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0;C:\WINDOWS\System32\OpenSSH;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;D:\Node.js;C:\Program Files\dotnet;C:\Program Files\NVIDIA Corporation\NVIDIA App\NvDLISR;D:\Git\cmd;C:\Program Files\GitHub CLI;C:\Program Files\Common Files\Autodesk Shared;C:\Program Files\Cloudflare\Cloudflare WARP;C:\node-global;D:\DeepSeek Harness\resources\runtime\cli\bin;C:\Users\Admin\.local\bin;C:\Users\Admin\AppData\Local\Programs\Python\Python312;D:\PyCharm\Python\Scripts;D:\PyCharm\Python;C:\Users\Admin\AppData\Local\Microsoft\WindowsApps;D:\JAVA\jdk\bin;C:\mingw64\bin;D:\JAVA\IntelliJ IDEA 2026.2.1\bin;D:\PyCharm\PyCharm 2026.2.0.1\bin;D:\Tools\DWS;C:\Users\Admin\AppData\Local\Programs\Microsoft VS Code\bin;D:\DevEco Studio\bin;D:\Git\usr\bin;C:\apache-maven-3.9.16\bin;C:\Users\Admin\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-9.0.2-full_build\bin;C:\Users\Admin\AppData\Local\PowerToys\DSCModules;C:\Users\Admin\AppData\Local\PowerToys\bin;D:\platform-tools;C:\Users\Admin\AppData\Local\Programs\Microsoft VS Code\bin\copilot-shim;C:\Users\Admin\.qoder\bin\git\usr\bin\vendor_perl;C:\Users\Admin\.qoder\bin\git\usr\bin\core_perl;."/>
+    <property name="java.vm.info" value="mixed mode, sharing"/>
+    <property name="stderr.encoding" value="GBK"/>
+    <property name="java.vendor" value="Oracle Corporation"/>
+    <property name="java.vm.version" value="25.0.2+10-LTS-69"/>
+    <property name="stdin.encoding" value="GBK"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="java.class.version" value="69.0"/>
+  </properties>
+  <testcase name="singleConnectionPoolTimesOutThenRecovers" classname="dev.study.collab.DiagnosticsTest" time="1.039">
+    <system-out><![CDATA[2026-11-08T03:45:30.434+08:00  INFO 56364 --- [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [dev.study.collab.DiagnosticsTest]: DiagnosticsTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-11-08T03:45:30.436+08:00  INFO 56364 --- [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration dev.study.collab.Application for test class dev.study.collab.DiagnosticsTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-11-08T03:45:30.465+08:00  INFO 56364 --- [           main] dev.study.collab.DiagnosticsTest         : Starting DiagnosticsTest using Java 25.0.2 with PID 56364 (started by Admin in E:\fullstack-code\project02-spring)
+2026-11-08T03:45:30.465+08:00  INFO 56364 --- [           main] dev.study.collab.DiagnosticsTest         : The following 1 profile is active: "test"
+2026-11-08T03:45:30.661+08:00  INFO 56364 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-11-08T03:45:30.667+08:00  INFO 56364 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection com.mysql.cj.jdbc.ConnectionImpl@5e7ea81b

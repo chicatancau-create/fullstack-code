@@ -1,0 +1,19 @@
+				weeks[parseInt(i / 7)] = new Array(7)
+			}
+			weeks[parseInt(i / 7)][i % 7] = canlender[i]
+		}
+		this.canlender = canlender
+		this.weeks = weeks
+	}
+
+	//静态方法
+	// static init(date) {
+	// 	if (!this.instance) {
+	// 		this.instance = new Calendar(date);
+	// 	}
+	// 	return this.instance;
+	// }
+}
+
+
+export default Calendar

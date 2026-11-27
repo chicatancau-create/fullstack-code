@@ -1,0 +1,94 @@
+const streamPts = [[12.5, 10.2], [16.5, 11.2], [20.5, 12.2], [25.5, 13.0]];
+function segDist(px, pz, a, b) {
+  const abx = b[0] - a[0], abz = b[1] - a[1];
+  const t = clamp(((px - a[0]) * abx + (pz - a[1]) * abz) / (abx * abx + abz * abz), 0, 1);
+  return Math.hypot(px - (a[0] + abx * t), pz - (a[1] + abz * t));
+}
+function streamDist(x, z) {
+  let d = 1e9;
+  for (let i = 0; i < streamPts.length - 1; i++) d = Math.min(d, segDist(x, z, streamPts[i], streamPts[i + 1]));
+  return d;
+}
+const pathPts = [[0.5, 25.5], [0.5, 17], [-1.5, 11], [-4, 5], [-6.5, 0], [-8, -3.5]];
+function pathDist(x, z) {
+  let d = 1e9;
+  for (let i = 0; i < pathPts.length - 1; i++) d = Math.min(d, segDist(x, z, pathPts[i], pathPts[i + 1]));
+  return d;
+}
+function islandR(x, z) { return 24.6 + hash2(Math.round(x / U), Math.round(z / U)) * 2.2; }
+function cellH(x, z) {
+  if (pondSigned(x, z) < 0) return -2.6;
+  if (streamDist(x, z) < 1.8) return -1.7;
+  return 0;
+}
+const cells = [];
+for (let gx = -13; gx <= 13; gx++) for (let gz = -13; gz <= 13; gz++) {
+  const x = gx * U, z = gz * U;
+  if (Math.hypot(x, z) > islandR(x, z) && streamDist(x, z) > 2.4) continue;
+  cells.push({ x, z, h: cellH(x, z), path: cellH(x, z) === 0 && pathDist(x, z) < 1.5 });
+}
+const cellAt = new Map(cells.map(c => [c.x + ',' + c.z, c]));
+const GRASS = [0x4f9e3f, 0x57ab46, 0x4a9440, 0x61b34e];
+const DIRT = [0x7a5230, 0x6b4526, 0x8a6038];
+const ROCK = [0x5d5a55, 0x6e675e, 0x4c4a46];
+for (const c of cells) {
+  let top;
+  if (c.h < -2) top = 0x1d5f66;
+  else if (c.h < 0) top = 0x20646b;
+  else if (c.path) top = 0xcfc4a8;
+  else top = pick(GRASS);
+  vox(c.x, c.h - 1, c.z, U, U, U, top);
+  for (let y = c.h - 3; y >= -5; y -= U) vox(c.x, y, c.z, U, U, U, pick(DIRT));
+}
+/* 岛底岩层倒锥 */
+for (let L = 1; L <= 6; L++) {
+  const y = -5 - L * U, rad = 25.5 - L * 3.4;
+  for (let gx = -13; gx <= 13; gx++) for (let gz = -13; gz <= 13; gz++) {
+    const x = gx * U, z = gz * U;
+    if (Math.hypot(x, z) > rad + hash2(gx + L * 7, gz - L * 3) * 2.4 - 1.2) continue;
+    vox(x, y, z, U, U, U, rnd() < 0.03 ? 0xc9a227 : pick(ROCK));
+  }
+}
+for (let i = 0; i < 9; i++) {
+  const a = rr(0, Math.PI * 2), r = rr(8, 20);
+  const x = Math.round(Math.cos(a) * r / U) * U, z = Math.round(Math.sin(a) * r / U) * U;
+  const depth = Math.floor(rr(2, 5));
+  for (let k = 0; k < depth; k++) vox(x, -17 - k * U, z, U * rr(0.5, 0.9), U, U * rr(0.5, 0.9), pick(ROCK));
+}
+/* 岸边收边石 */
+for (const c of cells) {
+  if (c.h !== 0) continue;
+  for (const [dx, dz] of [[U, 0], [-U, 0], [0, U], [0, -U]]) {
+    const n = cellAt.get((c.x + dx) + ',' + (c.z + dz));
+    if (n && n.h < 0) {
+      const ex = c.x + dx * 0.42, ez = c.z + dz * 0.42;
+      vox(ex, 0.18, ez, rr(0.5, 0.95), rr(0.35, 0.6), rr(0.5, 0.95), pick([0x8a8f98, 0x9aa0a8, 0x707680]), rr(0, 3));
+      if (rnd() < 0.5) vox(ex + rr(-0.4, 0.4), -0.45, ez + rr(-0.4, 0.4), rr(0.4, 0.7), rr(0.4, 0.7), rr(0.4, 0.7), 0x707680, rr(0, 3));
+    }
+  }
+}
+
+/* ============ 水体：浅蓝半透明，下凹有深度 ============ */
+const waterMat = new THREE.MeshPhysicalMaterial({
+  color: 0x8fd6ff, transparent: true, opacity: 0.52, roughness: 0.12,
+  metalness: 0, depthWrite: false
+});
+const waterMeshes = [];
+function waterBox(x, y, z, sx, sy, sz, ry = 0) {
+  const m = new THREE.Mesh(boxGeo, waterMat);
+  m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.rotation.y = ry;
+  m.renderOrder = 2; scene.add(m); waterMeshes.push(m); return m;
+}
+waterBox(9, -1.55, 9, 15.6, 2.15, 15.6);
+for (let i = 0; i < streamPts.length - 1; i++) {
+  const a = streamPts[i], b = streamPts[i + 1];
+  const mx = (a[0] + b[0]) / 2, mz = (a[1] + b[1]) / 2;
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1]) + 1.2;
+  waterBox(mx, -1.05, mz, len, 1.4, 3.4, Math.atan2(b[1] - a[1], b[0] - a[0]));
+}
+let exitCell = null;
+for (const c of cells) if (c.h === -1.7 && (!exitCell || c.x > exitCell.x)) exitCell = c;
+const fallX = exitCell.x + 1.0, fallZ = exitCell.z;
+waterBox(fallX, -11, fallZ, 0.9, 21, 3.2);
+vox(fallX - 0.5, -0.42, fallZ, 1.2, 0.22, 3.3, 0xd8f2ff);
+

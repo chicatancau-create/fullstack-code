@@ -1,0 +1,199 @@
+export type PaginationType = {
+  current : number,
+  size : number,
+  count : number
+}
+
+export type LoadMoreType = {
+  contentdown : string,
+  contentrefresh : string,
+  contentnomore : string
+}
+
+export type SelectedItemType = {
+  name : string,
+  value : string,
+}
+
+export type GetCommandOptions = {
+  collection ?: UTSJSONObject,
+  field ?: string,
+  orderby ?: string,
+  where ?: any,
+  pageData ?: string,
+  pageCurrent ?: number,
+  pageSize ?: number,
+  getCount ?: boolean,
+  getTree ?: any,
+  getTreePath ?: UTSJSONObject,
+  startwith ?: string,
+  limitlevel ?: number,
+  groupby ?: string,
+  groupField ?: string,
+  distinct ?: boolean,
+  pageIndistinct ?: boolean,
+  foreignKey ?: string,
+  loadtime ?: string,
+  manual ?: boolean
+}
+
+const DefaultSelectedNode = {
+  text: '请选择',
+  value: ''
+}
+
+export const dataPicker = defineMixin({
+  props: {
+    localdata: {
+      type: Array as PropType<Array<UTSJSONObject>>,
+      default: [] as Array<UTSJSONObject>
+    },
+    collection: {
+      type: Object,
+      default: ''
+    },
+    field: {
+      type: String,
+      default: ''
+    },
+    orderby: {
+      type: String,
+      default: ''
+    },
+    where: {
+      type: Object,
+      default: ''
+    },
+    pageData: {
+      type: String,
+      default: 'add'
+    },
+    pageCurrent: {
+      type: Number,
+      default: 1
+    },
+    pageSize: {
+      type: Number,
+      default: 20
+    },
+    getcount: {
+      type: Boolean,
+      default: false
+    },
+    gettree: {
+      type: Object,
+      default: ''
+    },
+    gettreepath: {
+      type: Object,
+      default: ''
+    },
+    startwith: {
+      type: String,
+      default: ''
+    },
+    limitlevel: {
+      type: Number,
+      default: 10
+    },
+    groupby: {
+      type: String,
+      default: ''
+    },
+    groupField: {
+      type: String,
+      default: ''
+    },
+    distinct: {
+      type: Boolean,
+      default: false
+    },
+    pageIndistinct: {
+      type: Boolean,
+      default: false
+    },
+    foreignKey: {
+      type: String,
+      default: ''
+    },
+    loadtime: {
+      type: String,
+      default: 'auto'
+    },
+    manual: {
+      type: Boolean,
+      default: false
+    },
+    preload: {
+      type: Boolean,
+      default: false
+    },
+    stepSearh: {
+      type: Boolean,
+      default: true
+    },
+    selfField: {
+      type: String,
+      default: ''
+    },
+    parentField: {
+      type: String,
+      default: ''
+    },
+    multiple: {
+      type: Boolean,
+      default: false
+    },
+    value: {
+      type: Object,
+      default: ''
+    },
+    modelValue: {
+      type: Object,
+      default: ''
+    },
+    defaultProps: {
+      type: Object as PropType<UTSJSONObject>,
+    }
+  },
+  data() {
+    return {
+      loading: false,
+      error: null as UniCloudError | null,
+      treeData: [] as Array<UTSJSONObject>,
+      selectedIndex: 0,
+      selectedNodes: [] as Array<UTSJSONObject>,
+      selectedPages: [] as Array<UTSJSONObject>[],
+      selectedValue: '',
+      selectedPaths: [] as Array<UTSJSONObject>,
+      pagination: {
+        current: 1,
+        size: 20,
+        count: 0
+      } as PaginationType
+    }
+  },
+  computed: {
+    mappingTextName() : string {
+      // TODO
+      return (this.defaultProps != null) ? this.defaultProps!.getString('text', 'text') : 'text'
+    },
+    mappingValueName() : string {
+      // TODO
+      return (this.defaultProps != null) ? this.defaultProps!.getString('value', 'value') : 'value'
+    },
+    currentDataList() : Array<UTSJSONObject> {
+      if (this.selectedIndex > this.selectedPages.length - 1) {
+        return [] as Array<UTSJSONObject>
+      }
+      return this.selectedPages[this.selectedIndex]
+    },
+    isLocalData() : boolean {
+      return this.localdata.length > 0
+    },
+    isCloudData() : boolean {
+      return this._checkIsNotNull(this.collection)
+    },
+    isCloudDataList() : boolean {
+      return (this.isCloudData && (this.parentField.length == 0 && this.selfField.length == 0))
+    },

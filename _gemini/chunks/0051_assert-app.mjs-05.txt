@@ -1,0 +1,55 @@
+      for (const type of ['mousePressed', 'mouseReleased']) await cdp.send('Input.dispatchMouseEvent', { type, x: fbox.x, y: fbox.y, button: 'left', clickCount: 1 }, PG);
+      await sleep(500);
+    }
+    check('未来格子点击不改变打卡数', (await evl(`document.querySelectorAll('.cell.checked').length`)) === futureBefore, `disabled=${fbox.d}`);
+  }
+
+  console.log('\n--- 7. 新增 / 编辑 / 删除习惯 ---');
+  const rows0 = await evl(`document.querySelectorAll('.habit-row').length`);
+  await clickAt('.btn-primary');
+  await sleep(600);
+  console.log('  FORM INPUTS:', await evl(`[...document.querySelectorAll('input,select,textarea')].map(i=>i.tagName+'['+i.type+']#'+i.id+' ph='+JSON.stringify(i.placeholder||'')+' aria='+JSON.stringify(i.getAttribute('aria-label')||'')).join(' ;; ')`));
+  const nameSel = await evl(`(() => { const list=[...document.querySelectorAll('input')];
+    const i = list.find(x => /名称|name/i.test((x.placeholder||'')+(x.id||'')+(x.getAttribute('aria-label')||'')) && x.type !== 'checkbox');
+    if (!i) return -1; return list.indexOf(i); })()`);
+  check('新增表单打开且有名称输入框', nameSel >= 0, 'inputIndex=' + nameSel);
+  await shot('04-form');
+  const nameBox = await evl(`(() => { const r = [...document.querySelectorAll('input')][${nameSel}].getBoundingClientRect(); return {x:r.left+6,y:r.top+r.height/2}; })()`);
+  for (const type of ['mousePressed', 'mouseReleased']) await cdp.send('Input.dispatchMouseEvent', { type, x: nameBox.x, y: nameBox.y, button: 'left', clickCount: 1 }, PG);
+  await sleep(300);
+  await cdp.send('Input.insertText', { text: '每日一道算法题' }, PG);
+  await sleep(400);
+  const typed = await evl(`[...document.querySelectorAll('input')][${nameSel}].value`);
+  check('名称输入框收到 v-model 值', typed === '每日一道算法题', JSON.stringify(typed));
+  const submitIdx = await evl(`[...document.querySelectorAll('button')].findIndex(b => /保存|确定|添加|新增|提交/.test(b.innerText) && !/新增习惯/.test(b.innerText))`);
+  await clickAt('button', submitIdx);
+  await sleep(900);
+  const rows1 = await evl(`document.querySelectorAll('.habit-row').length`);
+  check('新增习惯后行数 +1', rows1 === rows0 + 1, `${rows0} -> ${rows1}`);
+  check('新习惯出现在列表里', (await evl(`document.body.innerText.includes('每日一道算法题')`)));
+  await shot('05-board-added');
+
+  const delIdx = await evl(`[...document.querySelectorAll('button')].findIndex(b => b.innerText.trim()==='删除')`);
+  await clickAt('button', delIdx);
+  await sleep(400);
+  const rowsAfterFirstDel = await evl(`document.querySelectorAll('.habit-row').length`);
+  check('删除需要二次确认（第一次不删）', rowsAfterFirstDel === rows1, `${rows1} -> ${rowsAfterFirstDel}`);
+  // 确认态会隐藏「编辑」按钮，DOM 顺序左移，只能按文案查，不能按索引查
+  check('确认态按钮文案为「确认删除」', (await evl(`[...document.querySelectorAll('button')].some(b=>b.innerText.trim()==='确认删除')`)));
+  // 确认态会隐藏该行的「编辑」按钮：处于确认态的那一行只剩 1 个按钮
+  const confirmRowBtns = await evl(`(() => { const b=[...document.querySelectorAll('button')].find(x=>x.innerText.trim()==='确认删除');
+    if (!b) return -1; return b.closest('.row-actions').querySelectorAll('button').length; })()`);
+  check('确认态那一行只剩确认按钮（编辑让位）', confirmRowBtns === 1, 'buttons=' + confirmRowBtns);
+  await clickAt('button', await evl(`[...document.querySelectorAll('button')].findIndex(b => b.innerText.trim()==='确认删除')`));
+  await sleep(700);
+  const rows2 = await evl(`document.querySelectorAll('.habit-row').length`);
+  check('第二次确认行数 -1', rows2 === rows1 - 1, `${rows1} -> ${rows2}`);
+
+  // 确认态会自动取消：进入确认态后不点第二次，等它超时回退（截图会耗时，故放在最后一步）
+  await clickAt('button', await evl(`[...document.querySelectorAll('button')].findIndex(b => b.innerText.trim()==='删除')`));
+  await sleep(400);
+  await shot('06-delete-confirm');
+  await sleep(2600);
+  check('确认态超时后自动回退为「删除」', (await evl(`[...document.querySelectorAll('button')].some(b=>b.innerText.trim()==='删除')`)) && !(await evl(`[...document.querySelectorAll('button')].some(b=>b.innerText.trim()==='确认删除')`)));
+  await clickAt('button', await evl(`[...document.querySelectorAll('button')].findIndex(b => b.innerText.trim()==='删除')`));
+  await sleep(300);

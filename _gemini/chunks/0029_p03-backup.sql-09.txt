@@ -1,0 +1,92 @@
+-- Data for Name: inbox; Type: TABLE DATA; Schema: p03; Owner: -
+--
+
+COPY p03.inbox (consumer, event_id, processed_at) FROM stdin;
+notify-worker	pay-3	2026-11-09 11:24:27.171145+08
+\.
+
+
+--
+-- Data for Name: inventory; Type: TABLE DATA; Schema: p03; Owner: -
+--
+
+COPY p03.inventory (sku, title, unit_price, stock, version) FROM stdin;
+mq-sku	MQ 商品	100	9	1
+mq-runtime-sku	MQ 运行期商品	100	4	1
+worker-sku	Worker 商品	100	4	1
+fault-sku	故障演练商品	100	3	2
+\.
+
+
+--
+-- Data for Name: notifications; Type: TABLE DATA; Schema: p03; Owner: -
+--
+
+COPY p03.notifications (event_id, order_id, message, created_at) FROM stdin;
+mq-paid-1	1	订单 1 已支付	2026-11-09 11:24:20.349601+08
+bulk-2	1	订单 1 已支付	2026-11-09 11:24:21.165343+08
+bulk-1	1	订单 1 已支付	2026-11-09 11:24:21.165211+08
+bulk-11	1	订单 1 已支付	2026-11-09 11:24:21.173348+08
+bulk-12	1	订单 1 已支付	2026-11-09 11:24:21.173472+08
+bulk-13	1	订单 1 已支付	2026-11-09 11:24:21.176177+08
+bulk-14	1	订单 1 已支付	2026-11-09 11:24:21.176299+08
+bulk-15	1	订单 1 已支付	2026-11-09 11:24:21.178146+08
+bulk-16	1	订单 1 已支付	2026-11-09 11:24:21.178586+08
+bulk-17	1	订单 1 已支付	2026-11-09 11:24:21.179733+08
+bulk-18	1	订单 1 已支付	2026-11-09 11:24:21.180203+08
+bulk-19	1	订单 1 已支付	2026-11-09 11:24:21.181153+08
+bulk-20	1	订单 1 已支付	2026-11-09 11:24:21.181395+08
+bulk-21	1	订单 1 已支付	2026-11-09 11:24:21.182738+08
+bulk-22	1	订单 1 已支付	2026-11-09 11:24:21.183152+08
+bulk-23	1	订单 1 已支付	2026-11-09 11:24:21.184534+08
+bulk-24	1	订单 1 已支付	2026-11-09 11:24:21.184797+08
+bulk-25	1	订单 1 已支付	2026-11-09 11:24:21.186033+08
+bulk-26	1	订单 1 已支付	2026-11-09 11:24:21.186256+08
+bulk-27	1	订单 1 已支付	2026-11-09 11:24:21.187455+08
+bulk-28	1	订单 1 已支付	2026-11-09 11:24:21.187706+08
+bulk-29	1	订单 1 已支付	2026-11-09 11:24:21.188846+08
+bulk-30	1	订单 1 已支付	2026-11-09 11:24:21.18907+08
+bulk-3	1	订单 1 已支付	2026-11-09 11:24:21.325666+08
+bulk-4	1	订单 1 已支付	2026-11-09 11:24:21.383635+08
+bulk-5	1	订单 1 已支付	2026-11-09 11:24:21.429679+08
+bulk-6	1	订单 1 已支付	2026-11-09 11:24:21.48597+08
+bulk-7	1	订单 1 已支付	2026-11-09 11:24:21.540304+08
+bulk-8	1	订单 1 已支付	2026-11-09 11:24:21.605879+08
+bulk-9	1	订单 1 已支付	2026-11-09 11:24:21.676617+08
+bulk-10	1	订单 1 已支付	2026-11-09 11:24:21.737162+08
+pay-1	2	订单 2 已支付	2026-11-09 11:24:23.246936+08
+pay-2	3	订单 3 已支付	2026-11-09 11:24:25.044804+08
+pay-3	5	订单 5 已支付 100 分	2026-11-09 11:24:27.171145+08
+\.
+
+
+--
+-- Data for Name: order_items; Type: TABLE DATA; Schema: p03; Owner: -
+--
+
+COPY p03.order_items (order_id, sku, title, unit_price, qty) FROM stdin;
+1	mq-sku	MQ 商品	100	1
+2	mq-runtime-sku	MQ 运行期商品	100	1
+3	worker-sku	Worker 商品	100	1
+4	fault-sku	故障演练商品	100	1
+5	fault-sku	故障演练商品	100	1
+\.
+
+
+--
+-- Data for Name: orders; Type: TABLE DATA; Schema: p03; Owner: -
+--
+
+COPY p03.orders (id, user_id, idem_key, request_hash, sku, qty, unit_price, amount, status, created_at, paid_at, cancelled_at, version, shipped_at, completed_at, refunding_at, refunded_at) FROM stdin;
+1	mq-user	mq-order-1	d559ac7ca035b4385a99fc7ba1dfe3f04c6bfa895c66dec470f64d2c52865b95	mq-sku	1	100	100	paid	2026-11-09 11:24:20.328934+08	2026-11-09 11:24:20.341542+08	\N	1	\N	\N	\N	\N
+2	mq-runtime	mq-runtime-1794194662861	60c5257fde15f10651185f852305172cc2dd40f076dc99ef0ab6ad1b9d223187	mq-runtime-sku	1	100	100	paid	2026-11-09 11:24:23.009556+08	2026-11-09 11:24:23.027452+08	\N	1	\N	\N	\N	\N
+3	worker-split	worker-split-1794194664481	50539f3828f0d0e81f003be3c97932cb9c6cfbb88a22ac63b3d59070c27464b0	worker-sku	1	100	100	paid	2026-11-09 11:24:24.690522+08	2026-11-09 11:24:24.704166+08	\N	1	\N	\N	\N	\N
+4	fault-user	db-recovered-1794194666061	770533cc18e07deb3d53885bd4e6fd3fa97f322259291a7a5457424b2a9acdc0	fault-sku	1	100	100	pending_payment	2026-11-09 11:24:26.062061+08	\N	\N	0	\N	\N	\N	\N
+5	fault-user	mq-down-1794194666671	770533cc18e07deb3d53885bd4e6fd3fa97f322259291a7a5457424b2a9acdc0	fault-sku	1	100	100	paid	2026-11-09 11:24:26.679566+08	2026-11-09 11:24:26.696391+08	\N	1	\N	\N	\N	\N
+\.
+
+
+--
+-- Data for Name: outbox; Type: TABLE DATA; Schema: p03; Owner: -
+--
+

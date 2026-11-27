@@ -1,0 +1,87 @@
+<template>
+	<view class="uni-calendar" @mouseleave="leaveCale">
+
+		<view v-if="!insert && show" class="uni-calendar__mask" :class="{'uni-calendar--mask-show':aniMaskShow}"
+			@click="maskClick"></view>
+
+		<view v-if="insert || show" class="uni-calendar__content"
+			:class="{'uni-calendar--fixed':!insert,'uni-calendar--ani-show':aniMaskShow, 'uni-calendar__content-mobile': aniMaskShow}">
+			<view class="uni-calendar__header" :class="{'uni-calendar__header-mobile' :!insert}">
+
+				<view class="uni-calendar__header-btn-box" @click.stop="changeMonth('pre')">
+					<view class="uni-calendar__header-btn uni-calendar--left"></view>
+				</view>
+
+				<picker mode="date" :value="date" fields="month" @change="bindDateChange">
+					<text
+						class="uni-calendar__header-text">{{ (nowDate.year||'') + yearText + ( nowDate.month||'') + monthText}}</text>
+				</picker>
+
+				<view class="uni-calendar__header-btn-box" @click.stop="changeMonth('next')">
+					<view class="uni-calendar__header-btn uni-calendar--right"></view>
+				</view>
+
+				<view v-if="!insert" class="dialog-close" @click="maskClick">
+					<view class="dialog-close-plus" data-id="close"></view>
+					<view class="dialog-close-plus dialog-close-rotate" data-id="close"></view>
+				</view>
+			</view>
+			<view class="uni-calendar__box">
+
+				<view v-if="showMonth" class="uni-calendar__box-bg">
+					<text class="uni-calendar__box-bg-text">{{nowDate.month}}</text>
+				</view>
+
+				<view class="uni-calendar__weeks" style="padding-bottom: 7px;">
+					<view class="uni-calendar__weeks-day">
+						<text class="uni-calendar__weeks-day-text">{{SUNText}}</text>
+					</view>
+					<view class="uni-calendar__weeks-day">
+						<text class="uni-calendar__weeks-day-text">{{MONText}}</text>
+					</view>
+					<view class="uni-calendar__weeks-day">
+						<text class="uni-calendar__weeks-day-text">{{TUEText}}</text>
+					</view>
+					<view class="uni-calendar__weeks-day">
+						<text class="uni-calendar__weeks-day-text">{{WEDText}}</text>
+					</view>
+					<view class="uni-calendar__weeks-day">
+						<text class="uni-calendar__weeks-day-text">{{THUText}}</text>
+					</view>
+					<view class="uni-calendar__weeks-day">
+						<text class="uni-calendar__weeks-day-text">{{FRIText}}</text>
+					</view>
+					<view class="uni-calendar__weeks-day">
+						<text class="uni-calendar__weeks-day-text">{{SATText}}</text>
+					</view>
+				</view>
+
+				<view class="uni-calendar__weeks" v-for="(item,weekIndex) in weeks" :key="weekIndex">
+					<view class="uni-calendar__weeks-item" v-for="(weeks,weeksIndex) in item" :key="weeksIndex">
+						<calendar-item class="uni-calendar-item--hook" :weeks="weeks" :calendar="calendar" :selected="selected"
+							:checkHover="range" @change="choiceDate" @handleMouse="handleMouse">
+						</calendar-item>
+					</view>
+				</view>
+			</view>
+
+			<view v-if="!insert && !range && hasTime" class="uni-date-changed uni-calendar--fixed-top"
+				style="padding: 0 80px;">
+				<view class="uni-date-changed--time-date">{{tempSingleDate ? tempSingleDate : selectDateText}}</view>
+				<time-picker type="time" :start="timepickerStartTime" :end="timepickerEndTime" v-model="time"
+					:disabled="!tempSingleDate" :border="false" :hide-second="hideSecond" class="time-picker-style">
+				</time-picker>
+			</view>
+
+			<view v-if="!insert && range && hasTime" class="uni-date-changed uni-calendar--fixed-top">
+				<view class="uni-date-changed--time-start">
+					<view class="uni-date-changed--time-date">{{tempRange.before ? tempRange.before : startDateText}}
+					</view>
+					<time-picker type="time" :start="timepickerStartTime" v-model="timeRange.startTime" :border="false"
+						:hide-second="hideSecond" :disabled="!tempRange.before" class="time-picker-style">
+					</time-picker>
+				</view>
+				<view style="line-height: 50px;">
+					<uni-icons type="arrowthinright" color="#999"></uni-icons>
+				</view>
+				<view class="uni-date-changed--time-end">

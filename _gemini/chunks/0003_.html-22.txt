@@ -1,0 +1,23 @@
+  fish.forEach((f, i) => { f.f = new THREE.Vector3(0, 0, 1); fishPhase.array[i] = f.ph; });
+  fishPhase.needsUpdate = true;
+  applyTime(0);
+  updateEnvironment();
+  setSize();
+  renderer.compile(scene, camera);
+  try { sessionStorage.removeItem('isl-reloaded'); } catch (e) { /* 隐私模式下不可用 */ }
+  renderer.setAnimationLoop(tick);
+} catch (err) {
+  renderer.setAnimationLoop(null);
+  fatal(err);
+  throw err;
+}
+
+
+
+
+
+
+
+</script>
+</body>
+</html>

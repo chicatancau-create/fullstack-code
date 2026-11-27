@@ -1,0 +1,190 @@
+// 表格的筛选 + 排序状态：一处 reactive 收住，避免散落四五个 ref
+const table = reactive({
+  keyword: '',
+  onlyActive: false,
+  sortKey: 'weekRate',
+  sortAsc: false,
+})
+
+const visibleRows = computed(() => {
+  const keyword = table.keyword.trim().toLowerCase()
+  const filtered = summary.value.perHabit.filter((row) => {
+    const matchedName = !keyword || row.name.toLowerCase().includes(keyword)
+    const matchedActive = !table.onlyActive || row.weekDone > 0
+    return matchedName && matchedActive
+  })
+
+  const key = table.sortKey
+  const direction = table.sortAsc ? 1 : -1
+  return [...filtered].sort((left, right) => {
+    const a = left[key]
+    const b = right[key]
+    if (typeof a === 'string' || typeof b === 'string') {
+      return String(a).localeCompare(String(b), 'zh-CN') * direction
+    }
+    return ((Number(a) || 0) - (Number(b) || 0)) * direction
+  })
+})
+
+// 切月之后展开行里显示的还是上一个月的日期，继续留着会误导，直接收起
+watch(monthDate, () => {
+  expandedId.value = ''
+})
+
+// 展开中的习惯被删掉、或被筛选条件排除时收起，避免 expandedId 悬空
+watch(visibleRows, (rows) => {
+  if (expandedId.value && !rows.some((row) => row.id === expandedId.value)) {
+    expandedId.value = ''
+  }
+})
+
+const monthKeySet = computed(() => new Set(heatmap.value.cells.filter(Boolean)))
+
+function changeMonth(step) {
+  const delta = Number(step)
+  if (!Number.isFinite(delta) || delta === 0) return
+  // 子组件已把「下一月」置灰，这里再挡一次，防止别处直接调用
+  if (delta > 0 && nextDisabled.value) return
+  monthDate.value = addMonths(monthDate.value, delta)
+}
+
+function backToCurrentMonth() {
+  monthDate.value = startOfMonth(new Date())
+}
+
+function sortBy(key) {
+  if (table.sortKey === key) {
+    table.sortAsc = !table.sortAsc
+    return
+  }
+  table.sortKey = key
+  // 文本列首次点击升序更直观，数值列首次点击看高分
+  table.sortAsc = key === 'name'
+}
+
+function arrowOf(key) {
+  if (table.sortKey !== key) return ''
+  return table.sortAsc ? '▲' : '▼'
+}
+
+function toggleExpand(id) {
+  expandedId.value = expandedId.value === id ? '' : id
+}
+
+function monthDetail(id) {
+  const dates = Array.isArray(state.checkins[id]) ? state.checkins[id] : []
+  return dates.filter((key) => monthKeySet.value.has(key))
+}
+
+function shortDate(key) {
+  return isValidDateKey(key) ? formatShortDate(key) : key
+}
+
+function percent(rate) {
+  const num = Number(rate)
+  if (!Number.isFinite(num) || num <= 0) return '0%'
+  return `${Math.round(Math.min(num, 1) * 100)}%`
+}
+
+function barHeight(rate) {
+  // 柱高按完成率绝对值算，和柱顶百分比读数一致；空数据给 3% 让轨道可见
+  const num = Number(rate)
+  if (!Number.isFinite(num) || num <= 0) return '3%'
+  return `${Math.max(3, Math.min(100, Math.round(num * 100)))}%`
+}
+
+function ratePill(rate) {
+  const num = Number(rate)
+  if (!Number.isFinite(num)) return 'pill-amber'
+  if (num >= 1) return 'pill-green'
+  if (num >= 0.5) return ''
+  if (num > 0) return 'pill-amber'
+  return 'pill-red'
+}
+</script>
+
+<style scoped>
+.stats-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.banner {
+  padding: 6px 12px;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+/* ---------- 数字卡 ---------- */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* 全局 .card + .card 的 16px 上边距与本页 flex gap 会叠加（网格内还会把第 2–4 张卡压低），
+   统一清掉，间距只由 .stats-page / .stat-grid 的 gap 负责 */
+.stats-page > .card + .card,
+.stat-grid .card + .card {
+  margin-top: 0;
+}
+
+.stat-label {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.stat-value {
+  color: var(--brand);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-value.is-brand {
+  color: var(--accent);
+}
+
+.stat-value.is-good {
+  color: var(--accent2);
+}
+
+.stat-unit {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.stat-note {
+  font-size: 12px;
+}
+
+.streak-line {
+  margin-top: -4px;
+}
+
+.streak-hint {
+  font-size: 12px;
+}
+
+.back-line {
+  margin-top: -8px;
+  text-align: right;
+}
+
+/* ---------- 柱状条 ---------- */
+.bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+

@@ -1,0 +1,19 @@
+    comments: await listComments({ prisma: app.prisma, userId: request.user.sub, taskId: request.params.id }),
+  }));
+
+  app.post('/workspaces/:id/transaction-demo', { preHandler: auth }, async (request) => {
+    await assertMember(app.prisma, request.user.sub, request.params.id);
+    return transactionDemo({ prisma: app.prisma, userId: request.user.sub, workspaceId: request.params.id });
+  });
+
+  app.setErrorHandler((error, request, reply) => {
+    const status = error.status || error.statusCode || 500;
+    reply.code(status).send({
+      error: error.code || (status === 500 ? 'INTERNAL' : 'BAD_REQUEST'),
+      message: status === 500 ? '服务器内部错误' : error.message,
+      requestId: request.id,
+    });
+  });
+
+  return app;
+}

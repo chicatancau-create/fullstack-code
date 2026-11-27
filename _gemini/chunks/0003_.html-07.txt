@@ -1,0 +1,92 @@
+  heightTex: { value: heightTex },
+  heightRange: { value: HEIGHT_RANGE }
+};
+
+/* ---------------------------------------------------------------- GLSL 片段 */
+const GLSL_NOISE = /* glsl */`
+float h21(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+float h31(vec3 p){ p=fract(p*0.3183099+vec3(0.11,0.17,0.13)); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
+float vn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
+  float a=h21(i),b=h21(i+vec2(1.0,0.0)),c=h21(i+vec2(0.0,1.0)),d=h21(i+vec2(1.0,1.0));
+  return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }
+float fbm2(vec2 p){ float s=0.0,a=0.5; for(int i=0;i<4;i++){ s+=a*(vn(p)*2.0-1.0); p*=2.03; a*=0.5; } return s; }
+float rdg(vec2 p){ float s=0.0,a=0.5; for(int i=0;i<3;i++){ s+=a*(1.0-abs(vn(p)*2.0-1.0)); p*=2.07; a*=0.5; } return s; }
+`;
+const GLSL_CAUSTIC = /* glsl */`
+float caustic(vec2 p,float t){
+  vec2 i=p; float c=1.0; const float inten=0.0058;
+  for(int n=0;n<3;n++){
+    float tt=t*(1.0-(3.5/float(n+1)));
+    i=p+vec2(cos(tt-i.x)+sin(tt+i.y), sin(tt-i.y)+cos(tt+i.x));
+    float a=sin(i.x+tt), b=cos(i.y+tt);
+    a=(a<0.0?-1.0:1.0)*max(abs(a),0.02);
+    b=(b<0.0?-1.0:1.0)*max(abs(b),0.02);
+    c+=1.0/(length(vec2(p.x*inten/a, p.y*inten/b))+1e-3);
+  }
+  c/=3.0; c=clamp(c,0.0,6.0); c=clamp(pow(c,8.0),0.0,1.8);
+  return 1.25-c;
+}`;
+// NaN 兜底：任何通道出现 NaN 时整像素归零，避免污染 Bloom 的模糊链
+const GLSL_SAFE = /* glsl */`
+vec3 nanSafe(vec3 c){ float s=c.x+c.y+c.z; return ( s != s ) ? vec3(0.0) : max(c, vec3(0.0)); }
+`;
+const GLSL_SKY = /* glsl */`
+uniform vec3 uZenith,uHorizon,uGround,uSunCol,uSunDir;
+uniform float uSunPow,uSunI,uGlow,uHaze,uNight,uStarT;
+vec3 skyColor(vec3 d){
+  d=normalize(d);
+  float up=d.y;
+  vec3 c=mix(uHorizon,uZenith,pow(smoothstep(0.0,0.74,clamp(up,-1.0,1.0)),0.72));
+  c=mix(c,uGround,smoothstep(0.03,-0.26,up));
+  c=mix(c,uHorizon,pow(clamp(1.0-abs(up),0.0,1.0),9.0)*uHaze);
+  float mu=max(dot(d,uSunDir),0.0);
+  c+=uSunCol*(pow(mu,uSunPow)*uSunI + pow(mu,7.0)*uGlow*uSunI*0.30);
+  if(uNight>0.002 && up>-0.02){
+    vec3 q=floor(normalize(d)*170.0);
+    float hs=h31(q);
+    if(hs>0.9938){
+      float tw=0.5+0.5*sin(uStarT*(2.0+hs*46.0)+hs*70.0);
+      c+=vec3(0.82,0.88,1.0)*uNight*tw*0.85*(0.5+0.5*smoothstep(-0.02,0.5,up));
+    }
+  }
+  return max(c,vec3(0.0));
+}
+`;
+function skyUniformValues(extra = {}) {
+  return Object.assign({
+    uZenith: U.zenith, uHorizon: U.horizon, uGround: U.ground, uSunCol: U.sunCol,
+    uSunDir: U.sunDir, uSunPow: U.sunPow, uSunI: U.sunI, uGlow: U.glow,
+    uHaze: U.haze, uNight: U.night, uStarT: U.starT
+  }, extra);
+}
+
+/* ---------------------------------------------------------------- 天空 / 环境 */
+const skyMat = new THREE.ShaderMaterial({
+  side: THREE.BackSide, depthWrite: false, toneMapped: true,
+  uniforms: skyUniformValues(),
+  vertexShader: `varying vec3 vDir; void main(){ vDir = (modelMatrix*vec4(position,1.0)).xyz; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+  fragmentShader: GLSL_NOISE + GLSL_SKY + `varying vec3 vDir;
+    void main(){ vec3 c = skyColor(vDir); gl_FragColor = vec4(c*1.35, 1.0); }`
+});
+const skyDome = new THREE.Mesh(new THREE.SphereGeometry(40, 48, 32), skyMat);
+skyDome.frustumCulled = false; skyDome.renderOrder = -1000;
+scene.add(skyDome);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+pmrem.compileEquirectangularShader();
+let envRT = null;
+function updateEnvironment() {
+  const t = pmrem.fromScene(skyScene, 0, 0.1, 60);
+  if (envRT) envRT.dispose();
+  envRT = t;
+  scene.environment = t.texture;
+}
+const skyScene = new THREE.Scene();
+skyScene.add(new THREE.Mesh(new THREE.SphereGeometry(20, 32, 24), skyMat));
+
+/* ---------------------------------------------------------------- 灯光 */
+const sun = new THREE.DirectionalLight(0xfff3e0, 3.4);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.near = 0.4; sun.shadow.camera.far = 14;
+sun.shadow.camera.left = -1.9; sun.shadow.camera.right = 1.9;

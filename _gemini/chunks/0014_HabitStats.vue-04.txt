@@ -1,0 +1,226 @@
+.bar-col {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.bar-track {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 132px;
+  border-radius: 6px;
+  background: #eef1f7;
+  overflow: hidden;
+}
+
+.bar-fill {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, #7ea6ec, var(--accent));
+}
+
+.bar-col.is-current .bar-fill {
+  background: linear-gradient(180deg, #46b58a, var(--accent2));
+}
+
+.bar-pct {
+  color: var(--brand);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.bar-label {
+  color: var(--text);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.bar-done {
+  font-size: 11.5px;
+}
+
+.bars-note {
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+/* ---------- 明细表 ---------- */
+.table-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-input {
+  width: 168px;
+}
+
+.filter-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+/* 明细表：外层滚动容器负责横向滚动（内容放不下时页面本身不被撑破），
+   表格只给一个「不低于自身内容最小宽度」的地板，保证列不被压瘪、一列都不藏。 */
+.table-scroll {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+.stats-table {
+  margin-top: 10px;
+  min-width: 560px;
+}
+
+.th-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  cursor: pointer;
+}
+
+.th-arrow {
+  color: var(--accent);
+  font-size: 10px;
+}
+
+.is-sorted {
+  color: var(--accent);
+}
+
+.dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: baseline;
+}
+
+.row-name {
+  color: var(--text);
+}
+
+.cell-week {
+  min-width: 116px;
+}
+
+.mini {
+  display: inline-block;
+  width: 62px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 4px;
+  background: #eef1f7;
+  vertical-align: middle;
+  overflow: hidden;
+}
+
+.mini-fill {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+}
+
+.mini-text {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.month-detail {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  background: #f7f9fd;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.chip {
+  padding: 1px 9px;
+  border-radius: var(--radius-pill);
+  background: #e8f0ff;
+  color: var(--accent);
+  font-size: 11.5px;
+  line-height: 1.7;
+}
+
+.chip-today {
+  background: #e8f5ee;
+  color: var(--accent2);
+  font-weight: 700;
+}
+
+.empty-cell {
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ---------- 空态 ---------- */
+.empty-state {
+  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+@media (max-width: 720px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bars {
+    gap: 6px;
+  }
+
+  .bar-track {
+    height: 104px;
+  }
+
+  .bar-done {
+    display: none;
+  }
+
+  .filters {
+    width: 100%;
+  }
+
+  .filter-input {
+    flex: 1;
+    width: auto;
+    min-width: 120px;
+  }
+}
+</style>

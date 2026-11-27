@@ -1,0 +1,6 @@
+.gitattributes
+.gitignore
+AGENTS.md
+README.md
+errors.md
+progress.md

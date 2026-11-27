@@ -1,0 +1,49 @@
+  await clickAt('button', await evl(`[...document.querySelectorAll('button')].findIndex(b => b.innerText.trim()==='确认删除')`));
+  await sleep(700);
+  check('回退后仍可正常二次删除', (await evl(`document.querySelectorAll('.habit-row').length`)) === rows2 - 1, `${rows2} -> ${await evl(`document.querySelectorAll('.habit-row').length`)}`);
+
+
+  console.log('\n--- 8. 周切换 ---');
+  const week0 = await evl(`document.querySelector('.section-title')?.innerText`);
+  const prevIdx = await evl(`[...document.querySelectorAll('button')].findIndex(b => b.innerText.includes('上一周'))`);
+  await clickAt('button', prevIdx);
+  await sleep(600);
+  const week1 = await evl(`document.querySelector('.section-title')?.innerText`);
+  check('上一周 → 周标题变化', week0 !== week1, `${JSON.stringify(week0)} -> ${JSON.stringify(week1)}`);
+  await clickAt('button', prevIdx);
+  await clickAt('button', prevIdx);
+  await sleep(400);
+  const backIdx = await evl(`[...document.querySelectorAll('button')].findIndex(b => /回到本周|本周/.test(b.innerText))`);
+  if (backIdx >= 0) { await clickAt('button', backIdx); await sleep(600); }
+  else { await clickAt('button', await evl(`[...document.querySelectorAll('button')].findIndex(b => b.innerText.includes('下一周'))`)); await sleep(400); await clickAt('button', await evl(`[...document.querySelectorAll('button')].findIndex(b => b.innerText.includes('下一周'))`)); await sleep(600); }
+  check('能回到当前周', (await evl(`document.querySelector('.section-title')?.innerText`)) === week0, await evl(`document.querySelector('.section-title')?.innerText`));
+  const nextDisabled = await evl(`[...document.querySelectorAll('button')].find(b => b.innerText.includes('下一周'))?.disabled`);
+  check('本周时「下一周」被禁用', nextDisabled === true, 'disabled=' + nextDisabled);
+
+  console.log('\n--- 9. 统计页 / 热力月历 ---');
+  await goto('/#/stats');
+  // 用精确类名 .stat-card，不要用 [class*=stat]（它会连 .stats-page/.stat-grid/.stat-label 一起数，实测报 23）
+  const cards = await evl(`(() => { const c=[...document.querySelectorAll('.stat-card')];
+    return { n: c.length, allFilled: c.every(x => x.querySelector('.stat-label')?.innerText.trim() && x.querySelector('.stat-value')?.innerText.trim()),
+             nan: /NaN|undefined/.test(document.querySelector('.stat-grid').innerText) }; })()`);
+  check('统计页恰好 4 张数字卡且标签与数值都非空', cards.n === 4 && cards.allFilled && !cards.nan,
+    `n=${cards.n} allFilled=${cards.allFilled} 有NaN=${cards.nan}`);
+  const hmCells = await evl(`document.querySelectorAll('.hm-cell').length`);
+  check('热力月历为 7 的倍数格（周一开头整行）', hmCells % 7 === 0, 'cells=' + hmCells);
+  // 色阶档数由当月实际分布算出来当基准，不再写 >= 3（数据均匀时会假红，写成 >=0 又恒真）。
+  // aria-label 有三种真实形态（MonthHeatmap.vue 的 cellAriaLabel）：
+  //   '空白格' / '<key> 尚未到来' / '<key>，<n> 个习惯完成打卡' / '<key>，没有打卡'
+  // 注意：模板字符串里要写 \\d，写 \d 会被模板转义吃掉变成字面 d（本条第一次就栽在这）
+  const heat = await evl(`(() => {
+    const cells = [...document.querySelectorAll('.hm-cell:not(.is-blank)')];
+    const rendered = [...new Set(cells.map(c => [...c.classList].find(x => /^heat-/.test(x)) || 'NONE'))].sort();
+    const counts = cells.map(c => { const m = (c.getAttribute('aria-label') || '').match(/，(\\d+) 个习惯/); return m ? Number(m[1]) : 0; });
+    const expect = [...new Set(counts.map(n => 'heat-' + (n >= 3 ? 3 : n)))].sort();
+    return JSON.stringify({ rendered, expect, nCells: cells.length, maxCount: Math.max(...counts, 0) });
+  })()`);
+  const hh = JSON.parse(heat);
+  check('热力色阶档数与当月分布的档数一致', hh.rendered.join() === hh.expect.join() && hh.nCells > 0,
+    `渲染=${JSON.stringify(hh.rendered)} 应有=${JSON.stringify(hh.expect)} 格数=${hh.nCells} 单日最大=${hh.maxCount}`);
+  const monthLabel = await evl(`document.querySelector('.heatmap')?.innerText.match(/\\d{4}年\\d{1,2}月/)?.[0]`);
+  const nextBtnIdx = await evl(`[...document.querySelectorAll('button')].findIndex(b => b.innerText.includes('下一月'))`);
+  const prevBtnIdx = await evl(`[...document.querySelectorAll('button')].findIndex(b => b.innerText.includes('上一月'))`);

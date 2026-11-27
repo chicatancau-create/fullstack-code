@@ -1,0 +1,20 @@
+    /* flex-basis:100% = 强制换行：格子条永远独占一行，且与表头星期条左边缘对齐 */
+    flex: 0 1 100%;
+  }
+  .stats {
+    order: 4;
+    flex: 0 1 100%;
+    /* 整行铺开后中间列不再无限拉伸（1fr 会吃掉 600px 剩余空间，把百分比顶到最右侧）：
+       上限 260px 与桌面档的进度条观感一致，网格默认左对齐，右侧留白不承载信息。
+       两侧同样用定宽，理由见 .stats 主声明（max-content 会让逐行右边缘错位） */
+    grid-template-columns: 66px minmax(60px, 260px) 40px;
+  }
+}
+
+/* 更窄一档：格子尺寸由 HabitList.vue 的 --cell-size 统一下调，这里只补换行兜底 */
+@media (max-width: 420px) {
+  .cells {
+    flex-wrap: wrap;
+  }
+}
+</style>

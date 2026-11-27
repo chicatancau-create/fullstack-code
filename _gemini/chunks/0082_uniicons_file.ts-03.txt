@@ -1,0 +1,166 @@
+    "font_class": "redo",
+    "unicode": "\ue64a"
+  },
+  {
+    "font_class": "redo-filled",
+    "unicode": "\ue655"
+  },
+  {
+    "font_class": "refresh",
+    "unicode": "\ue657"
+  },
+  {
+    "font_class": "refresh-filled",
+    "unicode": "\ue656"
+  },
+  {
+    "font_class": "refreshempty",
+    "unicode": "\ue6bf"
+  },
+  {
+    "font_class": "reload",
+    "unicode": "\ue6b2"
+  },
+  {
+    "font_class": "right",
+    "unicode": "\ue6b5"
+  },
+  {
+    "font_class": "scan",
+    "unicode": "\ue62a"
+  },
+  {
+    "font_class": "search",
+    "unicode": "\ue654"
+  },
+  {
+    "font_class": "settings",
+    "unicode": "\ue653"
+  },
+  {
+    "font_class": "settings-filled",
+    "unicode": "\ue6ce"
+  },
+  {
+    "font_class": "shop",
+    "unicode": "\ue62f"
+  },
+  {
+    "font_class": "shop-filled",
+    "unicode": "\ue6cd"
+  },
+  {
+    "font_class": "smallcircle",
+    "unicode": "\ue67c"
+  },
+  {
+    "font_class": "smallcircle-filled",
+    "unicode": "\ue665"
+  },
+  {
+    "font_class": "sound",
+    "unicode": "\ue684"
+  },
+  {
+    "font_class": "sound-filled",
+    "unicode": "\ue686"
+  },
+  {
+    "font_class": "spinner-cycle",
+    "unicode": "\ue68a"
+  },
+  {
+    "font_class": "staff",
+    "unicode": "\ue6a7"
+  },
+  {
+    "font_class": "staff-filled",
+    "unicode": "\ue6cb"
+  },
+  {
+    "font_class": "star",
+    "unicode": "\ue688"
+  },
+  {
+    "font_class": "star-filled",
+    "unicode": "\ue68f"
+  },
+  {
+    "font_class": "starhalf",
+    "unicode": "\ue683"
+  },
+  {
+    "font_class": "trash",
+    "unicode": "\ue687"
+  },
+  {
+    "font_class": "trash-filled",
+    "unicode": "\ue685"
+  },
+  {
+    "font_class": "tune",
+    "unicode": "\ue6aa"
+  },
+  {
+    "font_class": "tune-filled",
+    "unicode": "\ue6ca"
+  },
+  {
+    "font_class": "undo",
+    "unicode": "\ue64f"
+  },
+  {
+    "font_class": "undo-filled",
+    "unicode": "\ue64c"
+  },
+  {
+    "font_class": "up",
+    "unicode": "\ue6b6"
+  },
+	{
+	  "font_class": "top",
+	  "unicode": "\ue6b6"
+	},
+  {
+    "font_class": "upload",
+    "unicode": "\ue690"
+  },
+  {
+    "font_class": "upload-filled",
+    "unicode": "\ue68e"
+  },
+  {
+    "font_class": "videocam",
+    "unicode": "\ue68c"
+  },
+  {
+    "font_class": "videocam-filled",
+    "unicode": "\ue689"
+  },
+  {
+    "font_class": "vip",
+    "unicode": "\ue6a8"
+  },
+  {
+    "font_class": "vip-filled",
+    "unicode": "\ue6c6"
+  },
+  {
+    "font_class": "wallet",
+    "unicode": "\ue6b1"
+  },
+  {
+    "font_class": "wallet-filled",
+    "unicode": "\ue6c2"
+  },
+  {
+    "font_class": "weibo",
+    "unicode": "\ue68b"
+  },
+  {
+    "font_class": "weixin",
+    "unicode": "\ue691"
+  }
+] as IconsDataItem[]
+
+// export const fontData = JSON.parse<IconsDataItem>(fontDataJson)

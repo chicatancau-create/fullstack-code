@@ -1,0 +1,167 @@
+					this.init()
+				})
+				// #endif
+
+				// 监听变化
+				this.$watch(
+					() => {
+						const val = this.form._getDataValue(this.name, this.form.localData)
+						return val
+					},
+					(value, oldVal) => {
+						const isEqual = this.form._isEqual(value, oldVal)
+						// 简单判断前后值的变化，只有发生变化才会发生校验
+						// TODO  如果 oldVal = undefined ，那么大概率是源数据里没有值导致 ，这个情况不哦校验 ,可能不严谨 ，需要在做观察
+						// fix by mehaotian 暂时取消 && oldVal !== undefined ，如果formData 中不存在，可能会不校验
+						if (!isEqual) {
+							const val = this.itemSetValue(value)
+							this.onFieldChange(val, false)
+						}
+					}, {
+						immediate: false
+					}
+				);
+			}
+
+		},
+		// #ifndef VUE3
+		destroyed() {
+			if (this.__isUnmounted) return
+			this.unInit()
+		},
+		// #endif
+		// #ifdef VUE3
+		unmounted() {
+			this.__isUnmounted = true
+			this.unInit()
+		},
+		// #endif
+		methods: {
+			/**
+			 * 外部调用方法
+			 * 设置规则 ，主要用于小程序自定义检验规则
+			 * @param {Array} rules 规则源数据
+			 */
+			setRules(rules = null) {
+				this.userRules = rules
+				this.init(false)
+			},
+			// 兼容老版本表单组件
+			setValue() {
+				// console.log('setValue 方法已经弃用，请使用最新版本的 uni-forms 表单组件以及其他关联组件。');
+			},
+			/**
+			 * 外部调用方法
+			 * 校验数据
+			 * @param {any} value 需要校验的数据
+			 * @param {boolean} 是否立即校验
+			 * @return {Array|null} 校验内容
+			 */
+			async onFieldChange(value, formtrigger = true) {
+				const {
+					formData,
+					localData,
+					errShowType,
+					validateCheck,
+					validateTrigger,
+					_isRequiredField,
+					_realName
+				} = this.form
+				const name = _realName(this.name)
+				if (!value) {
+					value = this.form.formData[name]
+				}
+				// fixd by mehaotian 不在校验前清空信息，解决闪屏的问题
+				// this.errMsg = '';
+
+				// fix by mehaotian 解决没有检验规则的情况下，抛出错误的问题
+				const ruleLen = this.itemRules.rules && this.itemRules.rules.length
+				if (!this.validator || !ruleLen || ruleLen === 0) return;
+
+				// 检验时机
+				// let trigger = this.isTrigger(this.itemRules.validateTrigger, this.validateTrigger, validateTrigger);
+				const isRequiredField = _isRequiredField(this.itemRules.rules || []);
+				let result = null;
+				// 只有等于 bind 时 ，才能开启时实校验
+				if (validateTrigger === 'bind' || formtrigger) {
+					// 校验当前表单项
+					result = await this.validator.validateUpdate({
+							[name]: value
+						},
+						formData
+					);
+
+					// 判断是否必填,非必填，不填不校验，填写才校验 ,暂时只处理 undefined  和空的情况
+					if (!isRequiredField && (value === undefined || value === '')) {
+						result = null;
+					}
+
+					// 判断错误信息显示类型
+					if (result && result.errorMessage) {
+						if (errShowType === 'undertext') {
+							// 获取错误信息
+							this.errMsg = !result ? '' : result.errorMessage;
+						}
+						if (errShowType === 'toast') {
+							uni.showToast({
+								title: result.errorMessage || '校验错误',
+								icon: 'none'
+							});
+						}
+						if (errShowType === 'modal') {
+							uni.showModal({
+								title: '提示',
+								content: result.errorMessage || '校验错误'
+							});
+						}
+					} else {
+						this.errMsg = ''
+					}
+					// 通知 form 组件更新事件
+					validateCheck(result ? result : null)
+				} else {
+					this.errMsg = ''
+				}
+				return result ? result : null;
+			},
+			/**
+			 * 初始组件数据
+			 */
+			init(type = false) {
+				const {
+					validator,
+					formRules,
+					childrens,
+					formData,
+					localData,
+					_realName,
+					labelWidth,
+					_getDataValue,
+					_setDataValue
+				} = this.form || {}
+				// 对齐方式
+				this.localLabelAlign = this._justifyContent()
+				// 宽度
+				this.localLabelWidth = this._labelWidthUnit(labelWidth)
+				// 标签位置
+				this.localLabelPos = this._labelPosition()
+				// 将需要校验的子组件加入form 队列
+				this.form && type && childrens.push(this)
+
+				if (!validator || !formRules) return
+				// 判断第一个 item
+				if (!this.form.isFirstBorder) {
+					this.form.isFirstBorder = true;
+					this.isFirstBorder = true;
+				}
+
+				// 判断 group 里的第一个 item
+				if (this.group) {
+					if (!this.group.isFirstBorder) {
+						this.group.isFirstBorder = true;
+						this.isFirstBorder = true;
+					}
+				}
+				this.border = this.form.border;
+				// 获取子域的真实名称
+				const name = _realName(this.name)

@@ -1,0 +1,86 @@
+package dev.study.collab;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+
+import java.util.Map;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+class ApiTest {
+    @Autowired
+    MockMvc mvc;
+    @Autowired
+    JdbcTemplate jdbc;
+    @Autowired
+    ObjectMapper json;
+
+    @BeforeEach
+    void clean() {
+        jdbc.update("DELETE FROM tasks");
+        jdbc.update("DELETE FROM memberships");
+        jdbc.update("DELETE FROM sessions");
+        jdbc.update("DELETE FROM workspaces");
+        jdbc.update("DELETE FROM users");
+    }
+
+    private MvcResult postJson(String path, String token, Object body) throws Exception {
+        var request = post(path).contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(body));
+        if (token != null) request.header("Authorization", "Bearer " + token);
+        return mvc.perform(request).andReturn();
+    }
+
+    private String register(String email) throws Exception {
+        MvcResult result = postJson("/auth/register", null, Map.of("email", email, "password", "correct-horse-1"));
+        assertThat(result.getResponse().getStatus()).isEqualTo(201);
+        return email;
+    }
+
+    private String login(String email) throws Exception {
+        MvcResult result = postJson("/auth/login", null, Map.of("email", email, "password", "correct-horse-1"));
+        assertThat(result.getResponse().getStatus()).isEqualTo(200);
+        return json.readTree(result.getResponse().getContentAsString()).get("token").asText();
+    }
+
+    private JsonNode body(MvcResult result) throws Exception {
+        return json.readTree(result.getResponse().getContentAsString());
+    }
+
+    @Test
+    void healthIsPublicAndOtherRoutesRequireToken() throws Exception {
+        mvc.perform(get("/health")).andExpect(status().isOk());
+        mvc.perform(get("/workspaces")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/workspaces").header("Authorization", "Bearer not-a-token")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void registerLoginAndDuplicateRules() throws Exception {
+        register("owner@example.com");
+        MvcResult duplicate = postJson("/auth/register", null, Map.of("email", "owner@example.com", "password", "correct-horse-1"));
+        assertThat(duplicate.getResponse().getStatus()).isEqualTo(409);
+        MvcResult weak = postJson("/auth/register", null, Map.of("email", "weak@example.com", "password", "short"));
+        assertThat(weak.getResponse().getStatus()).isEqualTo(400);
+        MvcResult wrong = postJson("/auth/login", null, Map.of("email", "owner@example.com", "password", "wrong-pass-1"));
+        assertThat(wrong.getResponse().getStatus()).isEqualTo(401);

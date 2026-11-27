@@ -1,0 +1,195 @@
+			uninstall() {
+				if (this.collapse) {
+					this.collapse.childrens.forEach((item, index) => {
+						if (item === this) {
+							this.collapse.childrens.splice(index, 1)
+						}
+					})
+					this.collapse.names.forEach((item, index) => {
+						if (item === this.nameSync) {
+							this.collapse.names.splice(index, 1)
+						}
+					})
+				}
+			},
+			onClick(isOpen, type) {
+				if (this.disabled) return
+				this.isOpen = isOpen
+				if (this.isOpen && this.collapse) {
+					this.collapse.setAccordion(this)
+				}
+				if (type !== 'init') {
+					this.collapse.onChange(isOpen, this)
+				}
+			},
+			getCollapseHeight(type, index = 0) {
+				const views = uni.createSelectorQuery().in(this)
+				views
+					.select(`#${this.elId}`)
+					.fields({
+						size: true
+					}, data => {
+						// TODO 百度中可能获取不到节点信息 ，需要循环获取
+						if (index >= 10) return
+						if (!data) {
+							index++
+							this.getCollapseHeight(false, index)
+							return
+						}
+						// #ifdef APP-NVUE
+						this.height = data.height + 1
+						// #endif
+						// #ifndef APP-NVUE
+						this.height = data.height
+						// #endif
+						this.isheight = true
+						if (type) return
+						this.onClick(this.isOpen, 'init')
+					})
+					.exec()
+			},
+			getNvueHwight(type) {
+				const result = dom.getComponentRect(this.$refs['collapse--hook'], option => {
+					if (option && option.result && option.size) {
+						// #ifdef APP-NVUE
+						this.height = option.size.height + 1
+						// #endif
+						// #ifndef APP-NVUE
+						this.height = option.size.height
+						// #endif
+						this.isheight = true
+						if (type) return
+						this.onClick(this.open, 'init')
+					}
+				})
+			},
+			/**
+			 * 获取父元素实例
+			 */
+			getCollapse(name = 'uniCollapse') {
+				let parent = this.$parent;
+				let parentName = parent.$options.name;
+				while (parentName !== name) {
+					parent = parent.$parent;
+					if (!parent) return false;
+					parentName = parent.$options.name;
+				}
+				return parent;
+			}
+		}
+	}
+</script>
+
+<style lang="scss">
+	.uni-collapse-item {
+		/* #ifndef APP-NVUE */
+		box-sizing: border-box;
+
+		/* #endif */
+		&__title {
+			/* #ifndef APP-NVUE */
+			display: flex;
+			width: 100%;
+			box-sizing: border-box;
+			/* #endif */
+			flex-direction: row;
+			align-items: center;
+			transition: border-bottom-color .3s;
+
+			// transition-property: border-bottom-color;
+			// transition-duration: 5s;
+			&-wrap {
+				width: 100%;
+				flex: 1;
+
+			}
+
+			&-box {
+				padding: 0 15px;
+				/* #ifndef APP-NVUE */
+				display: flex;
+				width: 100%;
+				box-sizing: border-box;
+				/* #endif */
+				flex-direction: row;
+				justify-content: space-between;
+				align-items: center;
+				height: 48px;
+				line-height: 48px;
+				background-color: #fff;
+				color: #303133;
+				font-size: 13px;
+				font-weight: 500;
+				/* #ifdef H5 */
+				cursor: pointer;
+				outline: none;
+
+				/* #endif */
+				&.is-disabled {
+					.uni-collapse-item__title-text {
+						color: #999;
+					}
+				}
+
+			}
+
+			&.uni-collapse-item-border {
+				border-bottom: 1px solid #ebeef5;
+			}
+
+			&.is-open {
+				border-bottom-color: transparent;
+			}
+
+			&-img {
+				height: 22px;
+				width: 22px;
+				margin-right: 10px;
+			}
+
+			&-text {
+				flex: 1;
+				font-size: 14px;
+				/* #ifndef APP-NVUE */
+				white-space: nowrap;
+				color: inherit;
+				/* #endif */
+				/* #ifdef APP-NVUE */
+				lines: 1;
+				/* #endif */
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			&-arrow {
+				/* #ifndef APP-NVUE */
+				display: flex;
+				box-sizing: border-box;
+				/* #endif */
+				align-items: center;
+				justify-content: center;
+				width: 20px;
+				height: 20px;
+				margin-right: 10px;
+				transform: rotate(0deg);
+
+				&-active {
+					transform: rotate(-180deg);
+				}
+			}
+
+
+		}
+
+		&__wrap {
+			/* #ifndef APP-NVUE */
+			will-change: height;
+			box-sizing: border-box;
+			/* #endif */
+			background-color: #fff;
+			overflow: hidden;
+			position: relative;
+			height: 0;
+
+			&.is--transition {
+				// transition: all 0.3s;

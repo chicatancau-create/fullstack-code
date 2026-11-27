@@ -1,0 +1,91 @@
+sun.shadow.camera.top = 1.9; sun.shadow.camera.bottom = -1.9;
+sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.018;
+sun.shadow.radius = 2.4;
+scene.add(sun, sun.target);
+
+const fillTop = new THREE.HemisphereLight(0xbcd8f0, 0x2a2418, 0.5);
+scene.add(fillTop);
+
+const lampWarm = new THREE.PointLight(0xffb35c, 0, 1.5, 2);
+const lampPier = new THREE.PointLight(0xffc478, 0, 1.1, 2);
+scene.add(lampWarm, lampPier);
+
+/* 接触投影（浮空软影） */
+const blob = new THREE.Mesh(
+  new THREE.PlaneGeometry(3.6, 3.6),
+  new THREE.MeshBasicMaterial({ map: TEX.shadowBlob, transparent: true, opacity: 0.34, depthWrite: false, color: 0x000000 })
+);
+blob.rotation.x = -Math.PI / 2; blob.position.y = -1.02;
+blob.layers.set(0);
+scene.add(blob);
+/* ---------------------------------------------------------------- 材质增强注入 */
+function applyUnderwater(mat, { caustic = 1.0, wetRough = 0.30, wind = 0, windFreq = 1.15, fin = false, tag = 'a' } = {}) {
+  mat.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, {
+      uTime: U.time, uWaterY: { value: WATER_Y }, uAbsorb: U.absorb,
+      uScatterCol: U.scatterCol, uScatter: U.scatter, uCausticCol: U.causticCol,
+      uCausticAmt: { value: caustic }, uCausticScale: { value: 5.4 },
+      uWetRough: { value: wetRough }, uWind: U.wind, uWindI: U.windI,
+      uAmp: { value: wind }, uFreq: { value: windFreq }
+    });
+    sh.vertexShader = `varying vec3 vWPos;
+       uniform float uTime, uAmp, uFreq, uWindI; uniform vec2 uWind;
+       #if defined(USE_WIND) || defined(USE_FIN)
+         attribute float aFlex;
+       #endif
+       #ifdef USE_FIN
+         attribute float aPhase;
+       #endif\n` + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+       #ifdef USE_WIND
+       {
+         float ph = transformed.x * 1.9 + transformed.z * 2.6;
+         float s = sin( uTime * uFreq + ph ) * 0.62 + sin( uTime * uFreq * 2.4 + ph * 1.6 ) * 0.38;
+         float k = aFlex * aFlex;
+         transformed.xz += uWind * ( s * uAmp * k * uWindI );
+         transformed.y  -= abs( s ) * uAmp * k * 0.20;
+       }
+       #endif
+       #ifdef USE_FIN
+       {
+         float w = sin( uTime * 7.2 + aPhase + position.x * 26.0 );
+         transformed.z += w * 0.019 * aFlex;
+         transformed.x -= abs( w ) * 0.007 * aFlex;
+       }
+       #endif`);
+    sh.vertexShader = sh.vertexShader.replace('#include <project_vertex>',
+      `#include <project_vertex>
+       vec4 wpq = vec4( transformed, 1.0 );
+       #ifdef USE_INSTANCING
+         wpq = instanceMatrix * wpq;
+       #endif
+       vWPos = ( modelMatrix * wpq ).xyz;`);
+
+    sh.fragmentShader = (GLSL_NOISE + GLSL_CAUSTIC + `
+      varying vec3 vWPos;
+      uniform float uTime, uWaterY, uScatter, uCausticAmt, uCausticScale, uWetRough;
+      uniform vec3 uAbsorb, uCausticCol, uScatterCol;
+      float subMask(){ return 1.0 - smoothstep( uWaterY - 0.05, uWaterY + 0.012, vWPos.y ); }
+    `) + sh.fragmentShader.replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
+       roughnessFactor = mix( roughnessFactor, uWetRough, subMask() * 0.85 );`)
+      .replace('#include <dithering_fragment>', `#include <dithering_fragment>
+       {
+         float wd = uWaterY - vWPos.y;
+         if ( wd > 0.0 ) {
+           vec3 att = exp( -uAbsorb * wd );
+           vec3 base = gl_FragColor.rgb * att;
+           base += uScatterCol * ( 1.0 - att ) * uScatter;
+           float cc = caustic( vWPos.xz * uCausticScale + fbm2( vWPos.xz * 1.1 ) * 0.55, uTime * 0.5 );
+           cc *= ( 1.0 - smoothstep( 0.03, 0.85, wd ) ) * subMask();
+           base += cc * uCausticCol * att * uCausticAmt * 0.85;
+           float chk = base.x + base.y + base.z;
+           gl_FragColor.rgb = ( chk != chk ) ? vec3( 0.02 ) : base;
+         }
+       }`);
+  };
+  if (wind > 0 || fin) {
+    mat.defines = Object.assign({}, mat.defines, wind > 0 ? { USE_WIND: '' } : {}, fin ? { USE_FIN: '' } : {});
+  }
+  mat.customProgramCacheKey = () => 'uw-' + tag;
+  return mat;
+}
+

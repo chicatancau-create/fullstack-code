@@ -1,0 +1,21 @@
+-- Name: refunds refunds_order_id_fkey; Type: FK CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.refunds
+    ADD CONSTRAINT refunds_order_id_fkey FOREIGN KEY (order_id) REFERENCES p03.orders(id) ON DELETE CASCADE;
+
+
+--
+-- Name: refunds refunds_payment_id_fkey; Type: FK CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.refunds
+    ADD CONSTRAINT refunds_payment_id_fkey FOREIGN KEY (payment_id) REFERENCES p03.payments(id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict skukuZYQOA2zHCUDxSYokxzJvxWa069fLO0y6g9dcsujx5i4iKhCqPhrq6RdBgY
+

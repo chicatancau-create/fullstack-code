@@ -1,0 +1,50 @@
+  const pressed1 = await evl(`(() => { const c=${cellPath}; return c.getAttribute('aria-pressed')+'/'+c.classList.contains('checked'); })()`);
+  check('打卡后 aria-pressed 翻转为 true', pressed1 === 'true/true', String(pressed1));
+  const title1 = await evl(`${cellPath}.title`);
+  check('打卡后 title 文案随之更新', title1 !== cellRef.title && /已打卡/.test(title1), title1);
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: cellRef.x, y: cellRef.y, button: 'left', clickCount: 1 }, PG);
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: cellRef.x, y: cellRef.y, button: 'left', clickCount: 1 }, PG);
+  await sleep(500);
+  check('再点一次取消打卡', (await evl(`document.querySelectorAll('.cell.checked').length`)) === n0, `${checked1} -> ${await evl(`document.querySelectorAll('.cell.checked').length`)}`);
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: cellRef.x, y: cellRef.y, button: 'left', clickCount: 1 }, PG);
+  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: cellRef.x, y: cellRef.y, button: 'left', clickCount: 1 }, PG);
+  await sleep(500);
+  // 等式 + 回归锁：每行 3 段统计文字都非空且格式正确，并且各行进度条右边缘必须逐行相等
+  // （右边缘相等这一条锁住的是实测过的缺陷：.stats 用 max-content 时「80%」列 24.75px、
+  //  「100%」列 31.8px，中间 1fr 跟着变，四行量出 911/918 两档、错位 7px）
+  const statsShape = await evl(`(() => { const rows=[...document.querySelectorAll('.habit-row')];
+    const texts = rows.map(r => [...r.querySelectorAll('.stat-text')]);
+    const filled = texts.every(ts => ts.length === 3 && ts.every(t => t.innerText.trim().length > 0));
+    const fmt = texts.every(ts => /^\\d+%$/.test(ts[0].innerText.trim()) && /^连续 \\d+ 天$/.test(ts[1].innerText.trim()) && /^最长 \\d+ 天$/.test(ts[2].innerText.trim()));
+    const bars = rows.map(r => Math.round(r.querySelector('.progress').getBoundingClientRect().right));
+    const clipped = rows.map(r => { const s = r.querySelector('.stats'), a = r.querySelector('.row-actions');
+      return [...s.querySelectorAll('.stat-text')].some(t => t.getBoundingClientRect().right > a.getBoundingClientRect().left + 1); });
+    return JSON.stringify({ filled, fmt, uniqBars: [...new Set(bars)], clipped: clipped.filter(Boolean).length }); })()`);
+  const ss = JSON.parse(statsShape);
+  check('每行三段统计文字齐全且格式正确', ss.filled && ss.fmt, `filled=${ss.filled} fmt=${ss.fmt}`);
+  check('各行进度条右边缘逐行相等（锁住 7px 错位回归）', ss.uniqBars.length === 1, 'barRights=' + JSON.stringify(ss.uniqBars));
+  check('统计文字不被操作列压住', ss.clipped === 0, 'clippedRows=' + ss.clipped);
+  const stored = await evl(`(() => { const d = JSON.parse(localStorage.getItem('xiji-habit-tracker-v1')); return Object.values(d.checkins).reduce((a,b)=>a+b.length,0); })()`);
+  check('打卡写入 localStorage', stored > 0, 'records=' + stored);
+  await shot('03-board-checked');
+
+  console.log('\n--- 5. 持久化（含反向对照）---');
+  await reload();
+  const checkedAfterReload = await evl(`document.querySelectorAll('.cell.checked').length`);
+  check('刷新后打卡状态保留', checkedAfterReload === checked1, `${checked1} -> ${checkedAfterReload}`);
+  // 反向对照：抹掉存储，同一断言必须变红
+  await evl(`localStorage.removeItem('xiji-habit-tracker-v1')`);
+  await reload();
+  const checkedAfterWipe = await evl(`document.querySelectorAll('.cell.checked').length`);
+  const teeth = checkedAfterWipe !== checked1;
+  check('反向对照：抹掉 localStorage 后同一断言确实失败（证明断言有牙齿）', teeth, `wiped=${checkedAfterWipe} vs ${checked1}`);
+  await evl(`localStorage.setItem('habit-token','xiaok');localStorage.setItem('habit-user','xiaok')`);
+  await reload();
+
+  console.log('\n--- 6. 未来日期不可打卡 ---');
+  const futureBefore = await evl(`document.querySelectorAll('.cell.checked').length`);
+  const fbox = await evl(`(() => { const c = [...document.querySelectorAll('.cell.future')][0]; if(!c) return null; const r=c.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2,d:c.disabled}; })()`);
+  if (!fbox) {
+    // 今天是一周最后一天时本周没有未来格，这条断言无从执行 —— 明确标成未执行，不写成通过
+    skip('未来格子点击不改变打卡数', '本周无未来日期格子（今天是该周最后一天），此断言在当前日期无从执行');  } else {
+    if (!fbox.d) {

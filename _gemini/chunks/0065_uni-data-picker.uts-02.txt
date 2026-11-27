@@ -1,0 +1,149 @@
+    isCloudDataTree() : boolean {
+      return (this.isCloudData && this.parentField.length > 0 && this.selfField.length > 0)
+    },
+    dataValue() : any {
+      return this.hasModelValue ? this.modelValue : this.value
+    },
+    hasCloudTreeData() : boolean {
+      return this.treeData.length > 0
+    },
+    hasModelValue() : boolean {
+      if (typeof this.modelValue == 'string') {
+        const valueString = this.modelValue as string
+        return (valueString.length > 0)
+      } else if (Array.isArray(this.modelValue)) {
+        const valueArray = this.modelValue as Array<string>
+        return (valueArray.length > 0)
+      }
+      return false
+    },
+    hasCloudDataValue() : boolean {
+      if (typeof this.dataValue == 'string') {
+        const valueString = this.dataValue as string
+        return (valueString.length > 0)
+      }
+      return false
+    }
+  },
+  created() {
+    this.pagination.current = this.pageCurrent
+    this.pagination.size = this.pageSize
+
+    this.$watch(
+      () : any => [
+        this.pageCurrent,
+        this.pageSize,
+        this.localdata,
+        this.value,
+        this.collection,
+        this.field,
+        this.getcount,
+        this.orderby,
+        this.where,
+        this.groupby,
+        this.groupField,
+        this.distinct
+      ],
+      (newValue : Array<any>, oldValue : Array<any>) => {
+        this.pagination.size = this.pageSize
+        if (newValue[0] !== oldValue[0]) {
+          this.pagination.current = this.pageCurrent
+        }
+
+        this.onPropsChange()
+      }
+    )
+  },
+  methods: {
+    onPropsChange() {
+      this.selectedIndex = 0
+      this.treeData.length = 0
+      this.selectedNodes.length = 0
+      this.selectedPages.length = 0
+      this.selectedPaths.length = 0
+
+      // 加载数据
+      this.$nextTick(() => {
+        this.loadData()
+      })
+    },
+
+    onTabSelect(index : number) {
+      this.selectedIndex = index
+    },
+
+    onNodeClick(nodeData : UTSJSONObject) {
+      if (nodeData.getBoolean('disable', false)) {
+        return
+      }
+
+      const isLeaf = this._checkIsLeafNode(nodeData)
+
+      this._trimSelectedNodes(nodeData)
+
+      this.$emit('nodeclick', nodeData)
+
+      if (this.isLocalData) {
+        if (isLeaf || !this._checkHasChildren(nodeData)) {
+          this.onFinish()
+        }
+      } else if (this.isCloudDataList) {
+        this.onFinish()
+      } else if (this.isCloudDataTree) {
+        if (isLeaf) {
+          this.onFinish()
+        } else if (!this._checkHasChildren(nodeData)) {
+          // 尝试请求一次，如果没有返回数据标记为叶子节点
+          this.loadCloudDataNode(nodeData)
+        }
+      }
+    },
+
+    getChangeNodes(): Array<UTSJSONObject> {
+      const nodes: Array<UTSJSONObject> = []
+      this.selectedNodes.forEach((node : UTSJSONObject) => {
+        const newNode: UTSJSONObject = {}
+        newNode[this.mappingTextName] = node.getString(this.mappingTextName)
+        newNode[this.mappingValueName] = node.getString(this.mappingValueName)
+        nodes.push(newNode)
+      })
+      return nodes
+    },
+
+    onFinish() { },
+
+    // 加载数据(自动判定环境)
+    loadData() {
+      if (this.isLocalData) {
+        this.loadLocalData()
+      } else if (this.isCloudDataList) {
+        this.loadCloudDataList()
+      } else if (this.isCloudDataTree) {
+        this.loadCloudDataTree()
+      }
+    },
+
+    // 加载本地数据
+    loadLocalData() {
+      this.treeData = this.localdata
+      if (Array.isArray(this.dataValue)) {
+        const value = this.dataValue as Array<UTSJSONObject>
+        this.selectedPaths = value.slice(0)
+        this._pushSelectedTreeNodes(value, this.localdata)
+      } else {
+        this._pushSelectedNodes(this.localdata)
+      }
+    },
+
+    // 加载 Cloud 数据 (单列)
+    loadCloudDataList() {
+      this._loadCloudData(null, (data : Array<UTSJSONObject>) => {
+        this.treeData = data
+        this._pushSelectedNodes(data)
+      })
+    },
+
+    // 加载 Cloud 数据 (树形)
+    loadCloudDataTree() {
+      let commandOptions = {
+        field: this._cloudDataPostField(),

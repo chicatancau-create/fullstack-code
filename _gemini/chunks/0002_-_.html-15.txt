@@ -1,0 +1,93 @@
+  for (const sp of glowSprites) sp.material.opacity = 0.7 * state.glow;
+  renderer.setPixelRatio(Math.min(devicePixelRatio, state.quality));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.shadowMap.enabled = state.shadow;
+  staticMesh.castShadow = state.shadow; staticMesh.receiveShadow = state.shadow;
+  sun.castShadow = state.shadow;
+  autoRotate = state.auto;
+}
+function bindRange(id, key, fmt) {
+  const el = $('c-' + id), out = $('o-' + id);
+  el.addEventListener('input', () => {
+    state[key] = parseFloat(el.value);
+    out.textContent = fmt(state[key]);
+    applyState();
+  });
+}
+bindRange('dragon', 'dragon', v => v.toFixed(2));
+bindRange('petals', 'petals', v => v.toFixed(0));
+bindRange('sunaz', 'sunaz', v => v.toFixed(0) + '°');
+bindRange('sunint', 'sunint', v => v.toFixed(1));
+bindRange('glow', 'glow', v => v.toFixed(2));
+bindRange('fog', 'fog', v => v.toFixed(4));
+bindRange('vig', 'vig', v => v.toFixed(2));
+$('c-quality').addEventListener('change', e => { state.quality = parseFloat(e.target.value); applyState(); });
+$('c-auto').addEventListener('change', e => { state.auto = e.target.checked; applyState(); });
+$('c-shadow').addEventListener('change', e => { state.shadow = e.target.checked; applyState(); });
+function syncUI() {
+  $('c-dragon').value = state.dragon; $('o-dragon').textContent = state.dragon.toFixed(2);
+  $('c-petals').value = state.petals; $('o-petals').textContent = state.petals.toFixed(0);
+  $('c-sunaz').value = state.sunaz; $('o-sunaz').textContent = state.sunaz.toFixed(0) + '°';
+  $('c-sunint').value = state.sunint; $('o-sunint').textContent = state.sunint.toFixed(1);
+  $('c-glow').value = state.glow; $('o-glow').textContent = state.glow.toFixed(2);
+  $('c-fog').value = state.fog; $('o-fog').textContent = state.fog.toFixed(4);
+  $('c-vig').value = state.vig; $('o-vig').textContent = state.vig.toFixed(2);
+  $('c-quality').value = String(state.quality);
+  $('c-auto').checked = state.auto; $('c-shadow').checked = state.shadow;
+}
+$('b-reset').addEventListener('click', () => {
+  Object.assign(state, DEF); Object.assign(goal, INIT);
+  syncUI(); applyState();
+});
+$('b-random').addEventListener('click', () => {
+  dragonT += rr(20, 200);
+  windX = rr(-0.6, 0.6); windZ = rr(-0.4, 0.4);
+  for (const p of petals) p.live = false;
+  for (const b of butterflies) b.ph = rr(0, 9);
+  for (const s of shards) s.a = rr(0, 9);
+  state.sunaz = Math.floor(rr(0, 360));
+  syncUI(); applyState();
+});
+$('b-shot').addEventListener('click', () => {
+  renderer.render(scene, camera);
+  const a = document.createElement('a');
+  a.download = '浮空御园-盘龙.png';
+  a.href = renderer.domElement.toDataURL('image/png');
+  a.click();
+});
+function applyViewOffset() {
+  const narrow = innerWidth < 760;
+  camera.fov = narrow ? 55 : 45;
+  if (narrow) camera.setViewOffset(innerWidth, innerHeight, 98, 0, innerWidth, innerHeight);
+  else camera.clearViewOffset();
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  applyViewOffset();
+  renderer.setSize(innerWidth, innerHeight);
+});
+applyViewOffset();
+
+/* ============ 主循环 ============ */
+$('st-vox').textContent = (SV.length + EV.length + DRAGON_N * 5 + PETAL_CAP + 80 + 18 + 14 + 16).toLocaleString();
+applyState(); syncUI();
+const clock = new THREE.Clock();
+let frames = 0, fpsT = 0, started = false, __frameCount = 0;
+window.__garden = {
+  get cameraPos() { return camera.position.toArray(); },
+  get dist() { return cur.dist; },
+  get state() { return { ...state }; },
+  get dragonT() { return dragonT; },
+  get petalCount() { return petalMesh.count; },
+  get voxCount() { return SV.length + EV.length; },
+  get sunPos() { return sun.position.toArray(); },
+  get frameCount() { return __frameCount; },
+  get drawCalls() { return renderer.info.render.calls; }
+};
+function loop() {
+  requestAnimationFrame(loop);
+  __frameCount++;
+  const dt = Math.min(0.05, clock.getDelta());
+  const t = clock.elapsedTime;
+  dragonT += dt * state.dragon;

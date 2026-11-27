@@ -1,0 +1,71 @@
+    if (!role) return reply.code(404).send({ error: 'not_found' });
+    const result = await pool.query(
+      `SELECT c.id, c.name, c.note, c.created_at,
+              (SELECT count(*)::int FROM p04.followups f WHERE f.client_id = c.id) AS followups
+       FROM p04.clients c WHERE c.tenant_id = $1 AND c.deleted_at IS NULL ORDER BY c.id`,
+      [tenantId],
+    );
+    return { clients: result.rows };
+  });
+
+  app.delete('/tenants/:id/clients/:clientId', auth, async (request, reply) => {
+    const tenantId = Number(request.params.id);
+    const clientId = Number(request.params.clientId);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const role = await roleIn(client, tenantId, request.user.id);
+      if (role !== 'owner' && role !== 'admin') {
+        await client.query('ROLLBACK');
+        return reply.code(role ? 403 : 404).send({ error: role ? 'forbidden' : 'not_found' });
+      }
+      const current = await client.query('SELECT id, name, note FROM p04.clients WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL FOR UPDATE', [clientId, tenantId]);
+      if (current.rowCount === 0) { await client.query('ROLLBACK'); return reply.code(404).send({ error: 'not_found' }); }
+      await client.query('UPDATE p04.clients SET deleted_at = now() WHERE id = $1', [clientId]);
+      await audit(client, tenantId, request.user.id, 'client.delete', `client:${clientId}`, {}, request.id, current.rows[0], { deleted: true });
+      await client.query('COMMIT');
+      return reply.code(204).send();
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  });
+
+  app.post('/tenants/:id/clients/:clientId/followups', auth, async (request, reply) => {
+    const tenantId = Number(request.params.id);
+    const clientId = Number(request.params.clientId);
+    const { summary, next_at: nextAt = null } = request.body || {};
+    if (typeof summary !== 'string' || summary.trim().length < 1 || summary.length > 2000) return reply.code(400).send({ error: 'invalid_summary' });
+    if (nextAt !== null && Number.isNaN(Date.parse(nextAt))) return reply.code(400).send({ error: 'invalid_next_at' });
+    const role = await roleIn(pool, tenantId, request.user.id);
+    if (!role) return reply.code(404).send({ error: 'not_found' });
+    if (role === 'viewer') return reply.code(403).send({ error: 'forbidden' });
+    const existing = await pool.query('SELECT id FROM p04.clients WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL', [clientId, tenantId]);
+    if (existing.rowCount === 0) return reply.code(404).send({ error: 'not_found' });
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const result = await client.query(
+        `INSERT INTO p04.followups (tenant_id, client_id, author_id, summary, next_at)
+         VALUES ($1, $2, $3, $4, $5) RETURNING id, client_id, summary, next_at, created_at`,
+        [tenantId, clientId, request.user.id, summary.trim(), nextAt],
+      );
+      if (nextAt) {
+        const followupId = result.rows[0].id;
+        await client.query(
+          `INSERT INTO p04.reminders (tenant_id, followup_id, due_at) VALUES ($1,$2,$3)
+           ON CONFLICT DO NOTHING`, [tenantId, followupId, nextAt],
+        );
+        await client.query(
+          `INSERT INTO p04.jobs (tenant_id, kind, dedupe_key, payload, run_at, priority)
+           VALUES ($1,'reminder',$2,$3::jsonb,$4,5) ON CONFLICT (tenant_id, dedupe_key) DO NOTHING`,
+          [tenantId, `followup:${followupId}:reminder`, JSON.stringify({ followup_id: followupId, client_id: clientId }), nextAt],
+        );
+      }
+      await audit(client, tenantId, request.user.id, 'followup.create', `followup:${result.rows[0].id}`, { client_id: clientId }, request.id, null, result.rows[0]);
+      await client.query('COMMIT');
+      return reply.code(201).send(result.rows[0]);
+    } catch (error) {
+      await client.query('ROLLBACK');

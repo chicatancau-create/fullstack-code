@@ -1,0 +1,126 @@
+import { useCallback, useEffect, useState } from 'react';
+import { api, ApiError, getToken, setToken, type AuditEvent, type Client, type Job, type Notification, type Tenant } from './api';
+
+type Tab = 'clients' | 'jobs' | 'audit';
+
+function errorText(error: unknown) {
+  if (error instanceof ApiError) {
+    if (error.status === 401) return '会话已过期，请重新登录';
+    if (error.status === 403) return '当前角色无权执行该操作';
+    return `请求失败：${error.code}`;
+  }
+  return '网络错误，请重试';
+}
+
+export default function App() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loggedIn, setLoggedIn] = useState(Boolean(getToken()));
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [tab, setTab] = useState<Tab>('clients');
+  const [clients, setClients] = useState<Client[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [audit, setAudit] = useState<AuditEvent[]>([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [clientName, setClientName] = useState('');
+  const [followupFor, setFollowupFor] = useState<number | null>(null);
+  const [summary, setSummary] = useState('');
+  const [nextAt, setNextAt] = useState('');
+  const [newTenant, setNewTenant] = useState('');
+
+  const handleError = useCallback((caught: unknown) => {
+    setError(errorText(caught));
+    if (caught instanceof ApiError && caught.status === 401) {
+      setToken('');
+      setLoggedIn(false);
+    }
+  }, []);
+
+  const loadTenants = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const data = await api.tenants();
+      setTenants(data.tenants);
+      setTenant((current) => current ?? data.tenants[0] ?? null);
+    } catch (caught) {
+      handleError(caught);
+    } finally {
+      setLoading(false);
+    }
+  }, [handleError]);
+
+  const loadDetail = useCallback(async (target: Tenant) => {
+    try {
+      setLoading(true);
+      setError('');
+      const [c, j, n] = await Promise.all([api.clients(target.id), api.jobs(target.id).catch(() => ({ jobs: [] })), api.notifications(target.id)]);
+      setClients(c.clients);
+      setJobs(j.jobs);
+      setNotifications(n.notifications);
+      if (target.role === 'owner' || target.role === 'admin') {
+        setAudit((await api.audit(target.id)).events);
+      } else {
+        setAudit([]);
+      }
+    } catch (caught) {
+      handleError(caught);
+    } finally {
+      setLoading(false);
+    }
+  }, [handleError]);
+
+  useEffect(() => {
+    if (loggedIn) void loadTenants();
+  }, [loggedIn, loadTenants]);
+
+  useEffect(() => {
+    if (tenant) void loadDetail(tenant);
+  }, [tenant, loadDetail]);
+
+  const canWrite = tenant ? tenant.role !== 'viewer' : false;
+  const canAdmin = tenant ? tenant.role === 'owner' || tenant.role === 'admin' : false;
+
+  async function submitLogin(event: React.FormEvent) {
+    event.preventDefault();
+    try {
+      setSubmitting(true);
+      setError('');
+      const data = await api.login(email.trim(), password);
+      setToken(data.token);
+      setLoggedIn(true);
+      setPassword('');
+    } catch (caught) {
+      handleError(caught);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function submitRegister(event: React.FormEvent) {
+    event.preventDefault();
+    if (!email.trim() || password.length < 8) {
+      setError('邮箱必填，密码至少 8 位');
+      return;
+    }
+    try {
+      setSubmitting(true);
+      setError('');
+      await api.register(email.trim(), email.split('@')[0], password);
+      const data = await api.login(email.trim(), password);
+      setToken(data.token);
+      setLoggedIn(true);
+      setPassword('');
+    } catch (caught) {
+      handleError(caught);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function logout() {
+    setToken('');

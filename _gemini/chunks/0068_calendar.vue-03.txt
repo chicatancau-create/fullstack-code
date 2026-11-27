@@ -1,0 +1,169 @@
+				}
+				this.cale.setStartDate(val)
+				this.cale.setDate(this.nowDate.fullDate)
+				this.weeks = this.cale.weeks
+			},
+			endDate(val) {
+				// 字节小程序 watch 早于 created
+				if (!this.cale) {
+					return
+				}
+				this.cale.setEndDate(val)
+				this.cale.setDate(this.nowDate.fullDate)
+				this.weeks = this.cale.weeks
+			},
+			selected(newVal) {
+				// 字节小程序 watch 早于 created
+				if (!this.cale) {
+					return
+				}
+				this.cale.setSelectInfo(this.nowDate.fullDate, newVal)
+				this.weeks = this.cale.weeks
+			},
+			pleStatus: {
+				immediate: true,
+				handler(newVal) {
+					const {
+						before,
+						after,
+						fulldate,
+						which
+					} = newVal
+					this.tempRange.before = before
+					this.tempRange.after = after
+					setTimeout(() => {
+						if (fulldate) {
+							this.cale.setHoverMultiple(fulldate)
+							if (before && after) {
+								this.cale.lastHover = true
+								if (this.rangeWithinMonth(after, before)) return
+								this.setDate(before)
+							} else {
+								this.cale.setMultiple(fulldate)
+								this.setDate(this.nowDate.fullDate)
+								this.calendar.fullDate = ''
+								this.cale.lastHover = false
+							}
+						} else {
+							// 字节小程序 watch 早于 created
+							if (!this.cale) {
+								return
+							}
+
+							this.cale.setDefaultMultiple(before, after)
+							if (which === 'left' && before) {
+								this.setDate(before)
+								this.weeks = this.cale.weeks
+							} else if (after) {
+								this.setDate(after)
+								this.weeks = this.cale.weeks
+							}
+							this.cale.lastHover = true
+						}
+					}, 16)
+				}
+			}
+		},
+		computed: {
+			timepickerStartTime() {
+				const activeDate = this.range ? this.tempRange.before : this.calendar.fullDate
+				return activeDate === this.startDate ? this.selectableTimes.start : ''
+			},
+			timepickerEndTime() {
+				const activeDate = this.range ? this.tempRange.after : this.calendar.fullDate
+				return activeDate === this.endDate ? this.selectableTimes.end : ''
+			},
+			/**
+			 * for i18n
+			 */
+			selectDateText() {
+				return t("uni-datetime-picker.selectDate")
+			},
+			startDateText() {
+				return this.startPlaceholder || t("uni-datetime-picker.startDate")
+			},
+			endDateText() {
+				return this.endPlaceholder || t("uni-datetime-picker.endDate")
+			},
+			okText() {
+				return t("uni-datetime-picker.ok")
+			},
+			yearText() {
+				return t("uni-datetime-picker.year")
+			},
+			monthText() {
+				return t("uni-datetime-picker.month")
+			},
+			MONText() {
+				return t("uni-calender.MON")
+			},
+			TUEText() {
+				return t("uni-calender.TUE")
+			},
+			WEDText() {
+				return t("uni-calender.WED")
+			},
+			THUText() {
+				return t("uni-calender.THU")
+			},
+			FRIText() {
+				return t("uni-calender.FRI")
+			},
+			SATText() {
+				return t("uni-calender.SAT")
+			},
+			SUNText() {
+				return t("uni-calender.SUN")
+			},
+			confirmText() {
+				return t("uni-calender.confirm")
+			},
+		},
+		created() {
+			// 获取日历方法实例
+			this.cale = new Calendar({
+				selected: this.selected,
+				startDate: this.startDate,
+				endDate: this.endDate,
+				range: this.range,
+			})
+			// 选中某一天
+			this.init(this.date)
+		},
+		methods: {
+			leaveCale() {
+				this.firstEnter = true
+			},
+			handleMouse(weeks) {
+				if (weeks.disable) return
+				if (this.cale.lastHover) return
+				let {
+					before,
+					after
+				} = this.cale.multipleStatus
+				if (!before) return
+				this.calendar = weeks
+				// 设置范围选
+				this.cale.setHoverMultiple(this.calendar.fullDate)
+				this.weeks = this.cale.weeks
+				// hover时，进入一个日历，更新另一个
+				if (this.firstEnter) {
+					this.$emit('firstEnterCale', this.cale.multipleStatus)
+					this.firstEnter = false
+				}
+			},
+			rangeWithinMonth(A, B) {
+				const [yearA, monthA] = A.split('-')
+				const [yearB, monthB] = B.split('-')
+				return yearA === yearB && monthA === monthB
+			},
+			// 蒙版点击事件
+			maskClick() {
+				this.close()
+				this.$emit('maskClose')
+			},
+
+			clearCalender() {
+				if (this.range) {
+					this.timeRange.startTime = ''
+					this.timeRange.endTime = ''

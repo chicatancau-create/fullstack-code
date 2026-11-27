@@ -1,0 +1,74 @@
+test('最后 owner 同时保护自删与降级；双 owner 时允许降级', async () => {
+  const alice = await user('alice@example.com');
+  const bob = await user('bob@example.com');
+  const ws = await workspace(alice.token, 'alpha');
+  const demoteSelf = await setRole(alice.token, ws.id, alice.id, 'member');
+  assert.equal(demoteSelf.statusCode, 409);
+  await addMember(alice.token, ws.id, 'bob@example.com');
+  assert.equal((await setRole(alice.token, ws.id, bob.id, 'owner')).statusCode, 200);
+  assert.equal((await setRole(alice.token, ws.id, alice.id, 'member')).statusCode, 200);
+  const demoteLast = await setRole(bob.token, ws.id, bob.id, 'member');
+  assert.equal(demoteLast.statusCode, 409);
+  const owners = await pool.query("SELECT count(*)::int AS n FROM p02.members WHERE workspace_id = $1 AND role = 'owner'", [ws.id]);
+  assert.equal(owners.rows[0].n, 1);
+});
+
+test('并发互删双 owner 最终仍保留 1 个 owner', async () => {
+  const alice = await user('alice@example.com');
+  const bob = await user('bob@example.com');
+  const ws = await workspace(alice.token, 'alpha');
+  await addMember(alice.token, ws.id, 'bob@example.com');
+  assert.equal((await setRole(alice.token, ws.id, bob.id, 'owner')).statusCode, 200);
+  const [r1, r2] = await Promise.all([
+    app.inject({ method: 'DELETE', url: `/workspaces/${ws.id}/members/${bob.id}`, headers: auth(alice.token) }),
+    app.inject({ method: 'DELETE', url: `/workspaces/${ws.id}/members/${alice.id}`, headers: auth(bob.token) }),
+  ]);
+  const statuses = [r1.statusCode, r2.statusCode];
+  assert.ok(statuses.includes(204));
+  assert.ok(statuses.includes(409) || statuses.includes(404));
+  const owners = await pool.query("SELECT count(*)::int AS n FROM p02.members WHERE workspace_id = $1 AND role = 'owner'", [ws.id]);
+  assert.equal(owners.rows[0].n, 1);
+});
+
+test('基线：成员仍可读取本工作区任务', async () => {
+  const alice = await user('alice@example.com');
+  const ws = await workspace(alice.token, 'alpha');
+  await app.inject({ method: 'POST', url: `/workspaces/${ws.id}/tasks`, headers: auth(alice.token), payload: { title: '本区任务' } });
+  const own = await app.inject({ method: 'GET', url: `/workspaces/${ws.id}/tasks`, headers: auth(alice.token) });
+  assert.equal(own.statusCode, 200);
+  assert.equal(own.json().tasks.length, 1);
+});
+
+async function createTask(token, workspaceId, title) {
+  const response = await app.inject({ method: 'POST', url: `/workspaces/${workspaceId}/tasks`, headers: auth(token), payload: { title } });
+  assert.equal(response.statusCode, 201, response.body);
+  return response.json();
+}
+
+test('D88：批量改状态返回逐项结果并写审计', async () => {
+  const alice = await user('alice@example.com');
+  const ws = await workspace(alice.token, 'alpha');
+  const first = await createTask(alice.token, ws.id, '任务一');
+  const second = await createTask(alice.token, ws.id, '任务二');
+  const third = await createTask(alice.token, ws.id, '任务三');
+  const response = await app.inject({
+    method: 'PATCH',
+    url: `/workspaces/${ws.id}/tasks/batch`,
+    headers: auth(alice.token),
+    payload: { updates: [{ id: first.id, status: 'done' }, { id: second.id, status: 'doing' }, { id: third.id, status: 'todo' }] },
+  });
+  assert.equal(response.statusCode, 200, response.body);
+  const results = response.json().results;
+  assert.equal(results.length, 3);
+  assert.deepEqual(results.map((item) => item.changed), [true, true, false]);
+  const rows = await pool.query('SELECT id, status FROM p02.tasks WHERE workspace_id = $1 ORDER BY id', [ws.id]);
+  assert.deepEqual(rows.rows.map((row) => row.status), ['done', 'doing', 'todo']);
+  const events = await pool.query('SELECT from_status, to_status, actor_id FROM p02.task_events WHERE task_id = $1', [first.id]);
+  assert.equal(events.rowCount, 1);
+  assert.equal(events.rows[0].from_status, 'todo');
+  assert.equal(events.rows[0].to_status, 'done');
+  assert.equal(events.rows[0].actor_id, alice.id);
+});
+
+test('D88：批量中的非法项逐项失败，合法项仍然生效', async () => {
+  const alice = await user('alice@example.com');

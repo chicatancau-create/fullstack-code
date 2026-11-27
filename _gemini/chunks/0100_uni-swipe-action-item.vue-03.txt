@@ -1,0 +1,132 @@
+					})
+				}
+			},
+			/**
+			 * 获取父元素实例
+			 */
+			getSwipeAction(name = 'uniSwipeAction') {
+				let parent = this.$parent;
+				let parentName = parent.$options.name;
+				while (parentName !== name) {
+					parent = parent.$parent;
+					if (!parent) return false;
+					parentName = parent.$options.name;
+				}
+				return parent;
+			}
+		}
+	}
+</script>
+<style lang="scss">
+	.uni-swipe {
+		position: relative;
+		/* #ifndef APP-NVUE */
+		overflow: hidden;
+		/* #endif */
+	}
+
+	.uni-swipe_box {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		flex-shrink: 0;
+		// touch-action: none;
+		/* #endif */
+		position: relative;
+	}
+
+	.uni-swipe_content {
+		// border: 1px red solid;
+	}
+
+	.uni-swipe_text--center {
+		width: 100%;
+		/* #ifndef APP-NVUE */
+		cursor: grab;
+		/* #endif */
+	}
+
+	.uni-swipe_button-group {
+		/* #ifndef APP-NVUE */
+		box-sizing: border-box;
+		display: flex;
+		/* #endif */
+		flex-direction: row;
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		/* #ifdef H5 */
+		cursor: pointer;
+		/* #endif */
+	}
+
+	.button-group--left {
+		left: 0;
+		transform: translateX(-100%)
+	}
+
+	.button-group--right {
+		right: 0;
+		transform: translateX(100%)
+	}
+
+	.uni-swipe_button {
+		/* #ifdef APP-NVUE */
+		flex: 1;
+		/* #endif */
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+		padding: 0 20px;
+	}
+
+	.uni-swipe_button-text {
+		/* #ifndef APP-NVUE */
+		flex-shrink: 0;
+		/* #endif */
+		font-size: 14px;
+	}
+
+	.ani {
+		transition-property: transform;
+		transition-duration: 0.3s;
+		transition-timing-function: cubic-bezier(0.165, 0.84, 0.44, 1);
+	}
+
+	/* #ifdef MP-ALIPAY */
+	.movable-area {
+		/* width: 100%; */
+		height: 45px;
+	}
+
+	.movable-view {
+		display: flex;
+		/* justify-content: center; */
+		position: relative;
+		flex: 1;
+		height: 45px;
+		z-index: 2;
+	}
+
+	.movable-view-button {
+		display: flex;
+		flex-shrink: 0;
+		flex-direction: row;
+		height: 100%;
+		background: #C0C0C0;
+	}
+
+	/* .transition {
+		transition: all 0.3s;
+	} */
+
+	.movable-view-box {
+		flex-shrink: 0;
+		height: 100%;
+		background-color: #fff;
+	}
+
+	/* #endif */
+</style>

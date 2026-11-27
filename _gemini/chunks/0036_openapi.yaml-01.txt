@@ -1,0 +1,131 @@
+openapi: 3.0.3
+info:
+  title: 项目 04 多租户客户跟进 SaaS API
+  version: 1.0.0
+  description: 本地合成数据；无邮件、支付、文件与第三方集成。
+servers:
+  - url: http://127.0.0.1:8797
+components:
+  securitySchemes:
+    Bearer:
+      type: http
+      scheme: bearer
+  schemas:
+    Tenant:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        plan: { type: string, enum: [free, team] }
+        seat_limit: { type: integer }
+    Client:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        note: { type: string }
+        created_at: { type: string, format: date-time }
+    Followup:
+      type: object
+      properties:
+        id: { type: integer }
+        client_id: { type: integer }
+        summary: { type: string }
+        next_at: { type: string, format: date-time, nullable: true }
+paths:
+  /health:
+    get:
+      summary: 健康检查
+      responses: { '200': { description: ok } }
+  /auth/register:
+    post:
+      summary: 注册
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, name]
+              properties:
+                email: { type: string }
+                password: { type: string, minLength: 10 }
+                name: { type: string, minLength: 2, maxLength: 40 }
+      responses:
+        '201': { description: 已创建 }
+        '400': { description: 参数非法 }
+        '409': { description: 邮箱已存在 }
+  /auth/login:
+    post:
+      summary: 登录，返回 12 小时会话令牌
+      responses:
+        '200': { description: '{ token, user, expires_at }' }
+        '401': { description: 凭据错误 }
+  /auth/logout:
+    post:
+      summary: 登出并删除当前会话
+      security: [{ Bearer: [] }]
+      responses: { '204': { description: 已删除 }, '401': { description: 未登录 } }
+  /tenants:
+    post:
+      summary: 创建组织，创建者成为 owner
+      security: [{ Bearer: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                plan: { type: string, enum: [free, team], default: free }
+      responses:
+        '201': { description: 组织, content: { application/json: { schema: { $ref: '#/components/schemas/Tenant' } } } }
+    get:
+      summary: 我所属的组织
+      security: [{ Bearer: [] }]
+      responses: { '200': { description: 列表 } }
+  /tenants/{id}/plan:
+    patch:
+      summary: 变更套餐（owner）；席位不足返回 409
+      security: [{ Bearer: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [plan]
+              properties:
+                plan: { type: string, enum: [free, team] }
+      responses:
+        '200': { description: 新 plan 与 seat_limit }
+        '403': { description: 非 owner }
+        '409': { description: seats_exceed_plan，含 members/pending/limit }
+  /tenants/{id}/members:
+    get:
+      summary: 成员列表（成员可见）
+      security: [{ Bearer: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: 成员 }
+        '404': { description: 非成员 }
+  /tenants/{id}/members/{userId}:
+    delete:
+      summary: 移除成员（owner/admin；不能移除 owner 或自己）
+      security: [{ Bearer: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+        - { in: path, name: userId, required: true, schema: { type: integer } }
+      responses:
+        '204': { description: 已移除 }
+        '403': { description: 权限不足 }
+        '409': { description: cannot_remove_owner / cannot_remove_self }
+  /tenants/{id}/invitations:
+    post:
+      summary: 邀请成员（owner/admin），pending 占用席位
+      security: [{ Bearer: [] }]
+      parameters:

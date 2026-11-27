@@ -1,0 +1,183 @@
+				return text;
+			},
+			getOffsetByPlacement() {
+				switch (this.placement) {
+					case 'top':
+						return "bottom:calc(100% + 12px);";
+					case 'bottom':
+						return "top:calc(100% + 12px);";
+				}
+			}
+		},
+
+		watch: {
+			localdata: {
+				immediate: true,
+				handler(val, old) {
+					if (Array.isArray(val) && old !== val) {
+						this.mixinDatacomResData = val
+					}
+				}
+			},
+			valueCom(val, old) {
+				this.initDefVal()
+			},
+			mixinDatacomResData: {
+				immediate: true,
+				handler(val) {
+					if (val.length) {
+						this.initDefVal()
+					}
+				}
+			},
+
+		},
+		methods: {
+			debounce(fn, time = 100) {
+				let timer = null
+				return function(...args) {
+					if (timer) clearTimeout(timer)
+					timer = setTimeout(() => {
+						fn.apply(this, args)
+					}, time)
+				}
+			},
+			// 执行数据库查询
+			query() {
+				this.mixinDatacomEasyGet();
+			},
+			// 监听查询条件变更事件
+			onMixinDatacomPropsChange() {
+				if (this.collection) {
+					this.debounceGet();
+				}
+			},
+			initDefVal() {
+				let defValue = ''
+				if ((this.valueCom || this.valueCom === 0) && !this.isDisabled(this.valueCom)) {
+					defValue = this.valueCom
+				} else {
+					let strogeValue
+					if (this.collection) {
+						strogeValue = this.getCache()
+					}
+					if (strogeValue || strogeValue === 0) {
+						defValue = strogeValue
+					} else {
+						let defItem = ''
+						if (this.defItem > 0 && this.defItem <= this.mixinDatacomResData.length) {
+							defItem = this.mixinDatacomResData[this.defItem - 1].value
+						}
+						defValue = defItem
+					}
+					if (defValue || defValue === 0) {
+						this.emit(defValue)
+					}
+				}
+				const def = this.mixinDatacomResData.find(item => item.value === defValue)
+				this.current = def ? this.formatItemName(def) : ''
+			},
+
+			/**
+			 * @param {[String, Number]} value
+			 * 判断用户给的 value 是否同时为禁用状态
+			 */
+			isDisabled(value) {
+				let isDisabled = false;
+
+				this.mixinDatacomResData.forEach(item => {
+					if (item.value === value) {
+						isDisabled = item.disable
+					}
+				})
+
+				return isDisabled;
+			},
+
+			clearVal() {
+				this.emit('')
+				if (this.collection) {
+					this.removeCache()
+				}
+			},
+			change(item) {
+				if (!item.disable) {
+					this.showSelector = false
+					this.current = this.formatItemName(item)
+					this.emit(item.value)
+				}
+			},
+			emit(val) {
+				this.$emit('input', val)
+				this.$emit('update:modelValue', val)
+				this.$emit('change', val)
+				if (this.collection) {
+					this.setCache(val);
+				}
+			},
+			toggleSelector() {
+				if (this.disabled) {
+					return
+				}
+
+				this.showSelector = !this.showSelector
+			},
+			formatItemName(item) {
+				let {
+					text,
+					value,
+					channel_code
+				} = item
+				channel_code = channel_code ? `(${channel_code})` : ''
+
+				if (this.format) {
+					// 格式化输出
+					let str = "";
+					str = this.format;
+					for (let key in item) {
+						str = str.replace(new RegExp(`{${key}}`, "g"), item[key]);
+					}
+					return str;
+				} else {
+					return this.collection.indexOf('app-list') > 0 ?
+						`${text}(${value})` :
+						(
+							text ?
+							text :
+							`未命名${channel_code}`
+						)
+				}
+			},
+			// 获取当前加载的数据
+			getLoadData() {
+				return this.mixinDatacomResData;
+			},
+			// 获取当前缓存key
+			getCurrentCacheKey() {
+				return this.collection;
+			},
+			// 获取缓存
+			getCache(name = this.getCurrentCacheKey()) {
+				let cacheData = uni.getStorageSync(this.cacheKey) || {};
+				return cacheData[name];
+			},
+			// 设置缓存
+			setCache(value, name = this.getCurrentCacheKey()) {
+				let cacheData = uni.getStorageSync(this.cacheKey) || {};
+				cacheData[name] = value;
+				uni.setStorageSync(this.cacheKey, cacheData);
+			},
+			// 删除缓存
+			removeCache(name = this.getCurrentCacheKey()) {
+				let cacheData = uni.getStorageSync(this.cacheKey) || {};
+				delete cacheData[name];
+				uni.setStorageSync(this.cacheKey, cacheData);
+			},
+		}
+	}
+</script>
+
+<style lang="scss">
+	$uni-base-color: #6a6a6a !default;
+	$uni-main-color: #333 !default;
+	$uni-secondary-color: #909399 !default;

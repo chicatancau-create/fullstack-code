@@ -1,0 +1,187 @@
+COPY p04.followups (id, tenant_id, client_id, author_id, summary, next_at, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: invitations; Type: TABLE DATA; Schema: p04; Owner: -
+--
+
+COPY p04.invitations (id, tenant_id, email, role, token_hash, status, expires_at, created_by, created_at, accepted_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: job_dead_letter; Type: TABLE DATA; Schema: p04; Owner: -
+--
+
+COPY p04.job_dead_letter (job_id, tenant_id, payload, last_error, attempts, moved_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: job_notifications; Type: TABLE DATA; Schema: p04; Owner: -
+--
+
+COPY p04.job_notifications (id, job_id, tenant_id, message, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: job_results; Type: TABLE DATA; Schema: p04; Owner: -
+--
+
+COPY p04.job_results (job_id, result, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: jobs; Type: TABLE DATA; Schema: p04; Owner: -
+--
+
+COPY p04.jobs (id, tenant_id, kind, dedupe_key, payload, run_at, status, attempts, locked_at, last_error, created_at, updated_at, priority, tenant_seq) FROM stdin;
+\.
+
+
+--
+-- Data for Name: memberships; Type: TABLE DATA; Schema: p04; Owner: -
+--
+
+COPY p04.memberships (tenant_id, user_id, role, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: reminders; Type: TABLE DATA; Schema: p04; Owner: -
+--
+
+COPY p04.reminders (id, tenant_id, followup_id, due_at, status, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: schema_migrations; Type: TABLE DATA; Schema: p04; Owner: -
+--
+
+COPY p04.schema_migrations (filename, applied_at) FROM stdin;
+001_init.sql	2026-11-07 22:06:42.187378+08
+002_jobs.sql	2026-11-07 23:28:35.363998+08
+003_full.sql	2026-11-09 08:51:24.429615+08
+004_rbac_viewer.sql	2026-11-09 09:00:27.541922+08
+\.
+
+
+--
+-- Data for Name: sessions; Type: TABLE DATA; Schema: p04; Owner: -
+--
+
+COPY p04.sessions (token_hash, user_id, expires_at, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: tenants; Type: TABLE DATA; Schema: p04; Owner: -
+--
+
+COPY p04.tenants (id, name, plan, seat_limit, created_at, capacity_tier) FROM stdin;
+\.
+
+
+--
+-- Data for Name: users; Type: TABLE DATA; Schema: p04; Owner: -
+--
+
+COPY p04.users (id, email, name, password_hash, created_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: worker_inbox; Type: TABLE DATA; Schema: p04; Owner: -
+--
+
+COPY p04.worker_inbox (consumer, job_id, processed_at) FROM stdin;
+\.
+
+
+--
+-- Name: audit_events_id_seq; Type: SEQUENCE SET; Schema: p04; Owner: -
+--
+
+SELECT pg_catalog.setval('p04.audit_events_id_seq', 1, false);
+
+
+--
+-- Name: clients_id_seq; Type: SEQUENCE SET; Schema: p04; Owner: -
+--
+
+SELECT pg_catalog.setval('p04.clients_id_seq', 1, false);
+
+
+--
+-- Name: followups_id_seq; Type: SEQUENCE SET; Schema: p04; Owner: -
+--
+
+SELECT pg_catalog.setval('p04.followups_id_seq', 1, false);
+
+
+--
+-- Name: invitations_id_seq; Type: SEQUENCE SET; Schema: p04; Owner: -
+--
+
+SELECT pg_catalog.setval('p04.invitations_id_seq', 1, false);
+
+
+--
+-- Name: job_notifications_id_seq; Type: SEQUENCE SET; Schema: p04; Owner: -
+--
+
+SELECT pg_catalog.setval('p04.job_notifications_id_seq', 1, false);
+
+
+--
+-- Name: jobs_id_seq; Type: SEQUENCE SET; Schema: p04; Owner: -
+--
+
+SELECT pg_catalog.setval('p04.jobs_id_seq', 1, false);
+
+
+--
+-- Name: reminders_id_seq; Type: SEQUENCE SET; Schema: p04; Owner: -
+--
+
+SELECT pg_catalog.setval('p04.reminders_id_seq', 1, false);
+
+
+--
+-- Name: tenants_id_seq; Type: SEQUENCE SET; Schema: p04; Owner: -
+--
+
+SELECT pg_catalog.setval('p04.tenants_id_seq', 1, false);
+
+
+--
+-- Name: users_id_seq; Type: SEQUENCE SET; Schema: p04; Owner: -
+--
+
+SELECT pg_catalog.setval('p04.users_id_seq', 1, false);
+
+
+--
+-- Name: audit_events audit_events_pkey; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.audit_events
+    ADD CONSTRAINT audit_events_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: clients clients_pkey; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.clients
+    ADD CONSTRAINT clients_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: followups followups_pkey; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+

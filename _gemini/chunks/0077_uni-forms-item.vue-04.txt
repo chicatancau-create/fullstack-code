@@ -1,0 +1,100 @@
+			line-height: 1;
+			padding-top: 4px;
+			position: absolute;
+			/* #ifndef APP-NVUE */
+			top: 100%;
+			left: 0;
+			transition: transform 0.3s;
+			transform: translateY(-100%);
+			/* #endif */
+			/* #ifdef APP-NVUE */
+			bottom: 5px;
+			/* #endif */
+
+			opacity: 0;
+
+			.error-text {
+				// 只有 nvue 下这个样式才生效
+				color: #f56c6c;
+				font-size: 12px;
+			}
+
+			&.msg--active {
+				opacity: 1;
+				transform: translateY(0%);
+			}
+		}
+
+		// 位置修饰样式
+		&.is-direction-left {
+			flex-direction: row;
+		}
+
+		&.is-direction-top {
+			flex-direction: column;
+
+			.uni-forms-item__label {
+				padding: 0 0 8px;
+				line-height: 1.5715;
+				text-align: left;
+				/* #ifndef APP-NVUE */
+				white-space: initial;
+				/* #endif */
+			}
+		}
+
+		.is-required {
+			// color: $uni-color-error;
+			color: #dd524d;
+			font-weight: bold;
+		}
+	}
+
+
+	.uni-forms-item--border {
+		margin-bottom: 0;
+		padding: 10px 0;
+		// padding-bottom: 0;
+		border-top: 1px #eee solid;
+
+		/* #ifndef APP-NVUE */
+		.uni-forms-item__content {
+			flex-direction: column;
+			justify-content: flex-start;
+			align-items: flex-start;
+
+			.uni-forms-item__error {
+				position: relative;
+				top: 5px;
+				left: 0;
+				padding-top: 0;
+			}
+		}
+
+		/* #endif */
+
+		/* #ifdef APP-NVUE */
+		display: flex;
+		flex-direction: column;
+
+		.uni-forms-item__error {
+			position: relative;
+			top: 0px;
+			left: 0;
+			padding-top: 0;
+			margin-top: 5px;
+		}
+
+		/* #endif */
+
+	}
+
+	.is-first-border {
+		/* #ifndef APP-NVUE */
+		border: none;
+		/* #endif */
+		/* #ifdef APP-NVUE */
+		border-width: 0;
+		/* #endif */
+	}
+</style>

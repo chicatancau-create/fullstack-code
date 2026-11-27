@@ -1,0 +1,21 @@
+  updateDragon(t);
+  updatePetals(t, dt, state.petals);
+  updateWater(t, dt);
+  updateKoi(t);
+  updateButterflies(t);
+  updateCranes(t);
+  const flick = 1 + Math.sin(t * 9.7) * 0.04 + Math.sin(t * 23.3) * 0.03;
+  glowMat.emissiveIntensity = 2.2 * state.glow * flick;
+  updateCamera(dt);
+  renderer.render(scene, camera);
+  frames++; fpsT += dt;
+  if (fpsT >= 1) { $('st-fps').textContent = Math.round(frames / fpsT); frames = 0; fpsT = 0; }
+  if (!started) {
+    started = true;
+    setTimeout(() => document.getElementById('loading').classList.add('gone'), 250);
+  }
+}
+loop();
+</script>
+</body>
+</html>

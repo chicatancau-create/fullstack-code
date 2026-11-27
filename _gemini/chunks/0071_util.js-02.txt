@@ -1,0 +1,154 @@
+		after = new Date(fixIosDateFormat(after))
+		return before.valueOf() === after.valueOf()
+	}
+
+	/**
+	 *  比较真实起始日期
+	 */
+
+	isLogicBefore(currentDate, before, after) {
+		let logicBefore = before
+		if (before && after) {
+			logicBefore = dateCompare(before, after) ? before : after
+		}
+		return this.dateEqual(logicBefore, currentDate)
+	}
+
+	isLogicAfter(currentDate, before, after) {
+		let logicAfter = after
+		if (before && after) {
+			logicAfter = dateCompare(before, after) ? after : before
+		}
+		return this.dateEqual(logicAfter, currentDate)
+	}
+
+	/**
+	 * 获取日期范围内所有日期
+	 * @param {Object} begin
+	 * @param {Object} end
+	 */
+	geDateAll(begin, end) {
+		var arr = []
+		var ab = begin.split('-')
+		var ae = end.split('-')
+		var db = new Date()
+		db.setFullYear(ab[0], ab[1] - 1, ab[2])
+		var de = new Date()
+		de.setFullYear(ae[0], ae[1] - 1, ae[2])
+		var unixDb = db.getTime() - 24 * 60 * 60 * 1000
+		var unixDe = de.getTime() - 24 * 60 * 60 * 1000
+		for (var k = unixDb; k <= unixDe;) {
+			k = k + 24 * 60 * 60 * 1000
+			arr.push(this.getDateObj(new Date(parseInt(k))).fullDate)
+		}
+		return arr
+	}
+
+	/**
+	 *  获取多选状态
+	 */
+	setMultiple(fullDate) {
+		if (!this.range) return
+
+		let {
+			before,
+			after
+		} = this.multipleStatus
+		if (before && after) {
+			if (!this.lastHover) {
+				this.lastHover = true
+				return
+			}
+			this.multipleStatus.before = fullDate
+			this.multipleStatus.after = ''
+			this.multipleStatus.data = []
+			this.multipleStatus.fulldate = ''
+			this.lastHover = false
+		} else {
+			if (!before) {
+				this.multipleStatus.before = fullDate
+				this.multipleStatus.after = undefined;
+				this.lastHover = false
+			} else {
+				this.multipleStatus.after = fullDate
+				if (dateCompare(this.multipleStatus.before, this.multipleStatus.after)) {
+					this.multipleStatus.data = this.geDateAll(this.multipleStatus.before, this.multipleStatus
+						.after);
+				} else {
+					this.multipleStatus.data = this.geDateAll(this.multipleStatus.after, this.multipleStatus
+						.before);
+				}
+				this.lastHover = true
+			}
+		}
+		this.getWeeks(fullDate)
+	}
+
+	/**
+	 *  鼠标 hover 更新多选状态
+	 */
+	setHoverMultiple(fullDate) {
+		//抖音小程序点击会触发hover事件，需要避免一下
+		// #ifndef MP-TOUTIAO
+		if (!this.range || this.lastHover) return
+		const {
+			before
+		} = this.multipleStatus
+
+		if (!before) {
+			this.multipleStatus.before = fullDate
+		} else {
+			this.multipleStatus.after = fullDate
+			if (dateCompare(this.multipleStatus.before, this.multipleStatus.after)) {
+				this.multipleStatus.data = this.geDateAll(this.multipleStatus.before, this.multipleStatus.after);
+			} else {
+				this.multipleStatus.data = this.geDateAll(this.multipleStatus.after, this.multipleStatus.before);
+			}
+		}
+		this.getWeeks(fullDate)
+		// #endif
+
+	}
+
+	/**
+	 * 更新默认值多选状态
+	 */
+	setDefaultMultiple(before, after) {
+		this.multipleStatus.before = before
+		this.multipleStatus.after = after
+		if (before && after) {
+			if (dateCompare(before, after)) {
+				this.multipleStatus.data = this.geDateAll(before, after);
+				this.getWeeks(after)
+			} else {
+				this.multipleStatus.data = this.geDateAll(after, before);
+				this.getWeeks(before)
+			}
+		}
+	}
+
+	/**
+	 * 获取每周数据
+	 * @param {Object} dateData
+	 */
+	getWeeks(dateData) {
+		const {
+			year,
+			month,
+		} = this.getDateObj(dateData)
+
+		const preMonthDayAmount = new Date(year, month - 1, 1).getDay()
+		const preMonthDays = this.getPreMonthDays(preMonthDayAmount, this.getDateObj(dateData))
+
+		const currentMonthDayAmount = new Date(year, month, 0).getDate()
+		const currentMonthDays = this.getCurrentMonthDays(currentMonthDayAmount, this.getDateObj(dateData))
+
+		const nextMonthDayAmount = 42 - preMonthDayAmount - currentMonthDayAmount
+		const nextMonthDays = this._getNextMonthDays(nextMonthDayAmount, this.getDateObj(dateData))
+
+		const calendarDays = [...preMonthDays, ...currentMonthDays, ...nextMonthDays]
+
+		const weeks = new Array(6)
+		for (let i = 0; i < calendarDays.length; i++) {
+			const index = Math.floor(i / 7)
+			if (!weeks[index]) {

@@ -1,0 +1,228 @@
+	 * @example <uni-calendar :insert="true":lunar="true" :start-date="'2019-3-2'":end-date="'2019-5-20'"@change="change" />
+	 */
+	export default {
+		components: {
+			CalendarItem
+		},
+		emits:['close','confirm','change','monthSwitch'],
+		props: {
+			date: {
+				type: String,
+				default: ''
+			},
+			selected: {
+				type: Array,
+				default () {
+					return []
+				}
+			},
+			lunar: {
+				type: Boolean,
+				default: false
+			},
+			startDate: {
+				type: String,
+				default: ''
+			},
+			endDate: {
+				type: String,
+				default: ''
+			},
+			range: {
+				type: Boolean,
+				default: false
+			},
+			insert: {
+				type: Boolean,
+				default: true
+			},
+			showMonth: {
+				type: Boolean,
+				default: true
+			},
+			clearDate: {
+				type: Boolean,
+				default: true
+			}
+		},
+		data() {
+			return {
+				show: false,
+				weeks: [],
+				calendar: {},
+				nowDate: '',
+				aniMaskShow: false
+			}
+		},
+		computed:{
+			/**
+			 * for i18n
+			 */
+
+			okText() {
+				return t("uni-calender.ok")
+			},
+			cancelText() {
+				return t("uni-calender.cancel")
+			},
+			todayText() {
+				return t("uni-calender.today")
+			},
+			monText() {
+				return t("uni-calender.MON")
+			},
+			TUEText() {
+				return t("uni-calender.TUE")
+			},
+			WEDText() {
+				return t("uni-calender.WED")
+			},
+			THUText() {
+				return t("uni-calender.THU")
+			},
+			FRIText() {
+				return t("uni-calender.FRI")
+			},
+			SATText() {
+				return t("uni-calender.SAT")
+			},
+			SUNText() {
+				return t("uni-calender.SUN")
+			},
+		},
+		watch: {
+			date(newVal) {
+				// this.cale.setDate(newVal)
+				this.init(newVal)
+			},
+			startDate(val){
+				this.cale.resetSatrtDate(val)
+				this.cale.setDate(this.nowDate.fullDate)
+				this.weeks = this.cale.weeks
+			},
+			endDate(val){
+				this.cale.resetEndDate(val)
+				this.cale.setDate(this.nowDate.fullDate)
+				this.weeks = this.cale.weeks
+			},
+			selected(newVal) {
+				this.cale.setSelectInfo(this.nowDate.fullDate, newVal)
+				this.weeks = this.cale.weeks
+			}
+		},
+		created() {
+			this.cale = new Calendar({
+				selected: this.selected,
+				startDate: this.startDate,
+				endDate: this.endDate,
+				range: this.range,
+			})
+			this.init(this.date)
+		},
+		methods: {
+			// 取消穿透
+			clean() {},
+			bindDateChange(e) {
+				const value = e.detail.value + '-1'
+				this.setDate(value)
+
+				const { year,month } = this.cale.getDate(value)
+        this.$emit('monthSwitch', {
+            year,
+            month
+        })
+			},
+			/**
+			 * 初始化日期显示
+			 * @param {Object} date
+			 */
+			init(date) {
+				this.cale.setDate(date)
+				this.weeks = this.cale.weeks
+				this.nowDate = this.calendar = this.cale.getInfo(date)
+			},
+			/**
+			 * 打开日历弹窗
+			 */
+			open() {
+				// 弹窗模式并且清理数据
+				if (this.clearDate && !this.insert) {
+					this.cale.cleanMultipleStatus()
+					// this.cale.setDate(this.date)
+					this.init(this.date)
+				}
+				this.show = true
+				this.$nextTick(() => {
+					setTimeout(() => {
+						this.aniMaskShow = true
+					}, 50)
+				})
+			},
+			/**
+			 * 关闭日历弹窗
+			 */
+			close() {
+				this.aniMaskShow = false
+				this.$nextTick(() => {
+					setTimeout(() => {
+						this.show = false
+						this.$emit('close')
+					}, 300)
+				})
+			},
+			/**
+			 * 确认按钮
+			 */
+			confirm() {
+				this.setEmit('confirm')
+				this.close()
+			},
+			/**
+			 * 变化触发
+			 */
+			change() {
+				if (!this.insert) return
+				this.setEmit('change')
+			},
+			/**
+			 * 选择月份触发
+			 */
+			monthSwitch() {
+				let {
+					year,
+					month
+				} = this.nowDate
+				this.$emit('monthSwitch', {
+					year,
+					month: Number(month)
+				})
+			},
+			/**
+			 * 派发事件
+			 * @param {Object} name
+			 */
+			setEmit(name) {
+				let {
+					year,
+					month,
+					date,
+					fullDate,
+					lunar,
+					extraInfo
+				} = this.calendar
+				this.$emit(name, {
+					range: this.cale.multipleStatus,
+					year,
+					month,
+					date,
+					fulldate: fullDate,
+					lunar,
+					extraInfo: extraInfo || {}
+				})
+			},
+			/**
+			 * 选择天触发
+			 * @param {Object} weeks
+			 */
+			choiceDate(weeks) {
+				if (weeks.disable) return

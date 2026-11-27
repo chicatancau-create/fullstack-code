@@ -1,0 +1,70 @@
+    (/Could not establish connection|Receiving end does not exist/i.test(d) ? browserNoise : pageErrors).push('EXC ' + d);
+  }, PG);
+  cdp.on('Log.entryAdded', (p) => { if (p.entry.level === 'error' && p.entry.source !== 'network') pageErrors.push('LOG ' + p.entry.text); }, PG);
+
+  await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'light' }] }, PG);
+  const setViewport = (w, h) => cdp.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 2, mobile: false }, PG);
+  await setViewport(1280, 900);
+
+  const evl = async (expression) => {
+    const r = await cdp.send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }, PG);
+    if (r.exceptionDetails) throw new Error('EVL ' + (r.exceptionDetails.exception?.description || r.exceptionDetails.text));
+    return r.result.value;
+  };
+  const goto = async (hash) => { await cdp.send('Page.navigate', { url: BASE + hash }, PG); await sleep(1500); };
+  const reload = async () => { await cdp.send('Page.reload', {}, PG); await sleep(1600); };
+  const shot = async (name) => {
+    const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' }, PG);
+    const p = path.join(OUT, name + '.png');
+    fs.writeFileSync(p, Buffer.from(data, 'base64'));
+    const sz = fs.existsSync(p) ? fs.statSync(p).size : 0;
+    if (!sz) throw new Error('screenshot empty: ' + name);
+    console.log('SHOT  ', name + '.png', sz, 'bytes');
+  };
+  const shotFull = async (name) => {
+    const { data } = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true }, PG);
+    const p = path.join(OUT, name + '.png');
+    fs.writeFileSync(p, Buffer.from(data, 'base64'));
+    console.log('SHOT  ', name + '.png', fs.statSync(p).size, 'bytes (full page)');
+  };
+  const clickAt = async (selector, idx = 0) => {
+    const box = await evl(`(() => { const e = document.querySelectorAll(${JSON.stringify(selector)})[${idx}];
+      if (!e) return null; const r = e.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2, d: e.disabled === true }; })()`);
+    if (!box) return 'NO_TARGET';
+    if (box.d) return 'DISABLED';
+    for (const type of ['mousePressed', 'mouseReleased']) {
+      await cdp.send('Input.dispatchMouseEvent', { type, x: box.x, y: box.y, button: 'left', clickCount: 1 }, PG);
+    }
+    await sleep(400);
+    return 'OK';
+  };
+  const typeInto = async (selector, text) => {
+    if (clickAt(selector) === 'NO_TARGET') return 'NO_TARGET';
+    await sleep(200);
+    await cdp.send('Input.insertText', { text }, PG);
+    await sleep(300);
+    return await evl(`document.querySelector(${JSON.stringify(selector)}).value`);
+  };
+
+  console.log('\n--- 1. 登录页与导航守卫 ---');
+  await goto('/#/login');
+  await evl(`localStorage.clear()`);
+  await reload();
+  check('未登录访问 /#/ 被守卫拦到 /#/login', (await evl('location.hash')).startsWith('#/login'), await evl('location.hash'));
+  await goto('/#/stats');
+  const bounced = await evl('location.hash');
+  check('未登录访问 /#/stats 带 redirect 参数', bounced.startsWith('#/login?redirect='), bounced);
+  check('登录页标题与副标题渲染', (await evl(`document.querySelector('.login-title')?.innerText`))?.includes('习惯打卡'), await evl(`document.querySelector('.login-sub')?.innerText`));
+  await shot('01-login');
+
+  console.log('\n--- 2. 空提交校验 ---');
+  await clickAt('.login-btn');
+  check('空提交被拦下（仍在登录页）', (await evl('location.hash')).includes('login'));
+  // 精确等式：登录页有 username / password 两个必填项，空提交必须各给一条 role=alert 且两个输入都置 aria-invalid=true
+  const loginErr = await evl(`(() => ({ nodes: document.querySelectorAll('.field-error[role=alert]').length,
+    invalid: document.querySelectorAll('input[aria-invalid="true"]').length }))()`);
+  check('空提交给出两个字段级错误且 aria-invalid 同步', loginErr.nodes === 2 && loginErr.invalid === 2,
+    `field-error=${loginErr.nodes} aria-invalid=${loginErr.invalid}`);
+
+  console.log('\n--- 3. 登录并回跳 ---');

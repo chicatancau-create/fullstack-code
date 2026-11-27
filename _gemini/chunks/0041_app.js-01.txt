@@ -1,0 +1,94 @@
+import Fastify from 'fastify';
+import crypto from 'node:crypto';
+
+const PLANS = { free: 2, team: 5 };
+const INVITE_ROLES = ['admin', 'member', 'viewer'];
+const SESSION_HOURS = 12;
+const INVITE_DAYS = 7;
+
+const sha256 = (text) => crypto.createHash('sha256').update(text).digest('hex');
+const nowPlus = (hours) => new Date(Date.now() + hours * 3600 * 1000);
+const emailOk = (value) => typeof value === 'string' && /^[^\s@]{1,64}@[^\s@]{1,64}\.[^\s@]{2,}$/.test(value);
+
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  return `${salt}:${crypto.scryptSync(password, salt, 64).toString('hex')}`;
+}
+
+function verifyPassword(password, stored) {
+  const [salt, hash] = String(stored).split(':');
+  if (!salt || !hash) return false;
+  const actual = crypto.scryptSync(password, salt, 64);
+  const expected = Buffer.from(hash, 'hex');
+  return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
+}
+
+function publicUser(row) {
+  return { id: row.id, email: row.email, name: row.name };
+}
+
+export function buildApp({ pool, logger = false, loginLimiter = null } = {}) {
+  const app = Fastify({ logger, bodyLimit: 32768, genReqId: () => crypto.randomUUID() });
+  if (loginLimiter) {
+    app.addHook('preHandler', async (request, reply) => {
+      if (request.method !== 'POST' || request.url !== '/auth/login') return;
+      const verdict = await loginLimiter(request.ip || 'unknown');
+      if (!verdict.allowed) {
+        reply.header('Retry-After', '5');
+        return reply.code(429).send({ error: 'rate_limited' });
+      }
+    });
+  }
+  app.addHook('onSend', async (request, reply, payload) => {
+    reply.header('X-Content-Type-Options', 'nosniff');
+    reply.header('X-Request-Id', request.id);
+    reply.header('Cache-Control', 'no-store');
+    return payload;
+  });
+  app.setErrorHandler((error, request, reply) => {
+    if (error.validation) return reply.code(400).send({ error: 'validation_failed' });
+    request.log.error({ err: error.message, reqId: request.id });
+    return reply.code(500).send({ error: 'internal_error', request_id: request.id });
+  });
+
+  async function authenticate(request, reply) {
+    const header = request.headers.authorization;
+    const token = typeof header === 'string' && header.startsWith('Bearer ') ? header.slice(7) : '';
+    if (!token) return reply.code(401).send({ error: 'unauthenticated' });
+    const result = await pool.query(
+      `SELECT u.id, u.email, u.name FROM p04.sessions s
+       JOIN p04.users u ON u.id = s.user_id
+       WHERE s.token_hash = $1 AND s.expires_at > now()`,
+      [sha256(token)],
+    );
+    if (result.rowCount === 0) return reply.code(401).send({ error: 'unauthenticated' });
+    request.user = result.rows[0];
+  }
+
+  async function roleIn(client, tenantId, userId) {
+    const result = await client.query('SELECT role FROM p04.memberships WHERE tenant_id = $1 AND user_id = $2', [tenantId, userId]);
+    return result.rows[0]?.role ?? null;
+  }
+
+  async function audit(client, tenantId, actorId, action, target, metadata = {}, requestId = '', before = null, after = null) {
+    await client.query(
+      `INSERT INTO p04.audit_events (tenant_id, actor_id, action, target, metadata, request_id, before, after)
+       VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7::jsonb, $8::jsonb)`,
+      [tenantId, actorId, action, target, JSON.stringify(metadata), requestId,
+        before ? JSON.stringify(before) : null, after ? JSON.stringify(after) : null],
+    );
+  }
+
+  async function inventory(client, tenantId) {
+    const result = await client.query(
+      `SELECT
+         (SELECT count(*)::int FROM p04.memberships WHERE tenant_id = $1) AS members,
+         (SELECT count(*)::int FROM p04.invitations WHERE tenant_id = $1 AND status = 'pending' AND expires_at > now()) AS pending`,
+      [tenantId],
+    );
+    return result.rows[0];
+  }
+
+  const auth = { preHandler: authenticate };
+
+  const httpCounters = new Map();

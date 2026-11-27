@@ -1,0 +1,202 @@
+	 * @property {Boolean} multiple = [true|false] 是否多选
+	 * @property {String|Number} value 默认值
+	 * @property {String|Number} start 起始日期或时间
+	 * @property {String|Number} end 起始日期或时间
+	 * @property {String} return-type = [timestamp | string]
+	 * @event {Function} change  选中发生变化触发
+	 */
+
+	export default {
+		name: 'UniDatetimePicker',
+		data() {
+			return {
+				indicatorStyle: `height: 50px;`,
+				visible: false,
+				fixNvueBug: {},
+				dateShow: true,
+				timeShow: true,
+				title: '日期和时间',
+				// 输入框当前时间
+				time: '',
+				// 当前的年月日时分秒
+				year: 1920,
+				month: 0,
+				day: 0,
+				hour: 0,
+				minute: 0,
+				second: 0,
+				// 起始时间
+				startYear: 1920,
+				startMonth: 1,
+				startDay: 1,
+				startHour: 0,
+				startMinute: 0,
+				startSecond: 0,
+				// 结束时间
+				endYear: 2120,
+				endMonth: 12,
+				endDay: 31,
+				endHour: 23,
+				endMinute: 59,
+				endSecond: 59,
+			}
+		},
+		options: {
+			// #ifdef MP-TOUTIAO
+			virtualHost: false,
+			// #endif
+			// #ifndef MP-TOUTIAO
+			virtualHost: true
+			// #endif
+		},
+		props: {
+			type: {
+				type: String,
+				default: 'datetime'
+			},
+			value: {
+				type: [String, Number],
+				default: ''
+			},
+			modelValue: {
+				type: [String, Number],
+				default: ''
+			},
+			start: {
+				type: [Number, String],
+				default: ''
+			},
+			end: {
+				type: [Number, String],
+				default: ''
+			},
+			returnType: {
+				type: String,
+				default: 'string'
+			},
+			disabled: {
+				type: [Boolean, String],
+				default: false
+			},
+			border: {
+				type: [Boolean, String],
+				default: true
+			},
+			hideSecond: {
+				type: [Boolean, String],
+				default: false
+			}
+		},
+		watch: {
+			// #ifndef VUE3
+			value: {
+				handler(newVal) {
+					if (newVal) {
+						this.parseValue(fixIosDateFormat(newVal))
+						this.initTime(false)
+					} else {
+						this.time = ''
+						this.parseValue(Date.now())
+					}
+				},
+				immediate: true
+			},
+			// #endif
+			// #ifdef VUE3
+			modelValue: {
+				handler(newVal) {
+					if (newVal) {
+						this.parseValue(fixIosDateFormat(newVal))
+						this.initTime(false)
+					} else {
+						this.time = ''
+						this.parseValue(Date.now())
+					}
+				},
+				immediate: true
+			},
+			// #endif
+			type: {
+				handler(newValue) {
+					if (newValue === 'date') {
+						this.dateShow = true
+						this.timeShow = false
+						this.title = '日期'
+					} else if (newValue === 'time') {
+						this.dateShow = false
+						this.timeShow = true
+						this.title = '时间'
+					} else {
+						this.dateShow = true
+						this.timeShow = true
+						this.title = '日期和时间'
+					}
+				},
+				immediate: true
+			},
+			start: {
+				handler(newVal) {
+					this.parseDatetimeRange(fixIosDateFormat(newVal), 'start')
+				},
+				immediate: true
+			},
+			end: {
+				handler(newVal) {
+					this.parseDatetimeRange(fixIosDateFormat(newVal), 'end')
+				},
+				immediate: true
+			},
+
+			// 月、日、时、分、秒可选范围变化后，检查当前值是否在范围内，不在则当前值重置为可选范围第一项
+			months(newVal) {
+				this.checkValue('month', this.month, newVal)
+			},
+			days(newVal) {
+				this.checkValue('day', this.day, newVal)
+			},
+			hours(newVal) {
+				this.checkValue('hour', this.hour, newVal)
+			},
+			minutes(newVal) {
+				this.checkValue('minute', this.minute, newVal)
+			},
+			seconds(newVal) {
+				this.checkValue('second', this.second, newVal)
+			}
+		},
+		computed: {
+			// 当前年、月、日、时、分、秒选择范围
+			years() {
+				return this.getCurrentRange('year')
+			},
+
+			months() {
+				return this.getCurrentRange('month')
+			},
+
+			days() {
+				return this.getCurrentRange('day')
+			},
+
+			hours() {
+				return this.getCurrentRange('hour')
+			},
+
+			minutes() {
+				return this.getCurrentRange('minute')
+			},
+
+			seconds() {
+				return this.getCurrentRange('second')
+			},
+
+			// picker 当前值数组
+			ymd() {
+				return [this.year - this.minYear, this.month - this.minMonth, this.day - this.minDay]
+			},
+			hms() {
+				return [this.hour - this.minHour, this.minute - this.minMinute, this.second - this.minSecond]
+			},
+
+			// 当前 date 是 start
+			currentDateIsStart() {

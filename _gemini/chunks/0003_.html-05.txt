@@ -1,0 +1,85 @@
+      const gy = y + Math.random() * h / rows;
+      ctx.beginPath(); ctx.moveTo(0, gy);
+      for (let x = 0; x <= w; x += 32) ctx.lineTo(x, gy + Math.sin(x * 0.03 + r) * 2.2);
+      ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(38,26,15,.75)'; ctx.fillRect(0, y + h / rows - 2, w, 2.5);
+    ctx.fillStyle = 'rgba(255,225,180,.10)'; ctx.fillRect(0, y + 1, w, 1.2);
+  }
+}, { repeat: [2, 2] });
+TEX.plankNormal = normalFromHeight(512, 512, (x, y) => {
+  const rows = 6, hh = 512 / rows, fy = ((y % hh) / hh);
+  return -smoothstep(0.86, 1.0, fy) * 1.4 + 0.25 * fbm(x / 512 * 10, y / 512 * 2, 4, 7);
+}, 1.6);
+
+// 茅草屋顶
+TEX.thatch = canvasTex(256, 256, (ctx, w, h) => {
+  ctx.fillStyle = '#8a6c3c'; ctx.fillRect(0, 0, w, h);
+  for (let i = 0; i < 1500; i++) {
+    const y = Math.random() * h;
+    ctx.strokeStyle = `rgba(${130 + Math.random() * 90 | 0},${100 + Math.random() * 60 | 0},${50 + Math.random() * 40 | 0},.6)`;
+    ctx.lineWidth = 0.8 + Math.random() * 1.4;
+    ctx.beginPath(); ctx.moveTo(Math.random() * w, y); ctx.lineTo(Math.random() * w, y + 6 + Math.random() * 12); ctx.stroke();
+  }
+  for (let r = 0; r < 7; r++) { ctx.fillStyle = 'rgba(50,36,18,.35)'; ctx.fillRect(0, r * h / 7 + h / 7 - 3, w, 3); }
+}, { repeat: [3, 2] });
+
+// 截面板块（沙层→黏土→岩层），v 与世界高度对齐
+function buildSedimentTexture() {
+  return canvasTex(1024, 512, (ctx, w, h) => {
+    const bands = [
+      { a: 0.00, b: 0.30, c: [226, 208, 168] },   // 干沙
+      { a: 0.28, b: 0.52, c: [196, 160, 112] },   // 湿沙/砂岩
+      { a: 0.50, b: 0.74, c: [148, 108, 74] },    // 黏土
+      { a: 0.72, b: 1.00, c: [74, 66, 62] }       //  basalt
+    ];
+    const img = ctx.createImageData(w, h), d = img.data;
+    for (let y = 0; y < h; y++) {
+      const v = y / h;
+      let col = bands[bands.length - 1].c;
+      for (const b of bands) if (v >= b.a && v <= b.b) {
+        const t = smoothstep(b.a, b.b, v);
+        const i = bands.indexOf(b);
+        const nx = bands[Math.min(i + 1, bands.length - 1)].c;
+        col = [mix(b.c[0], nx[0], t), mix(b.c[1], nx[1], t), mix(b.c[2], nx[2], t)];
+      }
+      for (let x = 0; x < w; x++) {
+        const u = x / w;
+        const n = fbm(u * 8, v * 22, 5, 21) * 26 + (vnoise(u * 220, v * 90, 3) - 0.5) * 26;
+        const streak = Math.pow(ridged(u * 40, v * 3 + 0.5, 2, 6), 3) * 22;
+        const i = (y * w + x) * 4;
+        d[i] = col[0] + n + streak; d[i + 1] = col[1] + n * 0.92 + streak * 0.85;
+        d[i + 2] = col[2] + n * 0.8 + streak * 0.7; d[i + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    // 卵石
+    for (let i = 0; i < 260; i++) {
+      const x = Math.random() * w, y = h * (0.25 + Math.random() * 0.75), r = 1.5 + Math.random() * 5;
+      ctx.fillStyle = `rgba(${90 + Math.random() * 70 | 0},${80 + Math.random() * 60 | 0},${72 + Math.random() * 50 | 0},.75)`;
+      ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.72, Math.random(), 0, 7); ctx.fill();
+    }
+  }, { repeat: [1, 1] });
+}
+TEX.sediment = buildSedimentTexture();
+TEX.sedimentNormal = normalFromHeight(512, 256, (x, y) =>
+  0.6 * fbm(x / 512 * 12, y / 256 * 26, 5, 21) + 0.4 * vnoise(x / 512 * 90, y / 256 * 40, 3), 1.1);
+
+// 接触投影
+TEX.shadowBlob = canvasTex(256, 256, (ctx, w, h) => {
+  const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+  g.addColorStop(0, 'rgba(0,0,0,.85)'); g.addColorStop(0.42, 'rgba(0,0,0,.42)');
+  g.addColorStop(0.72, 'rgba(0,0,0,.10)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+}, { srgb: false, repeat: [1, 1] });
+
+/* ---------------------------------------------------------------- 高度场 */
+// 陆地在 +X 一侧，海岸线沿 z 微弯；靠墙处有珊瑚浅架
+function terrainH(x, z) {
+  const rho = Math.hypot(x, z);
+  const shore = 0.16 + 0.16 * Math.sin(z * 2.7 + 0.5) + 0.05 * fbm(z * 1.6, 3.3, 3, 13);
+  const inland = x - shore;                        // >0 朝陆地
+  const t = smoothstep(-0.46, 0.055, inland);
+
+  const shelf = 0.115 * smoothstep(0.56, 0.97, rho);
+  const seabed = -0.335 + 0.080 * ridged(x * 2.0 + 3, z * 2.0 - 1, 3, 11) + shelf

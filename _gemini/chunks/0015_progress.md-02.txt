@@ -1,0 +1,50 @@
+- `Web/vue`：`npm run build` 通过（vite 8.3.4，30 modules，产出 `dist/`）。
+- `Python`：`main.py` → `Hi, PyCharm`；`EnvironmentTest.py` → `Sum: 14`。
+- `Cpp`：`g++ 15.2.0` 编译 `c.cpp`、`EnvironmentTest.c` 均成功，运行均输出 `Sum: 14`（临时产物已删，原 `c.exe`/`EnvironmentTestC.exe` 未动）。
+- `git fsck --full`：无输出，仓库健康。
+
+### 未处理（需本人决定，不擅自改动）
+
+- **`yingye/entry/src/main/ets/pages/Index.ets` 有一处未完成的改动**：新增行 `.expandSafeArea({SafeAreaType })`
+  引用了未导入的标识符，属半成品编辑，当前状态是 **git 未提交**。保留了原样。
+- Harmony 两个工程**未做真实构建**：工程内无 `hvigorw` 包装脚本，只能在 DevEco Studio 里验证，本次未跑。
+- `Harmony/MyApplication/oh-package-lock.json5` 有未提交改动（构建过程产生）。
+
+## 2026-10-19 清理无用文件（当天第二轮）
+
+用户确认只删「可再生」的东西，**备份、源码、记忆文件一律不动**。
+
+| 删除 | 规模 | 为什么安全 |
+|---|---|---|
+| `Harmony/.workbuddy-ai/tmp/covers_raw/` | 19.22 MB / 12 张原图 | 成品 `music_cover_01~10.png` 已在 `yingye/.../resources/base/media/`，这里只是 1024×1024 中间产物 |
+| `Harmony/MyApplication/src/` | 3 个 ets | 与 `entry/src/main/ets/` 同名文件逐字节相同，且 git 历史里仍可找回 |
+| `Harmony/MyApplication/.preview/` | 0.53 MB / 105 文件 | 预览器缓存，DevEco 打开时自动重建 |
+| `Harmony/MyApplication/.hvigor/` | 3.45 MB / 24 文件 | hvigor 构建缓存 |
+| `Harmony/yingye/.hvigor/` | 4.79 MB / 21 文件 | 同上 |
+| `Web/vue/dist/` | 0.09 MB | `npm run build` 产物 |
+
+**刻意保留（删了不可恢复）**：`.workbuddy-ai/backup/`（git 重建前唯一回滚依据）、
+`Harmony/.workbuddy-ai/memory/`（ArkTS 踩坑约定）、`Harmony/MyApplication/` 整个旧工程、
+`Python/.venv`、`Web/vue/node_modules`、两个工程的 `oh_modules`。
+
+### 验证
+
+- 删除后 `Web/vue`（含当时新增的 `Movie.vue`/`MovieDetails.vue` 路由）`npm run build` 通过，exit 0。
+- 随后再次删除 `dist/`，保持工作区干净。
+
+## 2026-11-16 Web/node 课堂练习归档
+
+- **结构**：`Web/node/` = app.js（express，端口 3000，挂 `/api/goods` `/api/cart` `/api/user`，含内联登录判断）+ goodsRouter/cartRouter/userRouter + `config/db.js`（mysql2 连接池，本机 shopdb）；`node_modules/` 不入库。
+- **数据**：本机 MySQL `shopdb`，13 张表全带 `t_` 前缀（老师 dump 导入），`t_goods` 4 行（字段 id/title/content/imagePath/price）。
+- **验收（当日实测）**：GET `/api/goods/list` → 200 四条；`/api/goods/1` → `{code:200, message:查询成功, data:华为P30}`；`/999` → `{code:404, 商品不存在}`；POST `/api/user/register` → 用户注册；POST `/api/cart/getCartById` `{"id":5}` → 查询用户ID是：5。
+- **收口**：26 个旧练习文件删除入库（`18e82a1`）；新代码入库（`e8ae74e`）；goodsRouter.js 里旧 `.then` 版注释删除；六条踩坑记入 [errors.md](errors.md)，与本记录同笔 docs 提交。
+- **已知边界（按用户要求保留原样）**：package.json 的 main 仍指向不存在的 index.js、无 start 脚本，启动用 `npx nodemon app`；`/:id` 用拼接 SQL（课堂写法，占位符数组写法课上后续再学）；**config/db.js 含本机数据库密码，仓库有公开远程（github/gitcode），推送前必须先处理**。
+
+## 下一步
+
+- [ ] Web/node 跟课继续（goods/cart/user 已连 MySQL，按课堂进度推进）
+- [ ] 补完或撤回 `yingye/.../pages/Index.ets` 里的 `.expandSafeArea({SafeAreaType })` 半成品
+- [ ] `Web/vue` 跟课继续（第 4 章 组件基础（下）：自定义指令已过，接下来是引用静态资源）
+- [ ] 决定 `Cpp/` 要不要拆成 `C/` + `Cpp/`
+- [x] ~~决定 git 怎么处理~~ → 已于 2026-10-13 重建历史（见上）
+- [ ] E 盘上的唯一副本要挪走（这台机器还会再咬人）

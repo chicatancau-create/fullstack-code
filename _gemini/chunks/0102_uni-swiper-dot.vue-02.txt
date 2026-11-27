@@ -1,0 +1,120 @@
+					this.dots.width = 14
+					this.dots.height = 14
+				} else {
+					this.dots.width = 6
+					this.dots.height = 6
+				}
+			}
+
+		},
+		created() {
+			if (this.mode === 'indexes') {
+				this.dots.width = 12
+				this.dots.height = 12
+			}
+			this.dots = Object.assign(this.dots, this.dotsStyles)
+		},
+		methods: {
+			clickItem(index) {
+				this.$emit('clickItem', index)
+			}
+		}
+	}
+</script>
+
+<style lang="scss" scoped>
+	.uni-swiper__warp {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex: 1;
+		flex-direction: column;
+		position: relative;
+		overflow: hidden;
+	}
+
+	.uni-swiper__dots-box {
+		position: absolute;
+		bottom: 10px;
+		left: 0;
+		right: 0;
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex: 1;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.uni-swiper__dots-item {
+		width: 8px;
+		border-radius: 100px;
+		margin-left: 6px;
+		background-color: rgba(0, 0, 0, 0.4);
+		/* #ifndef APP-NVUE */
+		cursor: pointer;
+		/* #endif */
+		/* #ifdef H5 */
+		// border-width: 5px 0;
+		// border-style: solid;
+		// border-color: transparent;
+		// background-clip: padding-box;
+		/* #endif */
+		// transition: width 0.2s linear;  不要取消注释，不然会不能变色
+	}
+
+	.uni-swiper__dots-item:first-child {
+		margin: 0;
+	}
+
+	.uni-swiper__dots-default {
+		border-radius: 100px;
+	}
+
+	.uni-swiper__dots-long {
+		border-radius: 50px;
+	}
+
+	.uni-swiper__dots-bar {
+		border-radius: 50px;
+	}
+
+	.uni-swiper__dots-nav {
+		bottom: 0px;
+		// height: 26px;
+		padding: 8px 0;
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex: 1;
+		flex-direction: row;
+		justify-content: flex-start;
+		align-items: center;
+		background-color: rgba(0, 0, 0, 0.2);
+	}
+
+	.uni-swiper__dots-nav-item {
+		/* overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap; */
+		font-size: 14px;
+		color: #fff;
+		margin: 0 15px;
+	}
+
+	.uni-swiper__dots-indexes {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		// flex: 1;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.uni-swiper__dots-indexes-text {
+		color: #fff;
+		font-size: 12px;
+		line-height: 14px;
+	}
+</style>

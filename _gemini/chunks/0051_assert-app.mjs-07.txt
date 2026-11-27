@@ -1,0 +1,55 @@
+  check('当前月时「下一月」禁用', (await evl(`[...document.querySelectorAll('button')][${nextBtnIdx}].disabled`)) === true);
+  await clickAt('button', prevBtnIdx);
+  await sleep(700);
+  const monthLabel2 = await evl(`document.querySelector('.heatmap')?.innerText.match(/\\d{4}年\\d{1,2}月/)?.[0]`);
+  check('上一月 → 月份切换', monthLabel !== monthLabel2, `${monthLabel} -> ${monthLabel2}`);
+  check('翻到历史月后「下一月」解禁', (await evl(`[...document.querySelectorAll('button')][${nextBtnIdx}].disabled`)) === false);
+  await shot('06b-stats-prevmonth');
+  await clickAt('button', nextBtnIdx);
+  await sleep(700);
+  const monthLabel3 = await evl(`document.querySelector('.heatmap')?.innerText.match(/\\d{4}年\\d{1,2}月/)?.[0]`);
+  check('下一月回到当前月并重新禁用', monthLabel3 === monthLabel && (await evl(`[...document.querySelectorAll('button')][${nextBtnIdx}].disabled`)) === true, `${monthLabel3} disabled=${await evl(`[...document.querySelectorAll('button')][${nextBtnIdx}].disabled`)}`);
+  await shot('07-stats');
+  await shotFull('07b-stats-full');
+
+  const tipCell = await evl(`(() => { const c=[...document.querySelectorAll('.hm-cell.heat-2,.hm-cell.heat-3')][0]; if(!c) return null; const r=c.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2, aria:c.getAttribute('aria-label')}; })()`);
+  if (tipCell) {
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: tipCell.x, y: tipCell.y, button: 'none' }, PG);
+    await sleep(600);
+    const tipShown = await evl(`(() => { const c=[...document.querySelectorAll('.hm-cell.heat-2,.hm-cell.heat-3')][0]; const t=c && c.querySelector('[class*=tip]:not(.tip-below):not(.tip-right):not(.tip-left)'); if(!t) return 'NO_TIP_NODE'; const s=getComputedStyle(t); return s.visibility+'/'+s.opacity; })()`);
+    check('悬停热力格显示当日明细浮层', /^visible\/(0\.)?[1-9]/.test(tipShown), `${tipCell.aria} -> ${tipShown}`);
+    await shot('08-heatmap-hover');
+  } else {
+    skip('悬停热力格显示当日明细浮层', '当月没有任何 heat-2/heat-3 格子，无悬停目标，此断言无从执行');
+  }
+  const expandIdx = await evl(`[...document.querySelectorAll('button')].findIndex(b => b.innerText.trim()==='展开')`);
+  if (expandIdx >= 0) {
+    // 明细表在首屏之外，必须先滚进视口再点（否则真实指针落在 viewport 外，点了等于没点）
+    await evl(`document.querySelectorAll('button')[${expandIdx}].scrollIntoView({block:'center'})`);
+    await sleep(500);
+    const before = await evl(`document.querySelectorAll('.month-detail').length`);
+    await clickAt('button', expandIdx);
+    await sleep(700);
+    const detail = await evl(`(() => { const d=document.querySelector('.month-detail');
+      return d ? 'chips=' + d.querySelectorAll('.chip').length + ' text=' + (d.innerText||'').replace(/\\s+/g,' ').trim().slice(0,40) : 'NO_DETAIL_NODE'; })()`);
+    check('展开后 .month-detail 真的渲染出来', (await evl(`document.querySelectorAll('.month-detail').length`)) === before + 1, `${before} -> ${detail}`);
+    check('该按钮文案由「展开」翻为「收起」', (await evl(`document.querySelectorAll('button')[${expandIdx}].innerText.trim()`)) === '收起',
+      await evl(`document.querySelectorAll('button')[${expandIdx}].innerText.trim()`));
+    await shot('08b-stats-expanded');
+  } else { check('明细表可展开本月打卡明细', false, '找不到展开按钮'); }
+
+  console.log('\n--- 10. 关于页 ---');
+  await goto('/#/about');
+  const aboutText = await evl(`document.body.innerText`);
+  check('关于页含实现说明段', /实现说明|实现思路/.test(aboutText));
+  const implLen = await evl(`(() => { const h=[...document.querySelectorAll('h2,h3')].find(x=>/实现说明/.test(x.innerText)); if(!h) return -1;
+    let t='', n=h.nextElementSibling; while(n && !/^H[23]$/.test(n.tagName)){ t += n.innerText; n=n.nextElementSibling; }
+    return t.replace(/\\s/g,'').length; })()`);
+  check('实现说明 ≤300 字', implLen > 0 && implLen <= 300, 'chars=' + implLen);
+  await shot('09-about');
+
+  console.log('\n--- 11. 404 ---');
+  await goto('/#/definitely-not-a-page');
+  check('未知路由落到 404 页', /404|不存在/.test(await evl('document.body.innerText')), await evl(`document.querySelector('h1,h2,.section-title')?.innerText`));
+  await shot('10-404');
+

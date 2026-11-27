@@ -1,0 +1,66 @@
+CREATE TABLE p03.schema_migrations (
+    filename text NOT NULL,
+    applied_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: audit_log id; Type: DEFAULT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.audit_log ALTER COLUMN id SET DEFAULT nextval('p03.audit_log_id_seq'::regclass);
+
+
+--
+-- Name: orders id; Type: DEFAULT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.orders ALTER COLUMN id SET DEFAULT nextval('p03.orders_id_seq'::regclass);
+
+
+--
+-- Name: payment_attempts id; Type: DEFAULT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.payment_attempts ALTER COLUMN id SET DEFAULT nextval('p03.payment_attempts_id_seq'::regclass);
+
+
+--
+-- Name: payments id; Type: DEFAULT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.payments ALTER COLUMN id SET DEFAULT nextval('p03.payments_id_seq'::regclass);
+
+
+--
+-- Name: refunds id; Type: DEFAULT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.refunds ALTER COLUMN id SET DEFAULT nextval('p03.refunds_id_seq'::regclass);
+
+
+--
+-- Data for Name: audit_log; Type: TABLE DATA; Schema: p03; Owner: -
+--
+
+COPY p03.audit_log (id, actor, action, order_id, request_id, before, after, created_at) FROM stdin;
+1	load-1	order.create	1	b495985e-cf0d-4e83-a836-1363afae1483	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.094868+08
+2	load-13	order.create	2	89a744d3-7c00-4348-b090-f653a8683b55	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.122966+08
+3	load-14	order.create	3	c6266335-d8a4-40b1-b5fa-0616bd993041	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.138483+08
+4	load-15	order.create	4	f77d8cbe-2624-4909-a8c2-1def6b3c444c	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.145748+08
+5	load-16	order.create	5	21d76f60-bba4-4c92-9c29-b7653525a801	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.153685+08
+6	load-17	order.create	6	21eddf81-ca8e-41b7-b694-2d91bca1b4a9	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.164237+08
+7	load-18	order.create	7	86d99224-7d0f-412c-912a-efa566f77ef4	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.171805+08
+8	load-19	order.create	8	59753d89-d1c9-42c6-94fe-7344d399a0a5	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.178393+08
+9	load-20	order.create	9	4c715fe6-b3bc-419e-b7a8-38a610d13df9	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.185701+08
+10	load-1	order.create	10	fb3c5636-fab5-4dc6-be77-c65adec1beec	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.191618+08
+11	load-13	order.create	11	eb87f213-77e7-49a7-8310-f3b61f38267e	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.197875+08
+12	load-14	order.create	12	887d5400-a0f0-4553-ab85-e2545b836d48	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.203187+08
+13	load-15	order.create	13	6df166bd-40b0-4824-8a86-475a3c8735d4	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.208832+08
+14	load-16	order.create	14	cb78e7c2-c64a-4325-801a-611d31731aa0	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.214538+08
+15	load-17	order.create	15	e7ca4f22-9d34-41a4-9120-d7f127fbbf8a	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.219824+08
+16	load-18	order.create	16	83c4ed50-d6b4-43ac-98b4-7cf79d72d338	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.225256+08
+17	load-19	order.create	17	8b15441f-0de5-4f41-b998-583bfb84ad31	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.231126+08
+18	load-2	order.create	18	86edfa86-0ade-4ec2-8569-4dacc0a6c900	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.232965+08
+19	load-20	order.create	19	a9176258-6c45-4890-bafe-e8b7e61579c5	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.236478+08
+20	load-1	order.create	20	7462181f-2891-45ef-b010-779d389bcca0	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.241996+08

@@ -1,0 +1,136 @@
+                    <li
+                      v-for="key in monthDetail(row.id)"
+                      :key="key"
+                      class="chip"
+                      :class="{ 'chip-today': key === todayKey }"
+                    >
+                      {{ shortDate(key) }}
+                    </li>
+                  </ul>
+                  <p v-else class="muted">这个习惯本月还没有打卡记录。</p>
+                </div>
+              </td>
+              <td>{{ row.target }} 天/周</td>
+              <td class="cell-week">
+                <span class="mini">
+                  <span class="mini-fill" :style="{ width: `${Math.round(row.weekRate * 100)}%` }"></span>
+                </span>
+                <span class="mini-text">{{ row.weekDone }}/{{ row.target }}</span>
+              </td>
+              <td><span class="pill" :class="ratePill(row.weekRate)">{{ percent(row.weekRate) }}</span></td>
+              <td>{{ row.currentStreak }} 天</td>
+              <td>{{ row.longestStreak }} 天</td>
+              <td>
+                <button class="btn btn-sm" type="button" @click="toggleExpand(row.id)">
+                  {{ expandedId === row.id ? '收起' : '展开' }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 空态：没有习惯时不渲染任何依赖除数的图表，直接给引导 -->
+    <section v-if="!summary.habitCount" class="card empty-state">
+      <h3 class="section-title">还没有可统计的习惯</h3>
+      <p class="muted">
+        先去打卡页建一个学习习惯（名称不超过 20 字、每周目标 1–7 天），并记录今天的完成情况，
+        回到这里就会出现热力月历、近 8 周完成率和明细表。
+      </p>
+      <RouterLink class="btn btn-primary" to="/">去打卡页登记习惯</RouterLink>
+    </section>
+  </div>
+</template>
+
+<script setup>
+import { computed, reactive, ref, watch } from 'vue'
+import MonthHeatmap from '@/components/habit/MonthHeatmap.vue'
+import { useHabits } from '@/composables/useHabits'
+import { buildMonthHeatmap, overallSummary, recentWeeks } from '@/utils/stats'
+import {
+  addMonths,
+  formatShortDate,
+  fromDateKey,
+  isValidDateKey,
+  startOfMonth,
+  toDateKey,
+} from '@/utils/date'
+
+const { state } = useHabits()
+
+const RECENT_WEEK_COUNT = 8
+
+// 今天在整个页面里是常量，月份才是可变状态
+const todayKey = toDateKey()
+const monthDate = ref(startOfMonth(new Date()))
+const expandedId = ref('')
+
+const heatmap = computed(() =>
+  buildMonthHeatmap(state.habits, state.checkins, monthDate.value),
+)
+
+const nextDisabled = computed(() => heatmap.value.monthKey >= todayKey.slice(0, 7))
+
+const summary = computed(() => overallSummary(state.habits, state.checkins, todayKey))
+
+const weeks = computed(() =>
+  recentWeeks(state.habits, state.checkins, fromDateKey(todayKey), RECENT_WEEK_COUNT),
+)
+
+const maxRate = computed(() =>
+  weeks.value.reduce((max, week) => (week.rate > max ? week.rate : max), 0),
+)
+
+const weeklyTarget = computed(() =>
+  summary.value.perHabit.reduce((sum, habit) => sum + habit.target, 0),
+)
+
+const statCards = computed(() => [
+  {
+    key: 'habitCount',
+    label: '习惯总数',
+    value: summary.value.habitCount,
+    unit: ' 个',
+    note: summary.value.habitCount ? '已登记的学习习惯' : '还没有登记习惯',
+    cls: '',
+  },
+  {
+    key: 'totalCheckins',
+    label: '累计打卡次数',
+    value: summary.value.totalCheckins,
+    unit: ' 次',
+    note: '所有习惯的历史打卡合计',
+    cls: '',
+  },
+  {
+    key: 'thisWeekDone',
+    label: '本周打卡',
+    value: summary.value.thisWeekDone,
+    unit: ` / ${weeklyTarget.value} 次`,
+    note: '本周（周一起）已完成次数',
+    cls: 'is-brand',
+  },
+  {
+    key: 'avgRate',
+    label: '平均完成率',
+    value: percent(summary.value.avgRate),
+    unit: '',
+    note: summary.value.habitCount ? '各习惯本周完成率的平均' : '无习惯时按 0% 兜底',
+    cls: summary.value.avgRate >= 0.8 ? 'is-good' : '',
+  },
+])
+
+const barsAriaLabel = computed(
+  () => `近 ${RECENT_WEEK_COUNT} 周完成率，最高 ${percent(maxRate.value)}`,
+)
+
+const columns = [
+  { key: 'name', label: '名称' },
+  { key: 'target', label: '目标' },
+  { key: 'weekDone', label: '本周' },
+  { key: 'weekRate', label: '完成率' },
+  { key: 'currentStreak', label: '当前连续' },
+  { key: 'longestStreak', label: '最长连续' },
+]
+

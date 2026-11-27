@@ -1,0 +1,70 @@
+        const lines = [];
+        const log = (...a) =>
+          lines.push(
+            a
+              .map((x) =>
+                typeof x === 'object' && x !== null ? JSON.stringify(x) : String(x)
+              )
+              .join(' ')
+          );
+        try {
+          fn(log);
+        } catch (e) {
+          lines.push('报错：' + e.message);
+        }
+        document.getElementById(id).textContent = lines.join('\n') || '(无输出)';
+      }
+
+      run('o1', (log) => {
+        for (let i = 1; i <= 3; i++) log('for', i);
+        let n = 0;
+        while (n < 3) {
+          log('while', n);
+          n++;
+        }
+        const arr = ['a', 'b', 'c'];
+        for (const v of arr) log('of 值', v);
+        for (const k in arr) log('in 下标', k);
+      });
+
+      run('o2', (log) => {
+        const list = [10, 20, 30];
+        list.push(40);
+        list.unshift(5);
+        list.pop();
+        const found = list.indexOf(20);
+        list.splice(found, 1, 99);
+        log(list, list.length, list.includes(5));
+      });
+
+      run('o3', (log) => {
+        const nums = [3, 1, 4, 1, 5];
+        nums.forEach((v, i) => i === 0 && log('原数组', nums));
+        log('map  x2  ->', nums.map((v) => v * 2));
+        log('filter >2 ->', nums.filter((v) => v > 2));
+        log('map 不改原数组?', nums);
+      });
+
+      run('o4', (log) => {
+        const nums = [3, 1, 4, 1, 5];
+        log('求和', nums.reduce((a, b) => a + b, 0));
+        log('最大值', nums.reduce((a, b) => (a > b ? a : b)));
+        log('find 第一个>2', nums.find((v) => v > 2));
+        log('some 有>4?', nums.some((v) => v > 4), 'every 都>0?', nums.every((v) => v > 0));
+        log('sort 数字要传比较函数', [10, 9, 100].sort((a, b) => a - b));
+      });
+
+      run('o5', (log) => {
+        const goods = [
+          { name: '女鞋', price: 298, tags: ['舒适', '透气'] },
+          { name: '雪地靴', price: 89, tags: ['保暖', '防滑'] },
+          { name: '毛衣', price: 199, tags: ['秋冬'] },
+        ];
+        log(goods.map((g) => g.name));
+        log('总价', goods.reduce((s, g) => s + g.price, 0));
+        log('500 以下', goods.filter((g) => g.price < 500).length, '件');
+        log('所有标签', goods.flatMap((g) => g.tags));
+      });
+    </script>
+  </body>
+</html>

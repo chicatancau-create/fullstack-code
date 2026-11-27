@@ -1,0 +1,84 @@
+package dev.study.collab;
+
+import jakarta.servlet.http.HttpServletRequest;
+import java.security.SecureRandom;
+import java.time.Instant;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping
+public class ApiController {
+    private final JdbcTemplate jdbc;
+    private final MembershipService memberships;
+    private final BCryptPasswordEncoder passwords = new BCryptPasswordEncoder();
+    private final SecureRandom random = new SecureRandom();
+
+    public ApiController(JdbcTemplate jdbc, MembershipService memberships) {
+        this.jdbc = jdbc;
+        this.memberships = memberships;
+    }
+
+    public record Register(String email, String password) {}
+    public record Login(String email, String password) {}
+    public record Workspace(String name) {}
+    public record Member(String email) {}
+    public record Task(String title) {}
+    public record Invite(String email, String role) {}
+    public record Accept(String token) {}
+
+    private static final String EMAIL = "^[^\\s@]{1,64}@[^\\s@]{1,64}\\.[^\\s@]{2,}$";
+
+    @GetMapping("/health")
+    public Map<String, String> health() {
+        return Map.of("status", "ok");
+    }
+
+    @PostMapping("/auth/register")
+    public ResponseEntity<Map<String, Object>> register(@RequestBody Register body) {
+        if (body.email() == null || !body.email().matches(EMAIL) || body.password() == null
+                || body.password().length() < 10 || body.password().length() > 200) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "invalid_credentials");
+        }
+        String email = body.email().toLowerCase();
+        jdbc.update("INSERT INTO users (email, password_hash) VALUES (?, ?)", email, passwords.encode(body.password()));
+        Long id = jdbc.queryForObject("SELECT id FROM users WHERE email = ?", Long.class, email);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("id", id, "email", email));
+    }
+
+    @PostMapping("/auth/login")
+    public Map<String, Object> login(@RequestBody Login body) {
+        if (body.email() == null || body.password() == null) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "bad_login");
+        }
+        List<Map<String, Object>> users = jdbc.queryForList("SELECT id, password_hash FROM users WHERE email = ?", body.email().toLowerCase());
+        if (users.isEmpty() || !passwords.matches(body.password(), (String) users.getFirst().get("password_hash"))) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "bad_login");
+        }
+        Long userId = ((Number) users.getFirst().get("id")).longValue();
+        byte[] raw = new byte[32];
+        random.nextBytes(raw);
+        String token = HexFormat.of().formatHex(raw);
+        jdbc.update("INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)",
+                AuthFilter.sha256(token), userId, java.sql.Timestamp.from(Instant.now().plusSeconds(12 * 3600)));
+        return Map.of("token", token);
+    }
+
+    @PostMapping("/auth/logout")
+    public Map<String, String> logout(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");

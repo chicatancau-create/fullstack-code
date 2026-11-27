@@ -1,0 +1,96 @@
+        return (item.parent_value === null || item.parent_value === undefined || item.parent_value === '')
+      }))
+      for (let i = 0; i < paths.length; i++) {
+        let value = paths[i].value
+        let nodes = data.filter((item) => {
+          return item.parent_value === value
+        })
+
+        if (nodes.length) {
+          dataList.push(nodes)
+        } else {
+          hasNodes = false
+        }
+      }
+
+      return {
+        dataList,
+        hasNodes
+      }
+    },
+
+    _extractTree(nodes, result, parent_value) {
+      let list = result || []
+      let valueField = this.map.value
+      for (let i = 0; i < nodes.length; i++) {
+        let node = nodes[i]
+
+        let child = {}
+        for (let key in node) {
+          if (key !== 'children') {
+            child[key] = node[key]
+          }
+        }
+        if (parent_value !== null && parent_value !== undefined && parent_value !== '') {
+          child.parent_value = parent_value
+        }
+        result.push(child)
+
+        let children = node.children
+        if (children) {
+          this._extractTree(children, result, node[valueField])
+        }
+      }
+    },
+
+    _extractTreePath(nodes, result) {
+      let list = result || []
+      for (let i = 0; i < nodes.length; i++) {
+        let node = nodes[i]
+
+        let child = {}
+        for (let key in node) {
+          if (key !== 'children') {
+            child[key] = node[key]
+          }
+        }
+        result.push(child)
+
+        let children = node.children
+        if (children) {
+          this._extractTreePath(children, result)
+        }
+      }
+    },
+
+    _findNodePath(key, nodes, path = []) {
+      let textField = this.map.text
+      let valueField = this.map.value
+      for (let i = 0; i < nodes.length; i++) {
+        let node = nodes[i]
+        let children = node.children
+        let text = node[textField]
+        let value = node[valueField]
+
+        path.push({
+          value,
+          text
+        })
+
+        if (value === key) {
+          return path
+        }
+
+        if (children) {
+          const p = this._findNodePath(key, children, path)
+          if (p.length) {
+            return p
+          }
+        }
+
+        path.pop()
+      }
+      return []
+    }
+  }
+}

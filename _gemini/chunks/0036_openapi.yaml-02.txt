@@ -1,0 +1,102 @@
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string }
+                role: { type: string, enum: [admin, member], default: member }
+      responses:
+        '201': { description: 邀请 + 一次性 token }
+        '409': { description: seats_full / already_invited }
+  /invitations/accept:
+    post:
+      summary: 接受邀请；邮箱必须匹配；过期/撤销/已移除返回 409
+      security: [{ Bearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        '200': { description: 已加入或幂等 }
+        '403': { description: email_mismatch }
+        '409': { description: invitation_inactive / membership_removed }
+  /invitations/{id}/revoke:
+    post:
+      summary: 撤销 pending 邀请（owner/admin）
+      security: [{ Bearer: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: 已撤销 }
+        '409': { description: 非 pending }
+  /tenants/{id}/clients:
+    post:
+      summary: 创建客户（成员）
+      security: [{ Bearer: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, maxLength: 80 }
+                note: { type: string, maxLength: 1000 }
+      responses:
+        '201': { description: 客户, content: { application/json: { schema: { $ref: '#/components/schemas/Client' } } } }
+    get:
+      summary: 客户列表（不含软删）
+      security: [{ Bearer: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      responses: { '200': { description: 列表 } }
+  /tenants/{id}/clients/{clientId}:
+    delete:
+      summary: 软删除客户（owner/admin），写审计
+      security: [{ Bearer: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+        - { in: path, name: clientId, required: true, schema: { type: integer } }
+      responses:
+        '204': { description: 已软删 }
+        '403': { description: 仅 admin+ }
+  /tenants/{id}/clients/{clientId}/followups:
+    post:
+      summary: 新增跟进（成员；客户必须未删除）
+      security: [{ Bearer: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+        - { in: path, name: clientId, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [summary]
+              properties:
+                summary: { type: string, maxLength: 2000 }
+                next_at: { type: string, format: date-time, nullable: true }
+      responses:
+        '201': { description: 跟进, content: { application/json: { schema: { $ref: '#/components/schemas/Followup' } } } }
+  /tenants/{id}/audit:
+    get:
+      summary: 最近 100 条审计（owner/admin）
+      security: [{ Bearer: [] }]
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: integer } }
+      responses:
+        '200': { description: 审计事件 }
+        '403': { description: 普通成员 }

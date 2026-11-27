@@ -1,0 +1,155 @@
+ALTER TABLE ONLY p03.notifications
+    ADD CONSTRAINT notifications_pkey PRIMARY KEY (event_id);
+
+
+--
+-- Name: order_items order_items_pkey; Type: CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.order_items
+    ADD CONSTRAINT order_items_pkey PRIMARY KEY (order_id);
+
+
+--
+-- Name: orders orders_pkey; Type: CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.orders
+    ADD CONSTRAINT orders_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: orders orders_user_id_idem_key_key; Type: CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.orders
+    ADD CONSTRAINT orders_user_id_idem_key_key UNIQUE (user_id, idem_key);
+
+
+--
+-- Name: outbox outbox_pkey; Type: CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.outbox
+    ADD CONSTRAINT outbox_pkey PRIMARY KEY (event_id);
+
+
+--
+-- Name: payment_attempts payment_attempts_payment_id_attempt_no_key; Type: CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.payment_attempts
+    ADD CONSTRAINT payment_attempts_payment_id_attempt_no_key UNIQUE (payment_id, attempt_no);
+
+
+--
+-- Name: payment_attempts payment_attempts_pkey; Type: CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.payment_attempts
+    ADD CONSTRAINT payment_attempts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: payment_events payment_events_pkey; Type: CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.payment_events
+    ADD CONSTRAINT payment_events_pkey PRIMARY KEY (event_id);
+
+
+--
+-- Name: payments payments_pkey; Type: CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.payments
+    ADD CONSTRAINT payments_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: products products_pkey; Type: CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.products
+    ADD CONSTRAINT products_pkey PRIMARY KEY (sku);
+
+
+--
+-- Name: refunds refunds_pkey; Type: CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.refunds
+    ADD CONSTRAINT refunds_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.schema_migrations
+    ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (filename);
+
+
+--
+-- Name: audit_order_idx; Type: INDEX; Schema: p03; Owner: -
+--
+
+CREATE INDEX audit_order_idx ON p03.audit_log USING btree (order_id, created_at);
+
+
+--
+-- Name: outbox_pending_idx; Type: INDEX; Schema: p03; Owner: -
+--
+
+CREATE INDEX outbox_pending_idx ON p03.outbox USING btree (created_at) WHERE (status = 'pending'::text);
+
+
+--
+-- Name: inventory inventory_sku_fkey; Type: FK CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.inventory
+    ADD CONSTRAINT inventory_sku_fkey FOREIGN KEY (sku) REFERENCES p03.products(sku);
+
+
+--
+-- Name: notifications notifications_order_id_fkey; Type: FK CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.notifications
+    ADD CONSTRAINT notifications_order_id_fkey FOREIGN KEY (order_id) REFERENCES p03.orders(id) ON DELETE CASCADE;
+
+
+--
+-- Name: order_items order_items_order_id_fkey; Type: FK CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.order_items
+    ADD CONSTRAINT order_items_order_id_fkey FOREIGN KEY (order_id) REFERENCES p03.orders(id) ON DELETE CASCADE;
+
+
+--
+-- Name: payment_attempts payment_attempts_payment_id_fkey; Type: FK CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.payment_attempts
+    ADD CONSTRAINT payment_attempts_payment_id_fkey FOREIGN KEY (payment_id) REFERENCES p03.payments(id) ON DELETE CASCADE;
+
+
+--
+-- Name: payment_events payment_events_order_id_fkey; Type: FK CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.payment_events
+    ADD CONSTRAINT payment_events_order_id_fkey FOREIGN KEY (order_id) REFERENCES p03.orders(id) ON DELETE CASCADE;
+
+
+--
+-- Name: payments payments_order_id_fkey; Type: FK CONSTRAINT; Schema: p03; Owner: -
+--
+
+ALTER TABLE ONLY p03.payments
+    ADD CONSTRAINT payments_order_id_fkey FOREIGN KEY (order_id) REFERENCES p03.orders(id) ON DELETE CASCADE;
+
+
+--

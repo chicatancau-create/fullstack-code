@@ -1,0 +1,173 @@
+import CALENDAR from './calendar.js'
+
+class Calendar {
+	constructor({
+		date,
+		selected,
+		startDate,
+		endDate,
+		range
+	} = {}) {
+		// 当前日期
+		this.date = this.getDate(new Date()) // 当前初入日期
+		// 打点信息
+		this.selected = selected || [];
+		// 范围开始
+		this.startDate = startDate
+		// 范围结束
+		this.endDate = endDate
+		this.range = range
+		// 多选状态
+		this.cleanMultipleStatus()
+		// 每周日期
+		this.weeks = {}
+		// this._getWeek(this.date.fullDate)
+	}
+	/**
+	 * 设置日期
+	 * @param {Object} date
+	 */
+	setDate(date) {
+		this.selectDate = this.getDate(date)
+		this._getWeek(this.selectDate.fullDate)
+	}
+
+	/**
+	 * 清理多选状态
+	 */
+	cleanMultipleStatus() {
+		this.multipleStatus = {
+			before: '',
+			after: '',
+			data: []
+		}
+	}
+
+	/**
+	 * 重置开始日期
+	 */
+	resetSatrtDate(startDate) {
+		// 范围开始
+		this.startDate = startDate
+
+	}
+
+	/**
+	 * 重置结束日期
+	 */
+	resetEndDate(endDate) {
+		// 范围结束
+		this.endDate = endDate
+	}
+
+	/**
+	 * 获取任意时间
+	 */
+	getDate(date, AddDayCount = 0, str = 'day') {
+		if (!date) {
+			date = new Date()
+		}
+		if (typeof date !== 'object') {
+			date = date.replace(/-/g, '/')
+		}
+		const dd = new Date(date)
+		switch (str) {
+			case 'day':
+				dd.setDate(dd.getDate() + AddDayCount) // 获取AddDayCount天后的日期
+				break
+			case 'month':
+				if (dd.getDate() === 31 && AddDayCount>0) {
+					dd.setDate(dd.getDate() + AddDayCount)
+				} else {
+					const preMonth = dd.getMonth()
+					dd.setMonth(preMonth + AddDayCount) // 获取AddDayCount天后的日期
+					const nextMonth = dd.getMonth()
+					// 处理 pre 切换月份目标月份为2月没有当前日(30 31) 切换错误问题
+					if(AddDayCount<0 && preMonth!==0 && nextMonth-preMonth>AddDayCount){
+						dd.setMonth(nextMonth+(nextMonth-preMonth+AddDayCount))
+					}
+					// 处理 next 切换月份目标月份为2月没有当前日(30 31) 切换错误问题
+					if(AddDayCount>0 && nextMonth-preMonth>AddDayCount){
+						dd.setMonth(nextMonth-(nextMonth-preMonth-AddDayCount))
+					}
+				}
+				break
+			case 'year':
+				dd.setFullYear(dd.getFullYear() + AddDayCount) // 获取AddDayCount天后的日期
+				break
+		}
+		const y = dd.getFullYear()
+		const m = dd.getMonth() + 1 < 10 ? '0' + (dd.getMonth() + 1) : dd.getMonth() + 1 // 获取当前月份的日期，不足10补0
+		const d = dd.getDate() < 10 ? '0' + dd.getDate() : dd.getDate() // 获取当前几号，不足10补0
+		return {
+			fullDate: y + '-' + m + '-' + d,
+			year: y,
+			month: m,
+			date: d,
+			day: dd.getDay()
+		}
+	}
+
+
+	/**
+	 * 获取上月剩余天数
+	 */
+	_getLastMonthDays(firstDay, full) {
+		let dateArr = []
+		for (let i = firstDay; i > 0; i--) {
+			const beforeDate = new Date(full.year, full.month - 1, -i + 1).getDate()
+			dateArr.push({
+				date: beforeDate,
+				month: full.month - 1,
+				lunar: this.getlunar(full.year, full.month - 1, beforeDate),
+				disable: true
+			})
+		}
+		return dateArr
+	}
+	/**
+	 * 获取本月天数
+	 */
+	_currentMonthDys(dateData, full) {
+		let dateArr = []
+		let fullDate = this.date.fullDate
+		for (let i = 1; i <= dateData; i++) {
+			let nowDate = full.year + '-' + (full.month < 10 ?
+				full.month : full.month) + '-' + (i < 10 ?
+				'0' + i : i)
+			// 是否今天
+			let isDay = fullDate === nowDate
+			// 获取打点信息
+			let info = this.selected && this.selected.find((item) => {
+				if (this.dateEqual(nowDate, item.date)) {
+					return item
+				}
+			})
+
+			// 日期禁用
+			let disableBefore = true
+			let disableAfter = true
+			if (this.startDate) {
+				// let dateCompBefore = this.dateCompare(this.startDate, fullDate)
+				// disableBefore = this.dateCompare(dateCompBefore ? this.startDate : fullDate, nowDate)
+				disableBefore = this.dateCompare(this.startDate, nowDate)
+			}
+
+			if (this.endDate) {
+				// let dateCompAfter = this.dateCompare(fullDate, this.endDate)
+				// disableAfter = this.dateCompare(nowDate, dateCompAfter ? this.endDate : fullDate)
+				disableAfter = this.dateCompare(nowDate, this.endDate)
+			}
+			let multiples = this.multipleStatus.data
+			let checked = false
+			let multiplesStatus = -1
+			if (this.range) {
+				if (multiples) {
+					multiplesStatus = multiples.findIndex((item) => {
+						return this.dateEqual(item, nowDate)
+					})
+				}
+				if (multiplesStatus !== -1) {
+					checked = true
+				}
+			}

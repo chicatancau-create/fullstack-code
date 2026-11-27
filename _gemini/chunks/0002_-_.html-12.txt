@@ -1,0 +1,84 @@
+    leg.g.quaternion.copy(f.q);
+    leg.g.rotateX(Math.sin(t * 1.8 + leg.ph) * 0.3);
+    leg.g.rotateZ(leg.side * 0.25);
+  }
+}
+
+/* ============ 花瓣：小方形薄片 ============ */
+const PETAL_CAP = 400;
+const petalMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7, side: THREE.DoubleSide });
+const petalMesh = dynMesh(PETAL_CAP, petalMat, false);
+const petals = [];
+{
+  const cols = [0xff8fb8, 0xff6fa5, 0xffa8c8, 0xffc4da, 0xf75590];
+  for (let i = 0; i < PETAL_CAP; i++) {
+    petalMesh.setColorAt(i, new THREE.Color(pick(cols)));
+    petals.push({ x: 0, y: -999, z: 0, vy: 0, ph: rr(0, 9), rs: rr(0.5, 2), size: rr(0.18, 0.3), live: false });
+  }
+  petalMesh.instanceColor.needsUpdate = true;
+}
+function respawnPetal(p) {
+  const t = pick(treeTops);
+  p.x = t.x + rr(-t.r, t.r); p.y = t.y + rr(-0.5, 1.2); p.z = t.z + rr(-t.r, t.r);
+  p.vy = rr(0.55, 1.15); p.g = t.g; p.live = true;
+}
+let windX = 0.35, windZ = 0.15;
+function updatePetals(t, dt, count) {
+  petalMesh.count = count;
+  for (let i = 0; i < count; i++) {
+    const p = petals[i];
+    if (!p.live || p.y < (p.g || 0) + 0.06) respawnPetal(p);
+    p.y -= p.vy * dt;
+    p.x += (Math.sin(t * 1.3 + p.ph) * 0.65 + windX) * dt;
+    p.z += (Math.cos(t * 1.1 + p.ph * 1.7) * 0.5 + windZ) * dt;
+    _e.set(t * p.rs + p.ph, p.ph + t * 0.6, t * p.rs * 0.7);
+    _q.setFromEuler(_e);
+    setInst(petalMesh, i, p.x, p.y, p.z, p.size, 0.035, p.size, _q);
+  }
+  petalMesh.instanceMatrix.needsUpdate = true;
+}
+
+/* ============ 瀑布水珠 / 溪流波光 / 池面鳞光 / 浮石 ============ */
+const dropMat = new THREE.MeshStandardMaterial({ color: 0xbfe9ff, transparent: true, opacity: 0.8, roughness: 0.2 });
+const dropMesh = dynMesh(80, dropMat, false);
+const drops = Array.from({ length: 80 }, () => ({ y: rr(-24, -0.5), v: rr(7, 11), x: rr(-0.4, 0.4), z: rr(-1.4, 1.4), s: rr(0.22, 0.34) }));
+const streakMat = new THREE.MeshStandardMaterial({ color: 0xeaf7ff, transparent: true, opacity: 0.5, roughness: 0.3 });
+const streakMesh = dynMesh(18, streakMat, false);
+const sparkleMesh = dynMesh(14, streakMat, false);
+const sparkles = Array.from({ length: 14 }, () => ({ a: rr(0, 9), r: rr(1, 5.4), sp: rr(0.05, 0.2), s: rr(0.3, 0.7) }));
+const shardMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
+const shardMesh = dynMesh(16, shardMat);
+const shards = Array.from({ length: 16 }, (_, i) => ({ r: rr(28, 42), a: rr(0, 9), y: rr(-9, 12), sp: rr(0.01, 0.04) * (i % 2 ? 1 : -1), s: rr(0.5, 1.4), bob: rr(0, 9) }));
+for (let i = 0; i < 16; i++) shardMesh.setColorAt(i, jitterColor(pick(ROCK)));
+shardMesh.instanceColor.needsUpdate = true;
+function updateWater(t, dt) {
+  drops.forEach((d, i) => {
+    d.y -= d.v * dt; d.x += dt * 0.25;
+    if (d.y < -25) { d.y = rr(-1.5, -0.4); d.x = rr(-0.4, 0.4); d.z = rr(-1.4, 1.4); }
+    setInst(dropMesh, i, fallX + d.x, d.y, fallZ + d.z, d.s, rr(0.7, 1.0), d.s);
+  });
+  dropMesh.instanceMatrix.needsUpdate = true;
+  for (let i = 0; i < 18; i++) {
+    const f = ((t * 0.12 + i / 18) % 1);
+    const segF = f * (streamPts.length - 1);
+    const si = Math.min(streamPts.length - 2, Math.floor(segF)), tt = segF - si;
+    const a = streamPts[si], b = streamPts[si + 1];
+    const x = a[0] + (b[0] - a[0]) * tt, z = a[1] + (b[1] - a[1]) * tt;
+    setInst(streakMesh, i, x + Math.sin(i * 3.7) * 0.8, -0.32, z + Math.cos(i * 2.9) * 0.8, 0.7, 0.05, 0.24, null);
+  }
+  streakMesh.instanceMatrix.needsUpdate = true;
+  sparkles.forEach((s, i) => {
+    const a = s.a + t * s.sp;
+    setInst(sparkleMesh, i, 9 + Math.cos(a) * s.r, -0.44, 9 + Math.sin(a) * s.r, s.s, 0.04, s.s * 0.6);
+  });
+  sparkleMesh.instanceMatrix.needsUpdate = true;
+  shards.forEach((s, i) => {
+    const a = s.a + t * s.sp;
+    _e.set(t * 0.1 + s.bob, a, t * 0.07); _q.setFromEuler(_e);
+    setInst(shardMesh, i, Math.cos(a) * s.r, s.y + Math.sin(t * 0.4 + s.bob) * 0.8, Math.sin(a) * s.r, s.s, s.s * 0.8, s.s, _q);
+  });
+  shardMesh.instanceMatrix.needsUpdate = true;
+}
+
+/* ============ 金鱼 ============ */
+const kois = [];

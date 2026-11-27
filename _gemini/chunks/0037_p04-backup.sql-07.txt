@@ -1,0 +1,35 @@
+CREATE POLICY clients_tenant_isolation ON p04.clients USING ((tenant_id = (current_setting('app.tenant_id'::text, true))::integer)) WITH CHECK ((tenant_id = (current_setting('app.tenant_id'::text, true))::integer));
+
+
+--
+-- Name: followups; Type: ROW SECURITY; Schema: p04; Owner: -
+--
+
+ALTER TABLE p04.followups ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: followups followups_tenant_isolation; Type: POLICY; Schema: p04; Owner: -
+--
+
+CREATE POLICY followups_tenant_isolation ON p04.followups USING ((tenant_id = (current_setting('app.tenant_id'::text, true))::integer)) WITH CHECK ((tenant_id = (current_setting('app.tenant_id'::text, true))::integer));
+
+
+--
+-- Name: jobs; Type: ROW SECURITY; Schema: p04; Owner: -
+--
+
+ALTER TABLE p04.jobs ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: jobs jobs_tenant_isolation; Type: POLICY; Schema: p04; Owner: -
+--
+
+CREATE POLICY jobs_tenant_isolation ON p04.jobs USING ((tenant_id = (current_setting('app.tenant_id'::text, true))::integer)) WITH CHECK ((tenant_id = (current_setting('app.tenant_id'::text, true))::integer));
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict T25OS8HwOXoE5FH38ZbeT8spK6CGHNJWSLroiUWd601qsYkTfR18PMiTIyWvDtS
+

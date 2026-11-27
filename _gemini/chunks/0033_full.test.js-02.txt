@@ -1,0 +1,80 @@
+  assert.equal(await statusOf(paid.id), 'refunded');
+  assert.equal(await stock(), 9);
+
+  const shipped = (await create(rowApp)).json();
+  await pay(rowApp, shipped.id);
+  await rowApp.inject({ method: 'POST', url: `/orders/${shipped.id}/ship`, headers: API });
+  assert.equal((await rowApp.inject({ method: 'POST', url: `/orders/${shipped.id}/refund`, headers: API })).statusCode, 200);
+  assert.equal(await statusOf(shipped.id), 'refunded');
+  assert.equal(await stock(), 8);
+});
+
+for (const strategy of ['row', 'optimistic']) {
+  test(`100 并发抢 10 件（${strategy} 锁）：成功 10、库存 0、无负库存`, async () => {
+    const app = strategy === 'row' ? rowApp : optApp;
+    const responses = await Promise.all(Array.from({ length: 100 }, () => create(app, crypto.randomUUID(), 'sku-1', 1)));
+    const codes = responses.map((r) => r.statusCode);
+    assert.equal(codes.filter((c) => c === 201).length, 10);
+    assert.equal(codes.filter((c) => c === 409).length, 90);
+    assert.equal(await stock(), 0);
+    const negative = await pool.query('SELECT count(*)::int AS n FROM p03.inventory WHERE stock < 0');
+    assert.equal(negative.rows[0].n, 0);
+    const orders = await pool.query('SELECT count(*)::int AS n FROM p03.orders');
+    assert.equal(orders.rows[0].n, 10);
+  });
+}
+
+test('Worker 消费 Outbox：生成通知、Inbox 去重、重复轮询不重复', async () => {
+  const order = (await create(rowApp)).json();
+  await pay(rowApp, order.id);
+  const first = await processOnce(pool);
+  assert.equal(first.filter((r) => r.status === 'sent').length, 1);
+  assert.equal((await processOnce(pool)).length, 0);
+  assert.equal((await pool.query('SELECT count(*)::int AS n FROM p03.notifications')).rows[0].n, 1);
+  assert.equal((await pool.query('SELECT count(*)::int AS n FROM p03.inbox')).rows[0].n, 1);
+});
+
+test('Worker 连续失败 5 次后进入 dead 并保留错误', async () => {
+  const order = (await create(rowApp)).json();
+  await pay(rowApp, order.id);
+  const broken = async () => { throw new Error('broker down'); };
+  for (let i = 0; i < 5; i += 1) await processOnce(pool, { publisher: broken });
+  const row = (await pool.query('SELECT status, attempts, last_error FROM p03.outbox')).rows[0];
+  assert.equal(row.status, 'dead');
+  assert.equal(row.attempts, 5);
+  assert.match(row.last_error, /broker down/);
+});
+
+test('OWASP 关键项：越权、安全头、过期/伪造回调、注入、审计、非法 ID', async () => {
+  const order = (await create(rowApp)).json();
+
+  const other = await rowApp.inject({ method: 'GET', url: `/orders/${order.id}`, headers: { 'x-api-key': 'test-key', 'x-user-id': 'bob' } });
+  assert.equal(other.statusCode, 404);
+
+  const health = await rowApp.inject({ method: 'GET', url: '/health' });
+  assert.equal(health.headers['x-content-type-options'], 'nosniff');
+  assert.equal(health.headers['x-frame-options'], 'DENY');
+  assert.equal(health.headers['referrer-policy'], 'no-referrer');
+
+  assert.equal((await create(rowApp, crypto.randomUUID(), "' OR 1=1 --", 1)).statusCode, 404);
+
+  const stale = { event_id: 'evt-stale', order_id: order.id, result: 'success', timestamp: Date.now() - 10 * 60 * 1000 };
+  assert.equal((await callback(rowApp, stale)).statusCode, 401);
+
+  const ok = { event_id: 'evt-ok', order_id: order.id, result: 'success', timestamp: Date.now() };
+  assert.equal((await callback(rowApp, ok)).statusCode, 200);
+  assert.equal((await callback(rowApp, { ...ok, result: 'failed', timestamp: Date.now() })).statusCode, 409);
+
+  const audit = await pool.query("SELECT actor, action, request_id, after FROM p03.audit_log WHERE action = 'order.create'");
+  assert.equal(audit.rowCount, 1);
+  assert.equal(audit.rows[0].actor, 'alice');
+  assert.ok(audit.rows[0].request_id);
+  assert.equal(audit.rows[0].after.sku, 'sku-1');
+
+  assert.equal((await rowApp.inject({ method: 'GET', url: '/orders/not-a-number', headers: API })).statusCode, 404);
+});
+
+test('OWASP 矩阵文档覆盖 A01–A10', () => {
+  const doc = fs.readFileSync('docs/owasp-matrix.md', 'utf8');
+  for (let i = 1; i <= 10; i += 1) assert.match(doc, new RegExp(`A${String(i).padStart(2, '0')}`));
+});

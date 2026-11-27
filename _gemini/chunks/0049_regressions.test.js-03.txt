@@ -1,0 +1,55 @@
+  const ws = await workspace(alice.token, 'alpha');
+  const task = await createTask(alice.token, ws.id, '任务一');
+  const response = await app.inject({
+    method: 'PATCH',
+    url: `/workspaces/${ws.id}/tasks/batch`,
+    headers: auth(alice.token),
+    payload: { updates: [{ id: task.id, status: 'bogus' }, { id: -1, status: 'done' }, { id: task.id, status: 'doing' }] },
+  });
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(response.json().results.map((item) => item.ok), [false, false, true]);
+  assert.deepEqual(response.json().results.map((item) => item.error || null), ['invalid_status', 'invalid_id', null]);
+  const row = await pool.query('SELECT status FROM p02.tasks WHERE id = $1', [task.id]);
+  assert.equal(row.rows[0].status, 'doing');
+});
+
+test('D88：批量不能改其他工作区任务', async () => {
+  const alice = await user('alice@example.com');
+  const bob = await user('bob@example.com');
+  const alpha = await workspace(alice.token, 'alpha');
+  const beta = await workspace(bob.token, 'beta');
+  const foreign = await createTask(alice.token, alpha.id, '别人的任务');
+  const response = await app.inject({
+    method: 'PATCH',
+    url: `/workspaces/${beta.id}/tasks/batch`,
+    headers: auth(bob.token),
+    payload: { updates: [{ id: foreign.id, status: 'done' }] },
+  });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.json().results[0].error, 'not_found');
+  const row = await pool.query('SELECT status FROM p02.tasks WHERE id = $1', [foreign.id]);
+  assert.equal(row.rows[0].status, 'todo');
+});
+
+test('D88：批量上限 50 条，超限整体拒绝', async () => {
+  const alice = await user('alice@example.com');
+  const ws = await workspace(alice.token, 'alpha');
+  const updates = Array.from({ length: 51 }, (_, index) => ({ id: index + 1, status: 'done' }));
+  const response = await app.inject({ method: 'PATCH', url: `/workspaces/${ws.id}/tasks/batch`, headers: auth(alice.token), payload: { updates } });
+  assert.equal(response.statusCode, 400);
+  assert.equal(response.json().error, 'invalid_updates');
+});
+
+test('D89：单条状态更新写审计且重复提交幂等', async () => {
+  const alice = await user('alice@example.com');
+  const ws = await workspace(alice.token, 'alpha');
+  const task = await createTask(alice.token, ws.id, '任务一');
+  const first = await app.inject({ method: 'PATCH', url: `/tasks/${task.id}`, headers: auth(alice.token), payload: { status: 'done' } });
+  assert.equal(first.statusCode, 200);
+  assert.equal(first.json().changed, true);
+  const second = await app.inject({ method: 'PATCH', url: `/tasks/${task.id}`, headers: auth(alice.token), payload: { status: 'done' } });
+  assert.equal(second.statusCode, 200);
+  assert.equal(second.json().changed, false);
+  const events = await pool.query('SELECT count(*)::int AS n FROM p02.task_events WHERE task_id = $1', [task.id]);
+  assert.equal(events.rows[0].n, 1);
+});

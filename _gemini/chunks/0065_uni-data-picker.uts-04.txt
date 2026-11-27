@@ -1,0 +1,125 @@
+      if (this._checkIsNotNull(this.where)) {
+        return `(${this.where as string}) && (${whereString})`
+      }
+
+      return whereString
+    },
+
+    _getWhereByForeignKey() : string {
+      let result : Array<string> = []
+      let whereField = this._getForeignKeyByField();
+      if (whereField.length > 0) {
+        result.push(`${whereField} == '${this.dataValue as string}'`)
+      }
+
+      if (this._checkIsNotNull(this.where)) {
+        return `(${this.where}) && (${result.join(' || ')})`
+      }
+
+      return result.join(' || ')
+    },
+
+    _getForeignKeyByField() : string {
+      const fields = this.field.split(',')
+      let whereField = ''
+      for (let i = 0; i < fields.length; i++) {
+        const items = fields[i].split('as')
+        if (items.length < 2) {
+          continue
+        }
+        if (items[1].trim() === 'value') {
+          whereField = items[0].trim()
+          break
+        }
+      }
+      return whereField
+    },
+
+    _getCommand(options ?: GetCommandOptions) : Promise<UniCloudDBGetResult> {
+      let db = uniCloud.databaseForJQL()
+
+      let collection = Array.isArray(this.collection) ? db.collection(...(this.collection as Array<any>)) : db.collection(this.collection)
+
+      let filter : UniCloudDBFilter | null = null
+      if (this.foreignKey.length > 0) {
+        filter = collection.foreignKey(this.foreignKey)
+      }
+
+      const where : any = options?.where ?? this.where
+      if (typeof where == 'string') {
+        const whereString = where as string
+        if (whereString.length > 0) {
+          filter = (filter != null) ? filter.where(where) : collection.where(where)
+        }
+      } else {
+        filter = (filter != null) ? filter.where(where) : collection.where(where)
+      }
+
+      let query : UniCloudDBQuery | null = null
+      if (this.field.length > 0) {
+        query = (filter != null) ? filter.field(this.field) : collection.field(this.field)
+      }
+      if (this.groupby.length > 0) {
+        if (query != null) {
+          query = query.groupBy(this.groupby)
+        } else if (filter != null) {
+          query = filter.groupBy(this.groupby)
+        }
+      }
+      if (this.groupField.length > 0) {
+        if (query != null) {
+          query = query.groupField(this.groupField)
+        } else if (filter != null) {
+          query = filter.groupField(this.groupField)
+        }
+      }
+      if (this.distinct == true) {
+        if (query != null) {
+          query = query.distinct(this.field)
+        } else if (filter != null) {
+          query = filter.distinct(this.field)
+        }
+      }
+      if (this.orderby.length > 0) {
+        if (query != null) {
+          query = query.orderBy(this.orderby)
+        } else if (filter != null) {
+          query = filter.orderBy(this.orderby)
+        }
+      }
+
+      const size = this.pagination.size
+      const current = this.pagination.current
+      if (query != null) {
+        query = query.skip(size * (current - 1)).limit(size)
+      } else if (filter != null) {
+        query = filter.skip(size * (current - 1)).limit(size)
+      } else {
+        query = collection.skip(size * (current - 1)).limit(size)
+      }
+
+      const getOptions = {}
+      const treeOptions = {
+        limitLevel: this.limitlevel,
+        startWith: this.startwith
+      }
+      if (this.getcount == true) {
+        getOptions['getCount'] = this.getcount
+      }
+
+      const getTree : any = options?.getTree ?? this.gettree
+      if (typeof getTree == 'string') {
+        const getTreeString = getTree as string
+        if (getTreeString.length > 0) {
+          getOptions['getTree'] = treeOptions
+        }
+      } else if (typeof getTree == 'object') {
+        getOptions['getTree'] = treeOptions
+      } else {
+        getOptions['getTree'] = getTree
+      }
+
+      const getTreePath = options?.getTreePath ?? this.gettreepath
+      if (typeof getTreePath == 'string') {
+        const getTreePathString = getTreePath as string
+        if (getTreePathString.length > 0) {

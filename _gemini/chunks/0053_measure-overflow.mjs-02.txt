@@ -1,0 +1,33 @@
+        const wide = [...document.querySelectorAll('body *')].filter(e => { const r=e.getBoundingClientRect(); return r.right > de.clientWidth + 1 && r.width > 0; })
+          .slice(0,4).map(e => e.tagName.toLowerCase()+'.'+(typeof e.className==='string'? e.className.trim().split(/\\s+/).slice(0,2).join('.') : '')+'@'+Math.round(e.getBoundingClientRect().right));
+        const clipped = [...document.querySelectorAll('body *')].filter(e => e.scrollWidth - e.clientWidth > 2 && getComputedStyle(e).overflowX !== 'visible' && getComputedStyle(e).overflowX !== 'auto' && getComputedStyle(e).overflowX !== 'scroll')
+          .slice(0,4).map(e => 'CLIP:'+e.tagName.toLowerCase()+'.'+(typeof e.className==='string'? e.className.trim().split(/\\s+/)[0] : ''));
+        let cover = 0, coverAt = '';
+        for (const row of document.querySelectorAll('.habit-row')) {
+          const s = row.querySelector('.stats'), a = row.querySelector('.row-actions');
+          if (!s || !a) continue;
+          const ar = a.getBoundingClientRect();
+          const sameLine = [...row.querySelectorAll('.identity,.cells,.stats,.row-actions')].some(e => { const r = e.getBoundingClientRect();
+            return e !== a && !e.contains(a) && r.top < ar.bottom - 2 && r.bottom > ar.top + 2; });
+          if (!sameLine) continue;
+          for (const c of s.children) { const cr = c.getBoundingClientRect();
+            if (cr.right > ar.left + 1 && cr.width > 0 && cr.top < ar.bottom - 2 && cr.bottom > ar.top + 2) {
+              if (cr.right - ar.left > cover) { cover = cr.right - ar.left; coverAt = c.className + '→' + Math.round(cr.right - ar.left); } } }
+        }
+        return { over, hash: location.hash, wide: wide.join(' '), clipped: clipped.join(' '), cover: Math.round(cover), coverAt }; })()`);
+      const ok = m.over <= 0 && m.cover <= 0;
+      if (!ok) bad++;
+      console.log(`${ok ? 'OK  ' : 'BAD '}  ${String(w).padStart(4)}px  ${m.hash.padEnd(9)} over=${String(m.over).padStart(4)} cover=${String(m.cover).padStart(3)}${m.coverAt ? '(' + m.coverAt + ')' : ''}  ${m.wide}${m.clipped ? '  ' + m.clipped : ''}`);
+    }
+  }
+  console.log(bad ? `\n${bad} 个「视口 x 路由」组合不合格(溢出或遮挡)` : '\n全部视口 x 路由组合无溢出且无遮挡');
+  cdp.close();
+  process.exitCode = bad ? 1 : 0;
+} catch (e) {
+  console.log('ABORT', e.message);
+  process.exitCode = 2;
+} finally {
+  if (child) { try { execFileSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore' }); } catch (e) {} }
+  try { fs.rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 }); } catch (e) {}
+}
+process.exit(process.exitCode ?? 0);

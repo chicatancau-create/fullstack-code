@@ -1,0 +1,96 @@
+import test, { before, after, beforeEach } from 'node:test';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import { createPool } from '../src/db.mjs';
+import { buildApp } from '../src/app.js';
+
+const API = { 'x-api-key': 'test-key', 'x-user-id': 'alice' };
+const PROVIDER_SECRET = 'test-provider-secret';
+const sign = (body) => crypto.createHmac('sha256', PROVIDER_SECRET).update(JSON.stringify(body)).digest('hex');
+
+let pool;
+let app;
+
+before(async () => {
+  pool = createPool();
+  app = buildApp({ pool });
+  await app.ready();
+});
+
+after(async () => {
+  await app.close();
+  await pool.end();
+});
+
+beforeEach(async () => {
+  await pool.query('TRUNCATE p03.notifications, p03.outbox, p03.payment_events, p03.order_items, p03.orders, p03.audit_log, p03.payments, p03.refunds RESTART IDENTITY CASCADE');
+  await pool.query('TRUNCATE p03.inventory, p03.products CASCADE');
+  await pool.query(`INSERT INTO p03.products (sku, title, price_cents) VALUES ('sku-1','机械键盘',299),('sku-2','显示器',1299)`);
+  await pool.query(
+    `INSERT INTO p03.inventory (sku, title, unit_price, stock) VALUES
+     ('sku-1', '机械键盘', 299, 10), ('sku-2', '显示器', 1299, 1)`,
+  );
+});
+
+async function createOrder(headers, body, key = crypto.randomUUID()) {
+  return app.inject({ method: 'POST', url: '/orders', headers: { ...API, ...headers, 'idempotency-key': key }, payload: body });
+}
+
+async function stock(sku) {
+  return (await pool.query('SELECT stock FROM p03.inventory WHERE sku = $1', [sku])).rows[0].stock;
+}
+
+async function orderStatus(id) {
+  return (await pool.query('SELECT status FROM p03.orders WHERE id = $1', [id])).rows[0]?.status;
+}
+
+test('health 无需鉴权，缺失 api key 或用户返回 401', async () => {
+  assert.equal((await app.inject({ method: 'GET', url: '/health' })).statusCode, 200);
+  assert.equal((await app.inject({ method: 'GET', url: '/orders/1' })).statusCode, 401);
+  const noUser = await app.inject({ method: 'GET', url: '/orders/1', headers: { 'x-api-key': 'test-key' } });
+  assert.equal(noUser.statusCode, 401);
+  const badUser = await app.inject({ method: 'GET', url: '/orders/1', headers: { 'x-api-key': 'test-key', 'x-user-id': 'A B' } });
+  assert.equal(badUser.statusCode, 401);
+});
+
+test('创建订单返回 201、服务端金额与快照，库存扣减一次', async () => {
+  const response = await createOrder({}, { sku: 'sku-1', qty: 2 });
+  assert.equal(response.statusCode, 201);
+  const order = response.json();
+  assert.equal(order.amount, 598);
+  assert.equal(order.unit_price, 299);
+  assert.equal(order.status, 'pending_payment');
+  assert.deepEqual(order.items, [{ sku: 'sku-1', title: '机械键盘', unit_price: 299, qty: 2 }]);
+  assert.equal(await stock('sku-1'), 8);
+});
+
+test('相同幂等键与相同请求返回 200 同一订单，库存不重复扣减', async () => {
+  const key = crypto.randomUUID();
+  const first = await createOrder({}, { sku: 'sku-1', qty: 3 }, key);
+  const second = await createOrder({}, { sku: 'sku-1', qty: 3 }, key);
+  assert.equal(first.statusCode, 201);
+  assert.equal(second.statusCode, 200);
+  assert.equal(second.json().id, first.json().id);
+  assert.equal(second.json().idempotent, true);
+  assert.equal(await stock('sku-1'), 7);
+});
+
+test('相同幂等键不同请求体返回 409，且不扣库存', async () => {
+  const key = crypto.randomUUID();
+  await createOrder({}, { sku: 'sku-1', qty: 1 }, key);
+  const conflict = await createOrder({}, { sku: 'sku-1', qty: 5 }, key);
+  assert.equal(conflict.statusCode, 409);
+  assert.equal(conflict.json().error, 'idempotency_conflict');
+  assert.equal(await stock('sku-1'), 9);
+  assert.equal((await pool.query('SELECT count(*)::int AS n FROM p03.orders')).rows[0].n, 1);
+});
+
+test('并发相同幂等键只产生一张订单', async () => {
+  const key = crypto.randomUUID();
+  const responses = await Promise.all(
+    Array.from({ length: 6 }, () => createOrder({}, { sku: 'sku-1', qty: 1 }, key)),
+  );
+  const statuses = responses.map((r) => r.statusCode).sort();
+  assert.deepEqual(statuses, [200, 200, 200, 200, 200, 201]);
+  const ids = new Set(responses.map((r) => r.json().id));
+  assert.equal(ids.size, 1);

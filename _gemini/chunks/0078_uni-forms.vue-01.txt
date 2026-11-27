@@ -1,0 +1,188 @@
+<template>
+	<view class="uni-forms">
+		<form>
+			<slot></slot>
+		</form>
+	</view>
+</template>
+
+<script>
+	import Validator from './validate.js';
+	import {
+		deepCopy,
+		getValue,
+		isRequiredField,
+		setDataValue,
+		getDataValue,
+		realName,
+		isRealName,
+		rawData,
+		isEqual
+	} from './utils.js'
+
+	// #ifndef VUE3
+	// 后续会慢慢废弃这个方法
+	import Vue from 'vue';
+	Vue.prototype.binddata = function(name, value, formName) {
+		if (formName) {
+			this.$refs[formName].setValue(name, value);
+		} else {
+			let formVm;
+			for (let i in this.$refs) {
+				const vm = this.$refs[i];
+				if (vm && vm.$options && vm.$options.name === 'uniForms') {
+					formVm = vm;
+					break;
+				}
+			}
+			if (!formVm) return console.error('当前 uni-froms 组件缺少 ref 属性');
+			formVm.setValue(name, value);
+		}
+	};
+	// #endif
+	/**
+	 * Forms 表单
+	 * @description 由输入框、选择器、单选框、多选框等控件组成，用以收集、校验、提交数据
+	 * @tutorial https://ext.dcloud.net.cn/plugin?id=2773
+	 * @property {Object} rules	表单校验规则
+	 * @property {String} validateTrigger = [bind|submit|blur]	校验触发器方式 默认 submit
+	 * @value bind		发生变化时触发
+	 * @value submit	提交时触发
+	 * @value blur	  失去焦点时触发
+	 * @property {String} labelPosition = [top|left]	label 位置 默认 left
+	 * @value top		顶部显示 label
+	 * @value left	左侧显示 label
+	 * @property {String} labelWidth	label 宽度，默认 70px
+	 * @property {String} labelAlign = [left|center|right]	label 居中方式  默认 left
+	 * @value left		label 左侧显示
+	 * @value center	label 居中
+	 * @value right		label 右侧对齐
+	 * @property {String} errShowType = [undertext|toast|modal]	校验错误信息提示方式
+	 * @value undertext	错误信息在底部显示
+	 * @value toast			错误信息toast显示
+	 * @value modal			错误信息modal显示
+	 * @event {Function} submit	提交时触发
+	 * @event {Function} validate	校验结果发生变化触发
+	 */
+	export default {
+		name: 'uniForms',
+		emits: ['validate', 'submit'],
+		options: {
+			virtualHost: true
+		},
+		props: {
+			// 即将弃用
+			value: {
+				type: Object,
+				default () {
+					return null;
+				}
+			},
+			// vue3 替换 value 属性
+			modelValue: {
+				type: Object,
+				default () {
+					return null;
+				}
+			},
+			// 1.4.0 开始将不支持 v-model ，且废弃 value 和 modelValue
+			model: {
+				type: Object,
+				default () {
+					return null;
+				}
+			},
+			// 表单校验规则
+			rules: {
+				type: Object,
+				default () {
+					return {};
+				}
+			},
+			//校验错误信息提示方式 默认 undertext 取值 [undertext|toast|modal]
+			errShowType: {
+				type: String,
+				default: 'undertext'
+			},
+			// 校验触发器方式 默认 bind 取值 [bind|submit]
+			validateTrigger: {
+				type: String,
+				default: 'submit'
+			},
+			// label 位置，默认 left 取值  top/left
+			labelPosition: {
+				type: String,
+				default: 'left'
+			},
+			// label 宽度
+			labelWidth: {
+				type: [String, Number],
+				default: ''
+			},
+			// label 居中方式，默认 left 取值 left/center/right
+			labelAlign: {
+				type: String,
+				default: 'left'
+			},
+			border: {
+				type: Boolean,
+				default: false
+			}
+		},
+		provide() {
+			return {
+				uniForm: this
+			}
+		},
+		data() {
+			return {
+				// 表单本地值的记录，不应该与传如的值进行关联
+				formData: {},
+				formRules: {}
+			};
+		},
+		computed: {
+			// 计算数据源变化的
+			localData() {
+				const localVal = this.model || this.modelValue || this.value
+				if (localVal) {
+					return deepCopy(localVal)
+				}
+				return {}
+			}
+		},
+		watch: {
+			// 监听数据变化 ,暂时不使用，需要单独赋值
+			// localData: {},
+			// 监听规则变化
+			rules: {
+				handler: function(val, oldVal) {
+					this.setRules(val)
+				},
+				deep: true,
+				immediate: true
+			}
+		},
+		created() {
+			// #ifdef VUE3
+			let getbinddata = getApp().$vm.$.appContext.config.globalProperties.binddata
+			if (!getbinddata) {
+				getApp().$vm.$.appContext.config.globalProperties.binddata = function(name, value, formName) {
+					if (formName) {
+						this.$refs[formName].setValue(name, value);
+					} else {
+						let formVm;
+						for (let i in this.$refs) {
+							const vm = this.$refs[i];
+							if (vm && vm.$options && vm.$options.name === 'uniForms') {
+								formVm = vm;
+								break;
+							}
+						}
+						if (!formVm) return console.error('当前 uni-froms 组件缺少 ref 属性');
+						formVm.setValue(name, value);
+					}
+				}
+			}
+			// #endif
+

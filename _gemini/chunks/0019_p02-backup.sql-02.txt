@@ -1,0 +1,138 @@
+789143eb-c5ac-4945-91b6-ce100d0eda85	30d39319-d43e-41c4-8ddb-7b6911a22b0d	bd0694a8f9240b97d1a46f343c7843a17b25c5d38216e0ba497cfa5a4c940e25	2026-11-16 09:23:41.431	\N	2026-11-09 09:23:41.432
+fdd409f2-8ede-49dc-8237-6fab75c0b5f6	30d39319-d43e-41c4-8ddb-7b6911a22b0d	3e2da6c52891abc227bd5283b557cf7932dfda179bb3048ff5cf3a0929b652fa	2026-11-16 09:23:41.475	\N	2026-11-09 09:23:41.476
+\.
+
+
+--
+-- Data for Name: Task; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public."Task" (id, "workspaceId", "ownerId", title, status, version, "createdAt", "updatedAt") FROM stdin;
+\.
+
+
+--
+-- Data for Name: User; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public."User" (id, email, name, "passwordHash", "createdAt") FROM stdin;
+30d39319-d43e-41c4-8ddb-7b6911a22b0d	restart-1794216221307@example.com	restart-1794216221307	scrypt$ee05a4b7d99e3b9d2ac8cc337d2f804d$a04e8054f9d6f9839dd79fcca0ec66d51ff7a7467ebae8ac21c660d735cd5ba09eddfce5f2e492d485de50c5996b5924e329916f21cb173e2ed99a43b030abc5	2026-11-09 09:23:41.429
+\.
+
+
+--
+-- Data for Name: Workspace; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public."Workspace" (id, name, "ownerId", "createdAt") FROM stdin;
+\.
+
+
+--
+-- Data for Name: _prisma_migrations; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) FROM stdin;
+bdced9be-0439-47e0-9f70-798705a87e27	f37a95082ab023d9fb5a53676b783598302d8024c3cb55427c4f0be3e6d4129b	2026-11-09 17:23:36.736365+08	20261108000000_init	\N	\N	2026-11-09 17:23:36.694193+08	1
+\.
+
+
+--
+-- Name: Comment Comment_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Comment"
+    ADD CONSTRAINT "Comment_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: Membership Membership_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Membership"
+    ADD CONSTRAINT "Membership_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: RefreshToken RefreshToken_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."RefreshToken"
+    ADD CONSTRAINT "RefreshToken_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: Task Task_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Task"
+    ADD CONSTRAINT "Task_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: User User_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."User"
+    ADD CONSTRAINT "User_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: Workspace Workspace_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Workspace"
+    ADD CONSTRAINT "Workspace_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: _prisma_migrations _prisma_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public._prisma_migrations
+    ADD CONSTRAINT _prisma_migrations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: Comment_taskId_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "Comment_taskId_idx" ON public."Comment" USING btree ("taskId");
+
+
+--
+-- Name: Membership_workspaceId_userId_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX "Membership_workspaceId_userId_key" ON public."Membership" USING btree ("workspaceId", "userId");
+
+
+--
+-- Name: RefreshToken_tokenHash_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX "RefreshToken_tokenHash_key" ON public."RefreshToken" USING btree ("tokenHash");
+
+
+--
+-- Name: RefreshToken_userId_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "RefreshToken_userId_idx" ON public."RefreshToken" USING btree ("userId");
+
+
+--
+-- Name: Task_one_in_progress_per_owner; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX "Task_one_in_progress_per_owner" ON public."Task" USING btree ("workspaceId", "ownerId") WHERE (status = 'in_progress'::public."TaskStatus");
+
+
+--
+-- Name: Task_workspaceId_status_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "Task_workspaceId_status_idx" ON public."Task" USING btree ("workspaceId", status);
+
+
+--

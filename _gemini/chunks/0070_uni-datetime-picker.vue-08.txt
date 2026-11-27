@@ -1,0 +1,22 @@
+		display: block;
+		width: 0;
+		height: 0;
+		border: 6px solid transparent;
+		border-top-width: 0;
+	}
+
+	.uni-popper__arrow {
+		filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.03));
+		top: -6px;
+		left: 10%;
+		margin-right: 3px;
+		border-bottom-color: #EBEEF5;
+	}
+
+	.uni-popper__arrow::after {
+		content: " ";
+		top: 1px;
+		margin-left: -6px;
+		border-bottom-color: #fff;
+	}
+</style>

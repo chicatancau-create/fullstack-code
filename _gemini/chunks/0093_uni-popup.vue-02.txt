@@ -1,0 +1,171 @@
+				let res = { backgroundColor: this.bg };
+				if (this.borderRadius || "0") {
+					res = Object.assign(res, { borderRadius: this.borderRadius })
+				}
+				return res;
+			},
+			isDesktop() {
+				return this.popupWidth >= 500 && this.popupHeight >= 500
+			},
+			bg() {
+				if (this.backgroundColor === '' || this.backgroundColor === 'none') {
+					return 'transparent'
+				}
+				return this.backgroundColor
+			}
+		},
+		mounted() {
+			const fixSize = () => {
+				const {
+					windowWidth,
+					windowHeight,
+					windowTop,
+					safeArea,
+					screenHeight,
+					safeAreaInsets
+				} = uni.getSystemInfoSync()
+				this.popupWidth = windowWidth
+				this.popupHeight = windowHeight + (windowTop || 0)
+				// TODO fix by mehaotian 是否适配底部安全区 ,目前微信ios 、和 app ios 计算有差异，需要框架修复
+				if (safeArea && this.safeArea) {
+					// #ifdef MP-WEIXIN
+					this.safeAreaInsets = screenHeight - safeArea.bottom
+					// #endif
+					// #ifndef MP-WEIXIN
+					this.safeAreaInsets = safeAreaInsets.bottom
+					// #endif
+				} else {
+					this.safeAreaInsets = 0
+				}
+			}
+			fixSize()
+			// #ifdef H5
+			// window.addEventListener('resize', fixSize)
+			// this.$once('hook:beforeDestroy', () => {
+			// 	window.removeEventListener('resize', fixSize)
+			// })
+			// #endif
+		},
+		// #ifndef VUE3
+		// TODO vue2
+		destroyed() {
+			this.setH5Visible()
+		},
+		// #endif
+		// #ifdef VUE3
+		// TODO vue3
+		unmounted() {
+			this.setH5Visible()
+		},
+		// #endif
+		activated() {
+   	  this.setH5Visible(!this.showPopup);
+    },
+    deactivated() {
+      this.setH5Visible(true);
+    },
+		created() {
+			// this.mkclick =  this.isMaskClick || this.maskClick
+			if (this.isMaskClick === null && this.maskClick === null) {
+				this.mkclick = true
+			} else {
+				this.mkclick = this.isMaskClick !== null ? this.isMaskClick : this.maskClick
+			}
+			if (this.animation) {
+				this.duration = 300
+			} else {
+				this.duration = 0
+			}
+			// TODO 处理 message 组件生命周期异常的问题
+			this.messageChild = null
+			// TODO 解决头条冒泡的问题
+			this.clearPropagation = false
+			this.maskClass.backgroundColor = this.maskBackgroundColor
+		},
+		methods: {
+			setH5Visible(visible = true) {
+				// #ifdef H5
+				// fix by mehaotian 处理 h5 滚动穿透的问题
+				document.getElementsByTagName('body')[0].style.overflow =  visible ? "visible" : "hidden";
+				// #endif
+			},
+			/**
+			 * 公用方法，不显示遮罩层
+			 */
+			closeMask() {
+				this.maskShow = false
+			},
+			/**
+			 * 公用方法，遮罩层禁止点击
+			 */
+			disableMask() {
+				this.mkclick = false
+			},
+			// TODO nvue 取消冒泡
+			clear(e) {
+				// #ifndef APP-NVUE
+				e.stopPropagation()
+				// #endif
+				this.clearPropagation = true
+			},
+
+			open(direction) {
+				// fix by mehaotian 处理快速打开关闭的情况
+				if (this.showPopup) {
+					return
+				}
+				let innerType = ['top', 'center', 'bottom', 'left', 'right', 'message', 'dialog', 'share']
+				if (!(direction && innerType.indexOf(direction) !== -1)) {
+					direction = this.type
+				}
+				if (!this.config[direction]) {
+					console.error('缺少类型：', direction)
+					return
+				}
+				this[this.config[direction]]()
+				this.$emit('change', {
+					show: true,
+					type: direction
+				})
+			},
+			close(type) {
+				this.showTrans = false
+				this.$emit('change', {
+					show: false,
+					type: this.type
+				})
+				clearTimeout(this.timer)
+				// // 自定义关闭事件
+				// this.customOpen && this.customClose()
+				this.timer = setTimeout(() => {
+					this.showPopup = false
+				}, 300)
+			},
+			// TODO 处理冒泡事件，头条的冒泡事件有问题 ，先这样兼容
+			touchstart() {
+				this.clearPropagation = false
+			},
+
+			onTap() {
+				if (this.clearPropagation) {
+					// fix by mehaotian 兼容 nvue
+					this.clearPropagation = false
+					return
+				}
+				this.$emit('maskClick')
+				if (!this.mkclick) return
+				this.close()
+			},
+			/**
+			 * 顶部弹出样式处理
+			 */
+			top(type) {
+				this.popupstyle = this.isDesktop ? 'fixforpc-top' : 'top'
+				this.ani = ['slide-top']
+				this.transClass = {
+					position: 'fixed',
+					left: 0,
+					right: 0,
+					backgroundColor: this.bg,
+					borderRadius:this.borderRadius || "0"
+				}

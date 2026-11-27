@@ -1,0 +1,200 @@
+				return (this.content.length + 1) * 55 + 15 + 'px'
+			},
+			contentWidthMin() {
+				return '55px'
+			},
+			// 动态计算宽度
+			boxWidth() {
+				return this.getPosition(3, 'horizontal')
+			},
+			// 动态计算高度
+			boxHeight() {
+				return this.getPosition(3, 'vertical')
+			},
+			// 计算左下位置
+			leftBottom() {
+				return this.getPosition(0, 'left', 'bottom')
+			},
+			// 计算右下位置
+			rightBottom() {
+				return this.getPosition(0, 'right', 'bottom')
+			},
+			// 计算左上位置
+			leftTop() {
+				return this.getPosition(0, 'left', 'top')
+			},
+			rightTop() {
+				return this.getPosition(0, 'right', 'top')
+			},
+			flexDirectionStart() {
+				return this.getPosition(1, 'vertical', 'top')
+			},
+			flexDirectionEnd() {
+				return this.getPosition(1, 'vertical', 'bottom')
+			},
+			horizontalLeft() {
+				return this.getPosition(2, 'horizontal', 'left')
+			},
+			horizontalRight() {
+				return this.getPosition(2, 'horizontal', 'right')
+			},
+			// 计算 nvue bottom
+			nvueBottom() {
+				const safeBottom = uni.getSystemInfoSync().windowBottom;
+				// #ifdef APP-NVUE
+				return 30 + safeBottom
+				// #endif
+				// #ifndef APP-NVUE
+				return 30
+				// #endif
+			}
+		},
+		watch: {
+			pattern: {
+				handler(val, oldVal) {
+					this.styles = Object.assign({}, this.styles, val)
+				},
+				deep: true
+			}
+		},
+		created() {
+			this.isShow = this.show
+			if (this.top === 0) {
+				this.fabShow = true
+			}
+			// 初始化样式
+			this.styles = Object.assign({}, this.styles, this.pattern)
+		},
+		methods: {
+			_onClick() {
+				this.$emit('fabClick')
+				if (!this.popMenu) {
+					return
+				}
+				this.isShow = !this.isShow
+			},
+			open() {
+				this.isShow = true
+			},
+			close() {
+				this.isShow = false
+			},
+			/**
+			 * 按钮点击事件
+			 */
+			_onItemClick(index, item) {
+				if (!this.isShow) {
+					return
+				}
+				this.$emit('trigger', {
+					index,
+					item
+				})
+			},
+			/**
+			 * 获取 位置信息
+			 */
+			getPosition(types, paramA, paramB) {
+				if (types === 0) {
+					return this.horizontal === paramA && this.vertical === paramB
+				} else if (types === 1) {
+					return this.direction === paramA && this.vertical === paramB
+				} else if (types === 2) {
+					return this.direction === paramA && this.horizontal === paramB
+				} else {
+					return this.isShow && this.direction === paramA ? this.contentWidth : this.contentWidthMin
+				}
+			}
+		}
+	}
+</script>
+
+<style lang="scss" >
+	$uni-shadow-base:0 1px 5px 2px rgba($color: #000000, $alpha: 0.3) !default;
+
+	.uni-fab {
+		position: fixed;
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		justify-content: center;
+		align-items: center;
+		z-index: 10;
+		border-radius: 45px;
+		box-shadow: $uni-shadow-base;
+	}
+
+	.uni-cursor-point {
+		/* #ifdef H5 */
+		cursor: pointer;
+		/* #endif */
+	}
+
+	.uni-fab--active {
+		opacity: 1;
+	}
+
+	.uni-fab--leftBottom {
+		left: 15px;
+		bottom: 30px;
+		/* #ifdef H5 */
+		left: calc(15px + var(--window-left));
+		bottom: calc(30px + var(--window-bottom));
+		/* #endif */
+		// padding: 10px;
+	}
+
+	.uni-fab--leftTop {
+		left: 15px;
+		top: 30px;
+		/* #ifdef H5 */
+		left: calc(15px + var(--window-left));
+		top: calc(30px + var(--window-top));
+		/* #endif */
+		// padding: 10px;
+	}
+
+	.uni-fab--rightBottom {
+		right: 15px;
+		bottom: 30px;
+		/* #ifdef H5 */
+		right: calc(15px + var(--window-right));
+		bottom: calc(30px + var(--window-bottom));
+		/* #endif */
+		// padding: 10px;
+	}
+
+	.uni-fab--rightTop {
+		right: 15px;
+		top: 30px;
+		/* #ifdef H5 */
+		right: calc(15px + var(--window-right));
+		top: calc(30px + var(--window-top));
+		/* #endif */
+		// padding: 10px;
+	}
+
+	.uni-fab__circle {
+		position: fixed;
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		justify-content: center;
+		align-items: center;
+		width: 55px;
+		height: 55px;
+		background-color: #3c3e49;
+		border-radius: 45px;
+		z-index: 11;
+		// box-shadow: $uni-shadow-base;
+	}
+
+	.uni-fab__circle--leftBottom {
+		left: 15px;
+		bottom: 30px;
+		/* #ifdef H5 */
+		left: calc(15px + var(--window-left));
+		bottom: calc(30px + var(--window-bottom));
+		/* #endif */
+	}
+

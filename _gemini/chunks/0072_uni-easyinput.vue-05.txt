@@ -1,0 +1,38 @@
+	.is-input-error-border {
+		border-color: $uni-error;
+
+		.uni-easyinput__placeholder-class {
+			color: mix(#fff, $uni-error, 50%);
+		}
+	}
+
+	.uni-easyinput--border {
+		margin-bottom: 0;
+		padding: 10px 15px;
+		// padding-bottom: 0;
+		border-top: 1px #eee solid;
+	}
+
+	.uni-easyinput-error {
+		padding-bottom: 0;
+	}
+
+	.is-first-border {
+		/* #ifndef APP-NVUE */
+		border: none;
+		/* #endif */
+		/* #ifdef APP-NVUE */
+		border-width: 0;
+		/* #endif */
+	}
+
+	.is-disabled {
+		background-color: #f7f6f6;
+		color: #d5d5d5;
+
+		.uni-easyinput__placeholder-class {
+			color: #d5d5d5;
+			font-size: 12px;
+		}
+	}
+</style>

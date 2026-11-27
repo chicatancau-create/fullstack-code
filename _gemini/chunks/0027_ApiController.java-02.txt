@@ -1,0 +1,69 @@
+        jdbc.update("DELETE FROM sessions WHERE token_hash = ?", AuthFilter.sha256(header.substring(7)));
+        return Map.of("status", "logged_out");
+    }
+
+    private long userId(HttpServletRequest request) {
+        return (Long) request.getAttribute(AuthFilter.USER_ID);
+    }
+
+    private String roleOf(long workspaceId, long userId) {
+        return jdbc.query("SELECT role FROM memberships WHERE workspace_id = ? AND user_id = ?",
+                rs -> rs.next() ? rs.getString(1) : null, workspaceId, userId);
+    }
+
+    private void requireOwner(long workspaceId, long userId) {
+        String role = roleOf(workspaceId, userId);
+        if (role == null) throw new ApiException(HttpStatus.NOT_FOUND, "not_found");
+        if (!"owner".equals(role)) throw new ApiException(HttpStatus.FORBIDDEN, "forbidden");
+    }
+
+    private void audit(long workspaceId, long actorId, String action, String target) {
+        jdbc.update("INSERT INTO audit_events (workspace_id, actor_id, action, target, metadata) VALUES (?, ?, ?, ?, CAST('{}' AS JSON))",
+                workspaceId, actorId, action, target);
+    }
+
+    private void requireMember(long workspaceId, long userId) {
+        Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM memberships WHERE workspace_id = ? AND user_id = ?",
+                Integer.class, workspaceId, userId);
+        if (count == null || count == 0) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "not_found");
+        }
+    }
+
+    @PostMapping("/workspaces")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> createWorkspace(HttpServletRequest request, @RequestBody Workspace body) {
+        if (body.name() == null || body.name().trim().length() < 2 || body.name().trim().length() > 120) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "invalid_name");
+        }
+        String slug = UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO workspaces (name, slug) VALUES (?, ?)", body.name().trim(), slug);
+        Long id = jdbc.queryForObject("SELECT id FROM workspaces WHERE slug = ?", Long.class, slug);
+        jdbc.update("INSERT INTO memberships (workspace_id, user_id, role) VALUES (?, ?, 'owner')", id, userId(request));
+        audit(id, userId(request), "workspace.create", "workspace:" + id);
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("id", id, "name", body.name().trim(), "role", "owner"));
+    }
+
+    @GetMapping("/workspaces")
+    public Map<String, Object> listWorkspaces(HttpServletRequest request) {
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "SELECT w.id, w.name, m.role FROM memberships m JOIN workspaces w ON w.id = m.workspace_id WHERE m.user_id = ? ORDER BY w.id",
+                userId(request));
+        return Map.of("workspaces", rows);
+    }
+
+    @PostMapping("/workspaces/{id}/members")
+    public ResponseEntity<Map<String, Object>> addMember(HttpServletRequest request, @PathVariable long id, @RequestBody Member body) {
+        String role = jdbc.query(
+                "SELECT role FROM memberships WHERE workspace_id = ? AND user_id = ?",
+                rs -> rs.next() ? rs.getString(1) : null, id, userId(request));
+        if (role == null) throw new ApiException(HttpStatus.NOT_FOUND, "not_found");
+        if (!"owner".equals(role)) throw new ApiException(HttpStatus.FORBIDDEN, "forbidden");
+        List<Long> target = jdbc.queryForList("SELECT id FROM users WHERE email = ?", Long.class, body.email().toLowerCase());
+        if (target.isEmpty()) throw new ApiException(HttpStatus.NOT_FOUND, "user_not_found");
+        try {
+            jdbc.update("INSERT INTO memberships (workspace_id, user_id, role) VALUES (?, ?, 'member')", id, target.getFirst());
+        } catch (DuplicateKeyException error) {
+            throw new ApiException(HttpStatus.CONFLICT, "already_member");
+        }
+        audit(id, userId(request), "member.add", "user:" + target.getFirst());

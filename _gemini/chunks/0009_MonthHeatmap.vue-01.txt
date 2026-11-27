@@ -1,0 +1,116 @@
+<template>
+  <section class="card heatmap">
+    <header class="hm-head">
+      <h3 class="section-title">打卡热力月历</h3>
+      <div class="hm-nav">
+        <button
+          class="btn btn-sm"
+          type="button"
+          aria-label="上一月"
+          @click="emit('change-month', -1)"
+        >
+          ‹ 上一月
+        </button>
+        <span class="hm-month" aria-live="polite">{{ monthLabel }}</span>
+        <button
+          class="btn btn-sm btn-primary"
+          type="button"
+          aria-label="下一月"
+          :disabled="nextDisabled"
+          @click="emit('change-month', 1)"
+        >
+          下一月 ›
+        </button>
+      </div>
+    </header>
+
+    <p class="muted hm-summary">
+      <span v-if="maxSafe">单日最多 {{ maxSafe }} 个习惯完成打卡</span>
+      <span v-else>本月还没有任何打卡记录</span>
+      <span v-if="nextDisabled" class="pill pill-amber hm-edge">已是当前月，未来月份不可查看</span>
+      <span v-else class="muted hm-edge">{{ monthAfterText }}</span>
+    </p>
+
+    <!-- 周一起排的表头，与下方 7 列网格严格对齐 -->
+    <div class="hm-weekdays" aria-hidden="true">
+      <span v-for="day in WEEK_LABELS" :key="day" class="hm-weekday">{{ day }}</span>
+    </div>
+
+    <div class="hm-grid" :aria-label="`${monthLabel}打卡热力图`">
+      <div
+        v-for="(cellKey, index) in safeCells"
+        :key="cellKey || `blank-${index}`"
+        class="hm-cell"
+        :class="cellClass(cellKey, index)"
+        :tabindex="isFocusable(cellKey) ? 0 : -1"
+        :aria-label="cellAriaLabel(cellKey)"
+      >
+        <template v-if="cellKey">
+          <span class="hm-day">{{ dayNumberOf(cellKey) }}</span>
+          <span v-if="countOf(cellKey)" class="hm-count">{{ countOf(cellKey) }}</span>
+          <!-- 悬停与键盘聚焦共用这一份明细：靠 CSS :hover / :focus 显隐，不注册监听、不碰 DOM -->
+          <div v-if="hasDetail(cellKey)" class="hm-tip" role="tooltip">
+            <strong class="hm-tip-title">{{ tipTitle(cellKey) }}</strong>
+            <ul class="hm-tip-list">
+              <li v-for="item in detailOf(cellKey)" :key="`${cellKey}-${item.name}`">
+                <i class="hm-dot" :style="{ backgroundColor: item.color }"></i>
+                <span>{{ item.name }}</span>
+              </li>
+            </ul>
+          </div>
+        </template>
+        <span v-else class="hm-blank" aria-hidden="true">·</span>
+      </div>
+    </div>
+
+    <footer class="hm-foot">
+      <button class="btn btn-sm hm-legend-btn" type="button" @click="showLegend = !showLegend">
+        {{ showLegend ? '收起色阶图例' : '查看色阶图例' }}
+      </button>
+      <div v-if="showLegend" class="hm-legend">
+        <span v-for="level in LEGEND" :key="level.cls" class="hm-legend-item">
+          <i class="hm-swatch" :class="level.cls"></i>{{ level.text }}
+        </span>
+        <span class="hm-legend-item"><i class="hm-swatch is-future-demo"></i>未来日期</span>
+      </div>
+    </footer>
+  </section>
+</template>
+
+<script setup>
+import { computed, ref } from 'vue'
+import { formatFullDate, isValidDateKey, toDateKey } from '@/utils/date'
+
+const props = defineProps({
+  // 'YYYY-MM'，标题直接由它推导，避免父页再传一份文案
+  monthKey: { type: String, default: '' },
+  cells: { type: Array, default: () => [] },
+  counts: { type: Object, default: () => ({}) },
+  detail: { type: Object, default: () => ({}) },
+  max: { type: Number, default: 0 },
+  todayKey: { type: String, default: toDateKey() },
+  // 「下一月不能超过当前月」这类边界由父页判定后下发
+  nextDisabled: { type: Boolean, default: false },
+})
+
+const emit = defineEmits(['change-month'])
+
+const WEEK_LABELS = ['一', '二', '三', '四', '五', '六', '日']
+const LEGEND = [
+  { cls: 'heat-0', text: '0 个习惯' },
+  { cls: 'heat-1', text: '1 个' },
+  { cls: 'heat-2', text: '2 个' },
+  { cls: 'heat-3', text: '3 个及以上' },
+]
+
+// 图例是纯 UI 开合状态，用 ref 足够，不必提升到父页
+const showLegend = ref(true)
+
+const safeCells = computed(() => (Array.isArray(props.cells) ? props.cells : []))
+
+const maxSafe = computed(() => {
+  const num = Number(props.max)
+  return Number.isFinite(num) && num > 0 ? num : 0
+})
+
+const monthLabel = computed(() => {

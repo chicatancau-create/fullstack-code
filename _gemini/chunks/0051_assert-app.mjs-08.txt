@@ -1,0 +1,32 @@
+  console.log('\n--- 12. 窄视口 390px ---');
+  await setViewport(390, 844);
+  await goto('/#/');
+  await sleep(800);
+  const overBoard = await evl(`document.documentElement.scrollWidth - document.documentElement.clientWidth`);
+  check('打卡页 390px 无横向溢出', overBoard <= 0, 'OVER=' + overBoard);
+  await shot('11-mobile-board');
+  await goto('/#/stats');
+  await sleep(900);
+  const overStats = await evl(`document.documentElement.scrollWidth - document.documentElement.clientWidth`);
+  check('统计页 390px 无横向溢出', overStats <= 0, 'OVER=' + overStats);
+  await shot('12-mobile-stats');
+  await setViewport(1280, 900);
+
+  console.log('\n--- 13. 反向对照：证明断言机制会红 ---');
+  check('负对照（预期 FAIL）：查询不存在的元素', (await evl(`!!document.querySelector('#__definitely_not_exists__')`)) === true, '这条必须显示 FAIL，否则说明断言是假的');
+
+  console.log('\nPAGE ERRORS:', pageErrors.length ? pageErrors.slice(0, 8) : 'none');
+  if (browserNoise.length) console.log('BROWSER NOISE (Edge 内建组件，非页面错误，已排除):', browserNoise.length, '条');
+} catch (e) {
+  fail++;
+  results.push('ABORT ' + e.message);
+  console.log('\n!!! ABORT:', e.message);
+} finally {
+  if (cdp) cdp.close();
+  if (child) { try { execFileSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore' }); } catch (e) {} }
+  try { fs.rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 }); } catch (e) {}
+  fs.writeFileSync(path.join(OUT, 'report.txt'), `BROWSER+断言结果\n${results.join('\n')}\n\nPASS=${pass} FAIL=${fail} NOT_EXECUTED=${skipped}`);
+  console.log(`\n===== PASS=${pass}  FAIL=${fail}（含 1 条故意的负对照）  NOT_EXECUTED=${skipped} =====`);
+  console.log('shots ->', OUT);
+}
+process.exit(fail > 1 ? 1 : 0);

@@ -1,0 +1,113 @@
+<template>
+	<!-- #ifdef APP-NVUE -->
+	<cell>
+		<!-- #endif -->
+		<view :hover-class="!clickable && !link ? '' : 'uni-list-chat--hover'" class="uni-list-chat" @click.stop="onClick">
+			<view :class="{ 'uni-list--border': border, 'uni-list-chat--first': isFirstChild }"></view>
+			<view class="uni-list-chat__container">
+				<view class="uni-list-chat__header-warp">
+					<view v-if="avatarCircle || avatarList.length === 0" class="uni-list-chat__header" :class="{ 'header--circle': avatarCircle }">
+						<image class="uni-list-chat__header-image" :class="{ 'header--circle': avatarCircle }" :src="avatarUrl" mode="aspectFill"></image>
+					</view>
+					<!-- 头像组 -->
+					<view v-else class="uni-list-chat__header">
+						<view v-for="(item, index) in avatarList" :key="index" class="uni-list-chat__header-box" :class="computedAvatar"
+						 :style="{ width: imageWidth + 'px', height: imageWidth + 'px' }">
+							<image class="uni-list-chat__header-image" :style="{ width: imageWidth + 'px', height: imageWidth + 'px' }" :src="item.url"
+							 mode="aspectFill"></image>
+						</view>
+					</view>
+				</view>
+				<!-- #ifndef APP -->
+				<view class="slot-header">
+				<!-- #endif -->
+					<slot name="header"></slot>
+				<!-- #ifndef APP -->
+				</view>
+				<!-- #endif -->
+				<view v-if="badgeText && badgePositon === 'left'" class="uni-list-chat__badge uni-list-chat__badge-pos" :class="[isSingle]">
+					<text class="uni-list-chat__badge-text">{{ badgeText === 'dot' ? '' : badgeText }}</text>
+				</view>
+				<view class="uni-list-chat__content">
+					<view class="uni-list-chat__content-main">
+						<text class="uni-list-chat__content-title uni-ellipsis">{{ title }}</text>
+						<view style="flex-direction: row;">
+							<text class="draft" v-if="isDraft">[草稿]</text>
+							<text class="uni-list-chat__content-note uni-ellipsis">{{isDraft?note.slice(14):note}}</text>
+						</view>
+					</view>
+					<view class="uni-list-chat__content-extra">
+						<slot>
+							<text class="uni-list-chat__content-extra-text">{{ time }}</text>
+							<view v-if="badgeText && badgePositon === 'right'" class="uni-list-chat__badge" :class="[isSingle, badgePositon === 'right' ? 'uni-list-chat--right' : '']">
+								<text class="uni-list-chat__badge-text">{{ badgeText === 'dot' ? '' : badgeText }}</text>
+							</view>
+						</slot>
+					</view>
+				</view>
+			</view>
+		</view>
+		<!-- #ifdef APP-NVUE -->
+	</cell>
+	<!-- #endif -->
+</template>
+
+<script>
+	// 头像大小
+	const avatarWidth = 45;
+
+	/**
+	 * ListChat 聊天列表
+	 * @description 聊天列表,用于创建聊天类列表
+	 * @tutorial https://ext.dcloud.net.cn/plugin?id=24
+	 * @property {String} 	title 							标题
+	 * @property {String} 	note 							描述
+	 * @property {Boolean} 	clickable = [true|false] 		是否开启点击反馈，默认为false
+	 * @property {String} 	badgeText						数字角标内容
+	 * @property {String}  	badgePositon = [left|right]		角标位置，默认为 right
+	 * @property {String} 	link = [false｜navigateTo|redirectTo|reLaunch|switchTab] 是否展示右侧箭头并开启点击反馈，默认为false
+	 *  @value false	 	不开启
+	 *  @value navigateTo 	同 uni.navigateTo()
+	 * 	@value redirectTo 	同 uni.redirectTo()
+	 * 	@value reLaunch   	同 uni.reLaunch()
+	 * 	@value switchTab  	同 uni.switchTab()
+	 * @property {String | PageURIString} 	to  			跳转目标页面
+	 * @property {String} 	time							右侧时间显示
+	 * @property {Boolean} 	avatarCircle = [true|false]		是否显示圆形头像，默认为false
+	 * @property {String} 	avatar							头像地址，avatarCircle 不填时生效
+	 * @property {Array} 	avatarList 						头像组，格式为 [{url:''}]
+	 * @event {Function} 	click 							点击 uniListChat 触发事件
+	 */
+	export default {
+		name: 'UniListChat',
+		emits:['click'],
+		props: {
+			title: {
+				type: String,
+				default: ''
+			},
+			note: {
+				type: String,
+				default: ''
+			},
+			clickable: {
+				type: Boolean,
+				default: false
+			},
+			link: {
+				type: [Boolean, String],
+				default: false
+			},
+			to: {
+				type: String,
+				default: ''
+			},
+			badgeText: {
+				type: [String, Number],
+				default: ''
+			},
+			badgePositon: {
+				type: String,
+				default: 'right'
+			},
+			time: {

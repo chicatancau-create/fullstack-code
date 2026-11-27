@@ -1,0 +1,56 @@
+				if (Array.isArray(keepitem)) {
+					keepitem.forEach(v => {
+						let vName = realName(v);
+						let value = getDataValue(v, this.localData)
+						if (value !== undefined) {
+							tempFormData[vName] = value
+						}
+					});
+				}
+
+				// TODO submit 即将废弃
+				if (type === 'submit') {
+					this.$emit('submit', {
+						detail: {
+							value: tempFormData,
+							errors: results
+						}
+					});
+				} else {
+					this.$emit('validate', results);
+				}
+
+				// const resetFormData = rawData(tempFormData, this.localData, this.name)
+				let resetFormData = {}
+				resetFormData = rawData(tempFormData, this.name)
+				callback && typeof callback === 'function' && callback(results, resetFormData);
+
+				if (promise && callback) {
+					return promise;
+				} else {
+					return null;
+				}
+
+			},
+
+			/**
+			 * 返回validate事件
+			 * @param {Object} result
+			 */
+			validateCheck(result) {
+				this.$emit('validate', result);
+			},
+			_getValue: getValue,
+			_isRequiredField: isRequiredField,
+			_setDataValue: setDataValue,
+			_getDataValue: getDataValue,
+			_realName: realName,
+			_isRealName: isRealName,
+			_isEqual: isEqual
+		}
+	};
+</script>
+
+<style lang="scss">
+	.uni-forms {}
+</style>

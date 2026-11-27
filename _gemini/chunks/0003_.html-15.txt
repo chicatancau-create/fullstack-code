@@ -1,0 +1,88 @@
+    postParts.push(stamp(xform(c, M().makeTranslation(sx, ground - 0.01 + len / 2, sz)), new THREE.Color(0x6c5638)));
+  }
+  const floor = new RoundedBoxGeometry(0.245, 0.016, 0.19, 2, 0.005);
+  postParts.push(stamp(xform(floor, M().makeTranslation(0, deck + 0.008, 0)), new THREE.Color(0xa88b5c)));
+
+  const walls = new RoundedBoxGeometry(0.205, 0.135, 0.165, 2, 0.008);
+  parts.push(stamp(xform(walls, M().makeTranslation(0, deck + 0.084, 0)), new THREE.Color(0xcbb08a)));
+  const roof = new THREE.ConeGeometry(0.185, 0.098, 4, 1);
+  const rm = M().makeRotationY(Math.PI / 4).multiply(M().makeScale(1.16, 1, 0.96)).multiply(
+    M().makeTranslation(0, deck + 0.202, 0));
+  parts.push(stamp(xform(roof, rm), new THREE.Color(0x9c7f4c)));
+  // 门廊柱 + 台阶
+  for (const sx of [-0.085, 0.085]) {
+    const p = new THREE.CylinderGeometry(0.007, 0.007, 0.14, 5, 1);
+    parts.push(stamp(xform(p, M().makeTranslation(sx, deck + 0.078, -0.10)), new THREE.Color(0x8d7048)));
+  }
+  for (let s = 0; s < 3; s++) {
+    const st = new THREE.BoxGeometry(0.09, 0.010, 0.026);
+    parts.push(stamp(xform(st, M().makeTranslation(0, deck - 0.012 - s * 0.042, -0.108 - s * 0.030)),
+      new THREE.Color(0xa88b5c)));
+  }
+  const merged = new THREE.Mesh(merge(parts), woodMat);
+  merged.castShadow = true; merged.receiveShadow = true;
+  const mergedPost = new THREE.Mesh(merge(postParts), woodMat);
+  mergedPost.castShadow = true; mergedPost.receiveShadow = true;
+  g.add(mergedPost, merged);
+
+  // 窗与灯
+  const winMat = emissiveMat(0xffae5c, 0);
+  for (const [px2, pz2, ry] of [[-0.055, -0.0835, 0], [0.055, -0.0835, 0], [0.1035, 0.0, Math.PI / 2]]) {
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(0.044, 0.038), winMat);
+    w.position.set(px2, deck + 0.093, pz2); w.rotation.y = ry;
+    if (ry === 0) w.rotation.x = -0.02;
+    g.add(w);
+  }
+  const door = new THREE.Mesh(new THREE.PlaneGeometry(0.048, 0.078),
+    new THREE.MeshStandardMaterial({ color: 0x4a3722, roughness: 0.85 }));
+  door.position.set(0.0, deck + 0.075, -0.0845);
+  g.add(door);
+
+  const lampBulb = new THREE.Mesh(new THREE.SphereGeometry(0.011, 12, 10), emissiveMat(0xffd9a0, 0));
+  lampBulb.position.set(0.0, deck + 0.150, -0.105);
+  g.add(lampBulb);
+  g.rotation.y = Math.PI / 2;
+  lampWarm.position.set(hx - 0.13, deck + 0.14, hz);
+  return { g, deck, pos: new THREE.Vector3(hx, 0, hz) };
+}
+const hut = makeHut();
+island.add(hut.g);
+
+function makePier(fromX, fromZ, toX, toZ, deckY) {
+  const g = new THREE.Group();
+  const parts = [], posts = [];
+  const N = 9;
+  const w = 0.085;
+  const dir = new THREE.Vector3(toX - fromX, 0, toZ - fromZ);
+  const len = dir.length();
+  const ang = Math.atan2(dir.x, dir.z);
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    const x = mix(fromX, toX, t), z = mix(fromZ, toZ, t);
+    const plank = new THREE.BoxGeometry(len / N * 0.80, 0.008, w);
+    const m = M().makeRotationY(ang);
+    const gg = xform(plank, m);
+    gg.translate(x, deckY, z);
+    parts.push(stamp(gg.clone(), new THREE.Color(0xb69768)));
+    if (i % 2 === 0) {
+      const bed = terrainH(x, z);
+      for (const off of [-w * 0.42, w * 0.42]) {
+        const ox = Math.cos(ang) * off, oz = -Math.sin(ang) * off;
+        const hl = Math.max(deckY - bed + 0.03, 0.012);
+        const c = new THREE.CylinderGeometry(0.0075, 0.0085, hl, 5, 1);
+        const cg = np(c).clone().translate(x + ox, bed - 0.02 + hl / 2, z + oz);
+        posts.push(stamp(cg, new THREE.Color(0x6b5537)));
+      }
+    }
+  }
+  // 扶手
+  for (const off of [-w * 0.5, w * 0.5]) {
+    const rail = new THREE.CylinderGeometry(0.0055, 0.0055, len, 4, 1);
+    rail.rotateX(Math.PI / 2);
+    rail.rotateY(ang);
+    const ox = Math.cos(ang) * off, oz = -Math.sin(ang) * off;
+    rail.translate((fromX + toX) / 2 + ox, deckY + 0.058, (fromZ + toZ) / 2 + oz);
+    parts.push(stamp(np(rail), new THREE.Color(0x9c7d52)));
+  }
+  const pm = new THREE.Mesh(merge(parts), woodMat);
+  pm.castShadow = true; pm.receiveShadow = true;

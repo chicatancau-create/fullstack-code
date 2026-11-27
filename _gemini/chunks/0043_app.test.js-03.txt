@@ -1,0 +1,60 @@
+  assert.equal(blocked.statusCode, 409);
+  assert.equal(blocked.json().error, 'seats_exceed_plan');
+  const members = (await app.inject({ method: 'GET', url: `/tenants/${tenant.id}/members`, headers: h(ownerToken) })).json().members;
+  const removed = members.filter((m) => m.role === 'member').slice(0, 2);
+  for (const member of removed) {
+    assert.equal((await app.inject({ method: 'DELETE', url: `/tenants/${tenant.id}/members/${member.id}`, headers: h(ownerToken) })).statusCode, 204);
+  }
+  const ok = await app.inject({ method: 'PATCH', url: `/tenants/${tenant.id}/plan`, headers: h(ownerToken), payload: { plan: 'free' } });
+  assert.equal(ok.statusCode, 200);
+  assert.equal(ok.json().seat_limit, 2);
+  const events = (await app.inject({ method: 'GET', url: `/tenants/${tenant.id}/audit`, headers: h(ownerToken) })).json().events;
+  assert.equal(events.filter((e) => e.action === 'tenant.plan_change').length, 1);
+  assert.equal(events.filter((e) => e.action === 'member.remove').length, 2);
+});
+
+test('owner 不能被移除，普通成员不能移除他人', async () => {
+  await register('owner@example.com');
+  await register('member@example.com');
+  const ownerToken = await login('owner@example.com');
+  const memberToken = await login('member@example.com');
+  const tenant = await makeTenant(ownerToken, 'team');
+  const inv = await invite(ownerToken, tenant.id, 'member@example.com');
+  await accept(memberToken, inv.json().token);
+  const members = (await app.inject({ method: 'GET', url: `/tenants/${tenant.id}/members`, headers: h(ownerToken) })).json().members;
+  const owner = members.find((m) => m.role === 'owner');
+  assert.equal((await app.inject({ method: 'DELETE', url: `/tenants/${tenant.id}/members/${owner.id}`, headers: h(ownerToken) })).statusCode, 409);
+  assert.equal((await app.inject({ method: 'DELETE', url: `/tenants/${tenant.id}/members/${owner.id}`, headers: h(memberToken) })).statusCode, 403);
+});
+
+test('跨租户读取与删除返回 404，成员不能访问别的组织', async () => {
+  await register('a@example.com');
+  await register('b@example.com');
+  const aToken = await login('a@example.com');
+  const bToken = await login('b@example.com');
+  const a = await makeTenant(aToken, 'team', 'A 公司');
+  await makeTenant(bToken, 'team', 'B 公司');
+  const client = await app.inject({ method: 'POST', url: `/tenants/${a.id}/clients`, headers: h(aToken), payload: { name: '客户甲' } });
+  assert.equal(client.statusCode, 201);
+  assert.equal((await app.inject({ method: 'GET', url: `/tenants/${a.id}/clients`, headers: h(bToken) })).statusCode, 404);
+  assert.equal((await app.inject({ method: 'DELETE', url: `/tenants/${a.id}/clients/${client.json().id}`, headers: h(bToken) })).statusCode, 404);
+  assert.equal((await app.inject({ method: 'GET', url: `/tenants/${a.id}/audit`, headers: h(bToken) })).statusCode, 404);
+  const list = await app.inject({ method: 'GET', url: `/tenants/${a.id}/clients`, headers: h(aToken) });
+  assert.equal(list.json().clients.length, 1);
+});
+
+test('成员可建客户与跟进；删除客户为软删除且仅 admin+ 可做', async () => {
+  await register('owner@example.com');
+  await register('member@example.com');
+  const ownerToken = await login('owner@example.com');
+  const memberToken = await login('member@example.com');
+  const tenant = await makeTenant(ownerToken, 'team');
+  const inv = await invite(ownerToken, tenant.id, 'member@example.com');
+  await accept(memberToken, inv.json().token);
+  const client = await app.inject({ method: 'POST', url: `/tenants/${tenant.id}/clients`, headers: h(memberToken), payload: { name: '客户乙', note: '合成数据' } });
+  assert.equal(client.statusCode, 201);
+  const follow = await app.inject({
+    method: 'POST', url: `/tenants/${tenant.id}/clients/${client.json().id}/followups`, headers: h(memberToken),
+    payload: { summary: '首次电话沟通', next_at: new Date(Date.now() + 86400000).toISOString() },
+  });
+  assert.equal(follow.statusCode, 201);

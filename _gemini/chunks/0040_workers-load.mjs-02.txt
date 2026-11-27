@@ -1,0 +1,76 @@
+     VALUES ($1,'boom','boom-1','{}'::jsonb, now() - interval '1 second', 0)`, [a.id],
+  );
+  for (let i = 0; i < 5; i += 1) {
+    await pool.query("UPDATE p04.jobs SET run_at = now() - interval '1 second' WHERE kind='boom'");
+    await processJobs(pool, { failKinds });
+  }
+  const dead = (await pool.query("SELECT status, attempts, last_error FROM p04.jobs WHERE kind='boom'")).rows[0];
+  assert.equal(dead.status, 'dead');
+  assert.equal(dead.attempts, 5);
+  const deadLetters = (await pool.query("SELECT count(*)::int AS n FROM p04.job_dead_letter")).rows[0].n;
+  assert.equal(deadLetters, 1);
+  log(`重试路径：boom 任务 5 次注入失败后 status=${dead.status} attempts=${dead.attempts}，死信=${deadLetters}`);
+  log('');
+
+  const overArgs = { remindersPerDay: 10000000, peakFactor: 3, msPerJob: 20, workerConcurrency: 1, workers: 1 };
+  for (const [label, args] of [
+    ['normal', { remindersPerDay: 1000, peakFactor: 3, msPerJob: 20, workerConcurrency: 4, workers: 1 }],
+    ['peak', { remindersPerDay: 1200000, peakFactor: 3, msPerJob: 20, workerConcurrency: 1, workers: 1 }],
+    ['over', overArgs],
+  ]) {
+    const est = capacityEstimate(args);
+    log(`容量估算 ${label}：normal=${est.normal_rps}rps peak=${est.peak_rps}rps capacity=${est.capacity_rps}rps util=${est.utilization} tier=${est.tier}`);
+  }
+  log('');
+
+  // 扩容验证：超容量档按 runbook「先加 worker/并发」逐个加 worker，找最小可行组合
+  const peakRpsNeeded = capacityEstimate(overArgs).peak_rps;
+  let scaling = null;
+  for (let workers = 1; workers <= 500; workers += 1) {
+    const est = capacityEstimate({ ...overArgs, workers, workerConcurrency: 4 });
+    if (est.tier !== 'over') { scaling = { workers, concurrencyPerWorker: 4, ...est }; break; }
+  }
+  assert.ok(scaling, '扩容扫描应能找到脱离 over 的组合');
+  assert.equal(scaling.tier, 'peak');
+  const doubled = capacityEstimate({ ...overArgs, workers: scaling.workers * 2, workerConcurrency: 4 });
+  log(`扩容验证：over 档峰值 ${peakRpsNeeded}rps，最小可行 ${scaling.workers} worker × 并发 ${scaling.concurrencyPerWorker} → capacity=${scaling.capacity_rps}rps util=${scaling.utilization} tier=${scaling.tier}；翻倍到 ${scaling.workers * 2} worker → util=${doubled.utilization} tier=${doubled.tier}`);
+  const dbCeiling = Number(process.env.PG_MAX_CONNECTIONS || 100);
+  log(`扩容约束：PostgreSQL max_connections=${dbCeiling}，worker 池上限需 ≤ 该值；本次方案 ${scaling.workers} 连接余量 ${dbCeiling - scaling.workers}`);
+  log('');
+
+  const child = spawn(process.execPath, ['src/worker.js'], {
+    env: { ...process.env, WORKER_PORT: '8798', WORKER_IDLE_MS: '500' },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  const exited = new Promise((resolve) => child.on('exit', (code) => resolve(code)));
+  await new Promise((resolve) => setTimeout(resolve, 1200));
+  child.kill('SIGTERM');
+  const exitCode = await exited;
+  if (process.platform === 'win32') {
+    log(`故障演练：Windows 下 child.kill 直接终止进程，exit=${exitCode}；SIGTERM 优雅关闭逻辑无法在 Windows 实测（未证实，仅 POSIX 可验证）`);
+  } else {
+    assert.equal(exitCode, 0);
+    log(`故障演练：独立 worker 收到 SIGTERM 后退出码=${exitCode}（优雅关闭）`);
+  }
+
+  const badClient = new pg.Client({ ...pool.options, port: 65432, connectionTimeoutMillis: 1500 });
+  let dbFault = 'unexpected';
+  try {
+    await badClient.connect();
+    await badClient.query('SELECT 1');
+    dbFault = 'connected';
+  } catch (error) {
+    dbFault = `rejected: ${error.code || error.message}`;
+  } finally {
+    await badClient.end().catch(() => {});
+  }
+  log(`故障演练：错误端口连接数据库 -> ${dbFault}；主连接池 /health=${(await app.inject({ method: 'GET', url: '/health' })).statusCode}`);
+
+  log('通知通道：SSE GET /tenants/:id/notifications/stream 由 tests/worker-runtime.test.js 自动验证（200 + text/event-stream + ": connected" + "id:" 与 data 事件；见 evidence/test.txt）');
+  log('优雅关闭：worker_runtime.shutdown() 与 SIGTERM 处理链由 tests/worker-runtime.test.js 自动验证（子进程退出码 0）');
+
+  fs.writeFileSync('evidence/workers-load.txt', lines.join('\n') + '\n');
+} finally {
+  await app.close().catch(() => {});
+  await pool.end();
+}

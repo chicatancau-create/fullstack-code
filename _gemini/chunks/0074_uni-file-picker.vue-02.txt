@@ -1,0 +1,212 @@
+				default: 'image'
+			},
+			// 文件类型筛选
+			fileExtname: {
+				type: [Array, String],
+				default () {
+					return []
+				}
+			},
+			title: {
+				type: String,
+				default: ''
+			},
+			listStyles: {
+				type: Object,
+				default () {
+					return {
+						// 是否显示边框
+						border: true,
+						// 是否显示分隔线
+						dividline: true,
+						// 线条样式
+						borderStyle: {}
+					}
+				}
+			},
+			imageStyles: {
+				type: Object,
+				default () {
+					return {
+						width: 'auto',
+						height: 'auto'
+					}
+				}
+			},
+			readonly: {
+				type: Boolean,
+				default: false
+			},
+			returnType: {
+				type: String,
+				default: 'array'
+			},
+			sizeType: {
+				type: Array,
+				default () {
+					return ['original', 'compressed']
+				}
+			},
+			sourceType: {
+				type: Array,
+				default () {
+					return  ['album', 'camera']
+				}
+			},
+			provider: {
+				type: String,
+				default: '' // 默认上传到 unicloud 内置存储 extStorage 扩展存储
+			}
+		},
+		data() {
+			return {
+				files: [],
+				localValue: []
+			}
+		},
+		watch: {
+			// #ifndef VUE3
+			value: {
+				handler(newVal, oldVal) {
+					this.setValue(newVal, oldVal)
+				},
+				immediate: true
+			},
+			// #endif
+			// #ifdef VUE3
+			modelValue: {
+				handler(newVal, oldVal) {
+					this.setValue(newVal, oldVal)
+				},
+				immediate: true
+			},
+			// #endif
+		},
+		computed: {
+			filesList() {
+				let files = []
+				this.files.forEach(v => {
+					files.push(v)
+				})
+				return files
+			},
+			showType() {
+				if (this.fileMediatype === 'image') {
+					return this.mode
+				}
+				return 'list'
+			},
+			limitLength() {
+				if (this.returnType === 'object') {
+					return 1
+				}
+				if (!this.limit) {
+					return 1
+				}
+				if (this.limit >= 9) {
+					return 9
+				}
+				return this.limit
+			}
+		},
+		created() {
+			// TODO 兼容不开通服务空间的情况
+			if (!(uniCloud.config && uniCloud.config.provider)) {
+				this.noSpace = true
+				uniCloud.chooseAndUploadFile = chooseAndUploadFile
+			}
+			this.form = this.getForm('uniForms')
+			this.formItem = this.getForm('uniFormsItem')
+			if (this.form && this.formItem) {
+				if (this.formItem.name) {
+					this.rename = this.formItem.name
+					this.form.inputChildrens.push(this)
+				}
+			}
+		},
+		methods: {
+			/**
+			 * 公开用户使用，清空文件
+			 * @param {Object} index
+			 */
+			clearFiles(index) {
+				if (index !== 0 && !index) {
+					this.files = []
+					this.$nextTick(() => {
+						this.setEmit()
+					})
+				} else {
+					this.files.splice(index, 1)
+				}
+				this.$nextTick(() => {
+					this.setEmit()
+				})
+			},
+			/**
+			 * 公开用户使用，继续上传
+			 */
+			upload() {
+				let files = []
+				this.files.forEach((v, index) => {
+					if (v.status === 'ready' || v.status === 'error') {
+						files.push(Object.assign({}, v))
+					}
+				})
+				return this.uploadFiles(files)
+			},
+			async setValue(newVal, oldVal) {
+				const newData =  async (v) => {
+					const reg = /cloud:\/\/([\w.]+\/?)\S*/
+					let url = ''
+					if(v.fileID){
+						url = v.fileID
+					}else{
+						url = v.url
+					}
+					if (reg.test(url)) {
+						v.fileID = url
+						v.url = await this.getTempFileURL(url)
+					}
+					if(v.url) v.path = v.url
+					return v
+				}
+				if (this.returnType === 'object') {
+					if (newVal) {
+						await newData(newVal)
+					} else {
+						newVal = {}
+					}
+				} else {
+					if (!newVal) newVal = []
+					for(let i =0 ;i < newVal.length ;i++){
+						let v = newVal[i]
+						await newData(v)
+					}
+				}
+				this.localValue = newVal
+				if (this.form && this.formItem &&!this.is_reset) {
+					this.is_reset = false
+					this.formItem.setValue(this.localValue)
+				}
+				let filesData = Object.keys(newVal).length > 0 ? newVal : [];
+				this.files = [].concat(filesData)
+			},
+
+			/**
+			 * 选择文件
+			 */
+			choose() {
+				if (this.disabled) return
+				if (this.files.length >= Number(this.limitLength) && this.showType !== 'grid' && this.returnType ===
+					'array') {
+					uni.showToast({
+						title: `您最多选择 ${this.limitLength} 个文件`,
+						icon: 'none'
+					})
+					return
+				}
+				this.chooseFiles()
+			},
+
+			/**
+			 * 选择文件并上传

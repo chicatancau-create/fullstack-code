@@ -1,0 +1,90 @@
+    "three": "https://fastly.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+    "three/addons/": "https://fastly.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="app"><canvas id="view"></canvas></div>
+
+<div class="brand"><h1>浮空树脂小岛</h1><p>FLOATING RESIN ISLAND — 实时 3D 沙盘</p></div>
+
+<div class="panel">
+  <div class="row"><span class="lab">光照 Time of day</span><span class="val" id="todName">正午</span></div>
+  <input type="range" id="tod" min="0" max="1000" value="0">
+  <div class="ticks"><b data-t="0">正午</b><b data-t="500">黄昏</b><b data-t="1000">夜晚</b></div>
+  <div class="row" style="margin-top:10px">
+    <span class="lab">自动环绕</span><span class="sw on" id="swOrbit"><i></i></span>
+  </div>
+  <div class="row">
+    <span class="lab">画质</span>
+    <select id="quality">
+      <option value="cine" selected>影视级</option>
+      <option value="balanced">均衡</option>
+      <option value="fast">流畅</option>
+    </select>
+  </div>
+  <div class="row"><span class="lab">帧率</span><span class="val" id="fps">—</span></div>
+</div>
+
+<div class="keys">
+  <div><kbd>拖动</kbd> 环绕 · <kbd>滚轮</kbd> 缩放</div>
+  <div><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 光照预设 · <kbd>空格</kbd> 环绕 · <kbd>H</kbd> 隐藏界面</div>
+</div>
+
+<div id="boot"><div class="in">
+  <div class="spin"></div><h2>正在铸造树脂小岛…</h2><pre id="bootErr"></pre>
+</div></div>
+
+<script type="module">
+/* ============================================================================
+   浮空树脂小岛 — 单文件实时 3D 沙盘
+   Three.js r169 / GTAO + Bloom + AgX + SMAA / 全程序化贴图 / 无外部资源
+============================================================================ */
+const bootEl = document.getElementById('boot'), bootErr = document.getElementById('bootErr');
+function fatal(err) {
+  console.error(err);
+  if (!bootEl || !document.body.contains(bootEl)) return;
+  bootEl.querySelector('.spin').style.display = 'none';
+  bootEl.querySelector('h2').textContent = '无法启动';
+  bootErr.style.display = 'block';
+  bootErr.textContent = (err && (err.message || err)) +
+    '\n\n多半是 CDN 连接抖动。重试；若仍失败，把 importmap 里的 fastly.jsdelivr.net 换成 unpkg.com 或本地 three 构建。';
+  if (!bootEl.querySelector('button')) {
+    const b = document.createElement('button');
+    b.textContent = '重新加载';
+    b.style.cssText = 'margin-top:12px;padding:7px 18px;border-radius:8px;border:1px solid rgba(255,120,90,.35);' +
+      'background:rgba(255,120,90,.12);color:#e9eef5;font:inherit;cursor:pointer';
+    b.onclick = () => location.reload();
+    bootEl.querySelector('.in').appendChild(b);
+  }
+}
+
+let THREE, OrbitControls, EffectComposer, RenderPass, ShaderPass, GTAOPass,
+    UnrealBloomPass, OutputPass, SMAAPass, RoundedBoxGeometry, BGU;
+addEventListener('error', (e) => { if (document.getElementById('boot')) fatal(e.error || e.message); });
+addEventListener('unhandledrejection', (e) => { if (document.getElementById('boot')) fatal(e.reason); });
+/* 模块加载：同一 URL 失败会被浏览器负缓存，所以兜底要换镜像。
+   addon 内部的 import 'three' 始终走 importmap，因此不会出现两份 three 实例。 */
+const HOSTS = [
+  'https://fastly.jsdelivr.net/npm/three@0.169.0/',
+  'https://cdn.jsdelivr.net/npm/three@0.169.0/',
+  'https://unpkg.com/three@0.169.0/',
+  'https://registry.npmmirror.com/three/0.169.0/files/'
+];
+async function imp(spec) {
+  try { return await import(spec); }
+  catch (e) {
+    const rel = spec.startsWith('three/addons/') ? 'examples/jsm/' + spec.slice('three/addons/'.length) : null;
+    if (!rel) throw e;                       // 核心库必须与 importmap 同源，换源会得到两份 three
+    let last = e;
+    for (const h of HOSTS) { try { return await import(h + rel); } catch (e2) { last = e2; } }
+    throw last;
+  }
+}
+try {
+  THREE = await imp('three');
+  ({ OrbitControls } = await imp('three/addons/controls/OrbitControls.js'));
+  ({ EffectComposer } = await imp('three/addons/postprocessing/EffectComposer.js'));
+  ({ RenderPass } = await imp('three/addons/postprocessing/RenderPass.js'));
+  ({ ShaderPass } = await imp('three/addons/postprocessing/ShaderPass.js'));

@@ -1,0 +1,173 @@
+					this.tempRange.before = ''
+					this.tempRange.after = ''
+					this.cale.multipleStatus.before = ''
+					this.cale.multipleStatus.after = ''
+					this.cale.multipleStatus.data = []
+					this.cale.lastHover = false
+				} else {
+					this.time = ''
+					this.tempSingleDate = ''
+				}
+				this.calendar.fullDate = ''
+				this.setDate(new Date())
+			},
+
+			bindDateChange(e) {
+				const value = e.detail.value + '-1'
+				this.setDate(value)
+			},
+			/**
+			 * 初始化日期显示
+			 * @param {Object} date
+			 */
+			init(date) {
+				// 字节小程序 watch 早于 created
+				if (!this.cale) {
+					return
+				}
+				this.cale.setDate(date || new Date())
+				this.weeks = this.cale.weeks
+				this.nowDate = this.cale.getInfo(date)
+				this.calendar = {
+					...this.nowDate
+				}
+				if (!date) {
+					// 优化date为空默认不选中今天
+					this.calendar.fullDate = ''
+					if (this.defaultValue && !this.range) {
+						// 暂时只支持移动端非范围选择
+						const defaultDate = new Date(this.defaultValue)
+						const fullDate = getDate(defaultDate)
+						const year = defaultDate.getFullYear()
+						const month = defaultDate.getMonth() + 1
+						const date = defaultDate.getDate()
+						const day = defaultDate.getDay()
+						this.calendar = {
+								fullDate,
+								year,
+								month,
+								date,
+								day
+							},
+							this.tempSingleDate = fullDate
+						this.time = getTime(defaultDate, this.hideSecond)
+					}
+				}
+			},
+			/**
+			 * 打开日历弹窗
+			 */
+			open() {
+				// 弹窗模式并且清理数据
+				if (this.clearDate && !this.insert) {
+					this.cale.cleanMultipleStatus()
+					this.init(this.date)
+				}
+				this.show = true
+				this.$nextTick(() => {
+					setTimeout(() => {
+						this.aniMaskShow = true
+					}, 50)
+				})
+			},
+			/**
+			 * 关闭日历弹窗
+			 */
+			close() {
+				this.aniMaskShow = false
+				this.$nextTick(() => {
+					setTimeout(() => {
+						this.show = false
+						this.$emit('close')
+					}, 300)
+				})
+			},
+			/**
+			 * 确认按钮
+			 */
+			confirm() {
+				this.setEmit('confirm')
+				this.close()
+			},
+			/**
+			 * 变化触发
+			 */
+			change(isSingleChange) {
+				if (!this.insert && !isSingleChange) return
+				this.setEmit('change')
+			},
+			/**
+			 * 选择月份触发
+			 */
+			monthSwitch() {
+				let {
+					year,
+					month
+				} = this.nowDate
+				this.$emit('monthSwitch', {
+					year,
+					month: Number(month)
+				})
+			},
+			/**
+			 * 派发事件
+			 * @param {Object} name
+			 */
+			setEmit(name) {
+				if (!this.range) {
+					if (!this.calendar.fullDate) {
+						this.calendar = this.cale.getInfo(new Date())
+						this.tempSingleDate = this.calendar.fullDate
+					}
+					if (this.hasTime && !this.time) {
+						this.time = getTime(new Date(), this.hideSecond)
+					}
+				}
+				let {
+					year,
+					month,
+					date,
+					fullDate,
+					extraInfo
+				} = this.calendar
+				this.$emit(name, {
+					range: this.cale.multipleStatus,
+					year,
+					month,
+					date,
+					time: this.time,
+					timeRange: this.timeRange,
+					fulldate: fullDate,
+					extraInfo: extraInfo || {}
+				})
+			},
+			/**
+			 * 选择天触发
+			 * @param {Object} weeks
+			 */
+			choiceDate(weeks) {
+				if (weeks.disable) return
+				this.calendar = weeks
+				this.calendar.userChecked = true
+				// 设置多选
+				this.cale.setMultiple(this.calendar.fullDate, true)
+				this.weeks = this.cale.weeks
+				this.tempSingleDate = this.calendar.fullDate
+				const beforeDate = new Date(this.cale.multipleStatus.before).getTime()
+				const afterDate = new Date(this.cale.multipleStatus.after).getTime()
+				if (beforeDate > afterDate && afterDate) {
+					this.tempRange.before = this.cale.multipleStatus.after
+					this.tempRange.after = this.cale.multipleStatus.before
+				} else {
+					this.tempRange.before = this.cale.multipleStatus.before
+					this.tempRange.after = this.cale.multipleStatus.after
+				}
+				this.change(true)
+			},
+			changeMonth(type) {
+				let newDate
+				if (type === 'pre') {
+					newDate = this.cale.getPreMonthObj(this.nowDate.fullDate).fullDate
+				} else if (type === 'next') {
+					newDate = this.cale.getNextMonthObj(this.nowDate.fullDate).fullDate
+				}

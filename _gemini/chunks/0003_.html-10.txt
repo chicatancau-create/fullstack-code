@@ -1,0 +1,93 @@
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx);
+  g.computeBoundingSphere();
+  return g;
+}
+const wallMat = new THREE.MeshStandardMaterial({
+  map: TEX.sediment, normalMap: TEX.sedimentNormal, normalScale: new THREE.Vector2(1.1, 1.1),
+  roughness: 0.95, metalness: 0.0, side: THREE.DoubleSide
+});
+wallMat.normalMap.repeat.set(6, 3);
+applyUnderwater(wallMat, { caustic: 0.75, wetRough: 0.35, tag: 'wall' });
+const coreWall = new THREE.Mesh(buildCoreWall(CORE, 200), wallMat);
+coreWall.receiveShadow = true;
+island.add(coreWall);
+
+/* 底面 */
+const bottomMat = new THREE.MeshStandardMaterial({ color: 0x3a3630, roughness: 1, map: TEX.sediment });
+bottomMat.map.repeat.set(0.6, 0.6);
+const bottom = new THREE.Mesh(
+  new THREE.CircleGeometry(CORE, 72),
+  bottomMat
+);
+bottom.rotation.x = Math.PI / 2; bottom.position.y = Y_BOT;
+island.add(bottom);
+/* ---------------------------------------------------------------- 水体 / 树脂壳 */
+/* 水面：程序化 Gerstner 法线 + 天空反射 + 岸线泡沫 */
+const waterUni = Object.assign(skyUniformValues(), {
+  uTime: U.time, uWaterY: { value: WATER_Y }, uHeightTex: U.heightTex,
+  uHeightRange: U.heightRange, uAbsorb: U.absorb, uDeep: U.waterDeep,
+  uShallow: U.waterShallow, uFoam: { value: 1 }, uNight: U.night,
+  uSunDir: U.sunDir, uSunCol: U.sunCol, uSunI: U.sunI, uR: { value: 0.990 },
+  uWindI: U.windI, uWind: U.wind
+});
+const waterMat = new THREE.ShaderMaterial({
+  uniforms: waterUni, transparent: true, depthWrite: false, side: THREE.FrontSide,
+  vertexShader: /* glsl */`
+    uniform float uTime, uWaterY, uR, uWindI; uniform vec2 uWind;
+    varying vec3 vWPos; varying float vW; varying float vRho;
+    ${GLSL_NOISE}
+    const vec2 W1 = vec2( 6.1, 2.7), W2 = vec2(-2.9, 7.3), W3 = vec2(11.7,-7.1), W4 = vec2(-13.1,-4.3);
+    float wh(vec2 p, float t){
+      float h = 0.0;
+      h += 0.0046*sin(dot(p,W1)+t*1.15);
+      h += 0.0034*sin(dot(p,W2)+t*1.52);
+      h += 0.0024*sin(dot(p,W3)+t*2.17);
+      h += 0.0015*sin(dot(p,W4)+t*2.93);
+      return h;
+    }
+    vec2 wn(vec2 p, float t){
+      vec2 d = vec2(0.0);
+      d += W1*0.0046*cos(dot(p,W1)+t*1.15);
+      d += W2*0.0034*cos(dot(p,W2)+t*1.52);
+      d += W3*0.0024*cos(dot(p,W3)+t*2.17);
+      d += W4*0.0015*cos(dot(p,W4)+t*2.93);
+      return d;
+    }
+    void main(){
+      vec3 pos = position;
+      float rho = length(pos.xz)/uR;
+      float fade = smoothstep(1.0, 0.86, rho);
+      float t = uTime;
+      float e = 0.01;
+      float detail = 0.0016*fbm2(pos.xz*3.4 + vec2(t*0.16, t*0.09));
+      pos.y = uWaterY + (wh(pos.xz, t) + detail) * fade * uWindI;
+      vW = pos.y; vRho = rho;
+      vec4 wp = modelMatrix*vec4(pos,1.0);
+      vWPos = wp.xyz;
+      gl_Position = projectionMatrix*viewMatrix*wp;
+    }`,
+  fragmentShader: GLSL_NOISE + GLSL_SAFE + GLSL_CAUSTIC + GLSL_SKY + /* glsl */`
+    uniform sampler2D uHeightTex; uniform vec2 uHeightRange, uWind;
+    uniform float uTime, uWaterY, uR, uFoam, uWindI;
+    uniform vec3 uAbsorb, uDeep, uShallow;
+    varying vec3 vWPos; varying float vW; varying float vRho;
+    void main(){
+      vec2 p = vWPos.xz;
+      vec2 tuv = p * 0.5 + 0.5;
+      float hb = uHeightRange.x + texture2D(uHeightTex, tuv).r*uHeightRange.y;
+      if ( hb > uWaterY - 0.0045 ) discard;
+
+      // 法线 = 波浪解析导数 + 高频细节
+      float t = uTime; float e = 0.012;
+      vec2 d = vec2(0.0);
+      d += vec2(6.1,2.7)*0.0046*cos(dot(p,vec2(6.1,2.7))+t*1.15);
+      d += vec2(-2.9,7.3)*0.0034*cos(dot(p,vec2(-2.9,7.3))+t*1.52);
+      d += vec2(11.7,-7.1)*0.0024*cos(dot(p,vec2(11.7,-7.1))+t*2.17);
+      d += vec2(-13.1,-4.3)*0.0015*cos(dot(p,vec2(-13.1,-4.3))+t*2.93);
+      d *= uWindI;
+      vec2 n1 = vec2( fbm2(p*3.1 + vec2(t*0.20, -t*0.11)), fbm2(p*3.1 + vec2(-t*0.13, t*0.24)) );
+      vec2 n2 = vec2( fbm2(p*7.7 - vec2(t*0.31, t*0.07)), fbm2(p*7.7 + vec2(t*0.09, -t*0.27)) );
+      vec3 N = normalize(vec3( -(d.x + n1.x*0.010 + n2.x*0.0055), 1.0, -(d.y + n1.y*0.010 + n2.y*0.0055) ));
+
+      vec3 V = normalize( vWPos - cameraPosition );

@@ -1,0 +1,89 @@
+          getOptions['getTreePath'] = getTreePath
+        }
+      } else {
+        getOptions['getTreePath'] = getTreePath
+      }
+
+      return query.get(getOptions)
+    },
+
+    _checkIsNotNull(value : any) : boolean {
+      if (typeof value == 'string') {
+        const valueString = value as string
+        return (valueString.length > 0)
+      } else if (value instanceof UTSJSONObject) {
+        return true
+      }
+      return false
+    },
+
+    _checkIsLeafNode(nodeData : UTSJSONObject) : boolean {
+      if (this.selectedIndex >= this.limitlevel) {
+        return true
+      }
+
+      if (nodeData.getBoolean('isleaf', false)) {
+        return true
+      }
+
+      return false
+    },
+
+    _checkHasChildren(nodeData : UTSJSONObject) : boolean {
+      const children = nodeData.getArray('children') ?? ([] as Array<any>)
+      return children.length > 0
+    },
+
+    _pushSelectedNodes(nodes : Array<UTSJSONObject>) {
+      this.selectedNodes.push(DefaultSelectedNode)
+      this.selectedPages.push(nodes)
+      this.selectedIndex = this.selectedPages.length - 1
+    },
+
+    _trimSelectedNodes(nodeData : UTSJSONObject) {
+      this.selectedNodes.splice(this.selectedIndex)
+      this.selectedNodes.push(nodeData)
+
+      if (this.selectedPages.length > 0) {
+        this.selectedPages.splice(this.selectedIndex + 1)
+      }
+
+      const children = nodeData.getArray<UTSJSONObject>('children') ?? ([] as Array<UTSJSONObject>)
+      if (children.length > 0) {
+        this.selectedNodes.push(DefaultSelectedNode)
+        this.selectedPages.push(children)
+      }
+
+      this.selectedIndex = this.selectedPages.length - 1
+    },
+
+    _pushSelectedTreeNodes(paths : Array<UTSJSONObject>, nodes : Array<UTSJSONObject>) {
+      let children : Array<UTSJSONObject> = nodes
+      paths.forEach((node : UTSJSONObject) => {
+        const findNode = children.find((item : UTSJSONObject) : boolean => {
+          return (item.getString(this.mappingValueName) == node.getString(this.mappingValueName))
+        })
+        if (findNode != null) {
+          this.selectedPages.push(children)
+          this.selectedNodes.push(node)
+          children = findNode.getArray<UTSJSONObject>('children') ?? ([] as Array<UTSJSONObject>)
+        }
+      })
+      this.selectedIndex = this.selectedPages.length - 1
+    },
+
+    _extractTreePath(nodes : Array<UTSJSONObject>, result : Array<UTSJSONObject>) {
+      if (nodes.length == 0) {
+        return
+      }
+
+      const node = nodes[0]
+      result.push(node)
+
+      const children = node.getArray<UTSJSONObject>('children')
+      if (Array.isArray(children) && children!.length > 0) {
+        this._extractTreePath(children, result)
+      }
+    }
+  }
+})

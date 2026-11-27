@@ -1,0 +1,14 @@
+		overflow: hidden;
+		position: absolute;
+		top: 0;
+		left: 0;
+		line-height: 1;
+		text-align: left;
+	}
+
+	.uni-cursor-not-allowed {
+		/* #ifdef H5 */
+		cursor: not-allowed !important;
+		/* #endif */
+	}
+</style>

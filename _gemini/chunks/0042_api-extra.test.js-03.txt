@@ -1,0 +1,17 @@
+  assert.equal((await app.inject({ method: 'POST', url: `/tenants/${t.id}/clients/9999/followups`, headers: h(owner), payload: { summary: '回访' } })).statusCode, 404);
+
+  assert.equal((await app.inject({ method: 'GET', url: `/tenants/${t.id}/jobs`, headers: h(member.token) })).statusCode, 403);
+  const badKind = await app.inject({ method: 'POST', url: `/tenants/${t.id}/jobs`, headers: h(owner), payload: { kind: 42, dedupe_key: 'x' } });
+  assert.equal(badKind.statusCode, 400);
+  const badPriority = await app.inject({ method: 'POST', url: `/tenants/${t.id}/jobs`, headers: h(owner), payload: { kind: 'reminder', dedupe_key: 'x', priority: 999 } });
+  assert.equal(badPriority.statusCode, 400);
+  assert.equal((await app.inject({ method: 'GET', url: `/tenants/${t.id}/notifications`, headers: h(member.token) })).statusCode, 200);
+  assert.equal((await app.inject({ method: 'GET', url: `/tenants/${t.id}/audit`, headers: h(member.token) })).statusCode, 403);
+});
+
+test('退出登录后会话立即失效', async () => {
+  await register('owner@example.com');
+  const token = await login('owner@example.com');
+  assert.equal((await app.inject({ method: 'POST', url: '/auth/logout', headers: h(token) })).statusCode, 204);
+  assert.equal((await app.inject({ method: 'GET', url: '/tenants', headers: h(token) })).statusCode, 401);
+});

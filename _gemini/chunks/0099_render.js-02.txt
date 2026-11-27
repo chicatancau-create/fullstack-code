@@ -1,0 +1,115 @@
+		var rightWidth = state.rightWidth
+		if (state.deltaX === 0) {
+			this.openState('none', ins, ownerInstance, self)
+			return
+		}
+		if ((isopen === 'none' && rightWidth > 0 && -left > threshold) || (isopen !== 'none' && rightWidth > 0 &&
+				rightWidth +
+				left < threshold)) {
+			// right
+			this.openState('right', ins, ownerInstance, self)
+		} else if ((isopen === 'none' && leftWidth > 0 && left > threshold) || (isopen !== 'none' && leftWidth > 0 &&
+				leftWidth - left < threshold)) {
+			// left
+			this.openState('left', ins, ownerInstance, self)
+		} else {
+			// default
+			this.openState('none', ins, ownerInstance, self)
+		}
+	},
+
+
+	/**
+	 * 开启状态
+	 * @param {Boolean} type
+	 * @param {Object} ins
+	 * @param {Object} ownerInstance
+	 */
+	openState(type, ins, ownerInstance, self) {
+		let state = self.state
+		let leftWidth = state.leftWidth
+		let rightWidth = state.rightWidth
+		let left = ''
+		state.isopen = state.isopen ? state.isopen : 'none'
+		switch (type) {
+			case "left":
+				left = leftWidth
+				break
+			case "right":
+				left = -rightWidth
+				break
+			default:
+				left = 0
+		}
+
+		// && !state.throttle
+
+		if (state.isopen !== type) {
+			state.throttle = true
+			ownerInstance.callMethod('change', {
+				open: type
+			})
+
+		}
+
+		state.isopen = type
+		// 添加动画类
+		ins.requestAnimationFrame(() => {
+			ins.addClass('ani');
+			this.move(left, ins, ownerInstance, self)
+		})
+	},
+
+
+	getDirection(x, y) {
+		if (x > y && x > MIN_DISTANCE) {
+			return 'horizontal';
+		}
+		if (y > x && y > MIN_DISTANCE) {
+			return 'vertical';
+		}
+		return '';
+	},
+
+	/**
+	 * 重置滑动状态
+	 * @param {Object} event
+	 */
+	resetTouchStatus(instance, self) {
+		let state = self.state;
+		state.direction = '';
+		state.deltaX = 0;
+		state.deltaY = 0;
+		state.offsetX = 0;
+		state.offsetY = 0;
+	},
+
+	/**
+	 * 设置滑动开始位置
+	 * @param {Object} event
+	 */
+	stopTouchStart(event, ownerInstance, self) {
+		let instance = event.instance;
+		let state = self.state
+		this.resetTouchStatus(instance, self);
+		var touch = event.touches[0];
+		state.startX = touch.clientX;
+		state.startY = touch.clientY;
+	},
+
+	/**
+	 * 滑动中，是否禁止打开
+	 * @param {Object} event
+	 */
+	stopTouchMove(event, self) {
+		let instance = event.instance;
+		let state = self.state;
+		let touch = event.touches[0];
+
+		state.deltaX = touch.clientX - state.startX;
+		state.deltaY = touch.clientY - state.startY;
+		state.offsetY = Math.abs(state.deltaY);
+		state.offsetX = Math.abs(state.deltaX);
+		state.direction = state.direction || this.getDirection(state.offsetX, state.offsetY);
+	}
+}

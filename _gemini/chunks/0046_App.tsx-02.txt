@@ -1,0 +1,123 @@
+    setLoggedIn(false);
+    setTenant(null);
+    setTenants([]);
+  }
+
+  async function createTenant(event: React.FormEvent) {
+    event.preventDefault();
+    if (newTenant.trim().length < 2) return;
+    try {
+      setSubmitting(true);
+      const created = await api.createTenant(newTenant.trim());
+      setNewTenant('');
+      const data = await api.tenants();
+      setTenants(data.tenants);
+      setTenant(data.tenants.find((item) => item.id === created.id) ?? created);
+    } catch (caught) {
+      handleError(caught);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function createClient(event: React.FormEvent) {
+    event.preventDefault();
+    if (!tenant || clientName.trim().length < 1) return;
+    try {
+      setSubmitting(true);
+      await api.createClient(tenant.id, clientName.trim());
+      setClientName('');
+      await loadDetail(tenant);
+    } catch (caught) {
+      handleError(caught);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function removeClient(clientId: number) {
+    if (!tenant) return;
+    try {
+      setSubmitting(true);
+      await api.deleteClient(tenant.id, clientId);
+      await loadDetail(tenant);
+    } catch (caught) {
+      handleError(caught);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function createFollowup(event: React.FormEvent) {
+    event.preventDefault();
+    if (!tenant || followupFor === null || summary.trim().length < 1) return;
+    try {
+      setSubmitting(true);
+      await api.createFollowup(tenant.id, followupFor, summary.trim(), nextAt ? new Date(nextAt).toISOString() : '');
+      setSummary('');
+      setNextAt('');
+      setFollowupFor(null);
+      await loadDetail(tenant);
+    } catch (caught) {
+      handleError(caught);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function createJob(event: React.FormEvent) {
+    event.preventDefault();
+    if (!tenant) return;
+    try {
+      setSubmitting(true);
+      await api.createJob(tenant.id, 'reminder', `ui:${Date.now()}`, 5);
+      await loadDetail(tenant);
+    } catch (caught) {
+      handleError(caught);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (!loggedIn) {
+    return (
+      <main>
+        <h1>P04 多租户 SaaS 控制台</h1>
+        <p className="muted">多租户客户跟进 · 席位并发 · 审计 · 后台调度</p>
+        {error && <p className="error" role="alert">{error}</p>}
+        <form className="card" onSubmit={submitLogin}>
+          <label>邮箱<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" required /></label>
+          <label>密码<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required /></label>
+          <div className="row">
+            <button type="submit" disabled={submitting}>{submitting ? '登录中…' : '登录'}</button>
+            <button type="button" className="secondary" disabled={submitting} onClick={submitRegister}>注册并登录</button>
+          </div>
+        </form>
+      </main>
+    );
+  }
+
+  return (
+    <main>
+      <header className="row between">
+        <div>
+          <h1>P04 多租户 SaaS 控制台</h1>
+          <p className="muted">当前角色：{tenant ? `${tenant.role} · ${tenant.name}` : '未选择组织'}</p>
+        </div>
+        <button type="button" className="secondary" onClick={logout}>退出登录</button>
+      </header>
+      {error && <p className="error" role="alert">{error}</p>}
+
+      <section className="card">
+        <h2>我的组织</h2>
+        {loading && <p className="muted">加载中…</p>}
+        {!loading && tenants.length === 0 && <p className="muted">还没有组织，先创建一个。</p>}
+        <ul className="grid">
+          {tenants.map((item) => (
+            <li key={item.id}>
+              <button type="button" className={`tile ${tenant?.id === item.id ? 'active' : ''}`} onClick={() => setTenant(item)}>
+                <strong>{item.name}</strong>
+                <span>{item.plan} · 席位 {item.seat_limit} · {item.role}</span>
+              </button>
+            </li>
+          ))}

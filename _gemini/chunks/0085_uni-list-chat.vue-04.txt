@@ -1,0 +1,59 @@
+		/* #ifndef APP-NVUE */
+		left: calc(#{$avatar-width} + 10px - #{$badge-space} + #{$badge-left});
+		top: calc(#{$uni-spacing-row-base}/ 2 + 1px + #{$badge-top});
+		/* #endif */
+	}
+
+	.uni-list-chat__badge {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		justify-content: center;
+		align-items: center;
+		border-radius: 100px;
+		background-color: $badge-background-color;
+	}
+
+	.uni-list-chat__badge-text {
+		color: $badge-color;
+		font-size: $badge-font;
+	}
+
+	.uni-badge--single {
+		/* #ifndef APP-NVUE */
+		// left: calc(#{$avatar-width} + 7px + #{$badge-left});
+		/* #endif */
+		width: $badge-size;
+		height: $badge-size;
+	}
+
+	.uni-badge--complex {
+		/* #ifdef APP-NVUE */
+		left: 50px;
+		/* #endif */
+		/* #ifndef APP-NVUE */
+		width: auto;
+		/* #endif */
+		height: $badge-size;
+		padding: 0 $badge-space;
+	}
+
+	.uni-badge--dot {
+		/* #ifdef APP-NVUE */
+		left: 60px;
+		top: 6px;
+		/* #endif */
+		/* #ifndef APP-NVUE */
+		left: calc(#{$avatar-width} + 15px - #{$dot-width}/ 2 + 1px + #{$badge-left});
+		/* #endif */
+		width: $dot-width;
+		height: $dot-height;
+		padding: 0;
+	}
+
+	.uni-list-chat--right {
+		/* #ifdef APP-NVUE */
+		left: 0;
+		/* #endif */
+	}
+</style>

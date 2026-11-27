@@ -1,0 +1,99 @@
+<template>
+	<view class="uni-datetime-picker">
+		<view @click="initTimePicker">
+			<slot>
+				<view class="uni-datetime-picker-timebox-pointer"
+					:class="{'uni-datetime-picker-disabled': disabled, 'uni-datetime-picker-timebox': border}">
+					<text class="uni-datetime-picker-text">{{time}}</text>
+					<view v-if="!time" class="uni-datetime-picker-time">
+						<text class="uni-datetime-picker-text">{{selectTimeText}}</text>
+					</view>
+				</view>
+			</slot>
+		</view>
+		<view v-if="visible" id="mask" class="uni-datetime-picker-mask" @click="tiggerTimePicker"></view>
+		<view v-if="visible" class="uni-datetime-picker-popup" :class="[dateShow && timeShow ? '' : 'fix-nvue-height']"
+			:style="fixNvueBug">
+			<view class="uni-title">
+				<text class="uni-datetime-picker-text">{{selectTimeText}}</text>
+			</view>
+			<view v-if="dateShow" class="uni-datetime-picker__container-box">
+				<picker-view class="uni-datetime-picker-view" :indicator-style="indicatorStyle" :value="ymd"
+					@change="bindDateChange">
+					<picker-view-column>
+						<view class="uni-datetime-picker-item" v-for="(item,index) in years" :key="index">
+							<text class="uni-datetime-picker-item">{{lessThanTen(item)}}</text>
+						</view>
+					</picker-view-column>
+					<picker-view-column>
+						<view class="uni-datetime-picker-item" v-for="(item,index) in months" :key="index">
+							<text class="uni-datetime-picker-item">{{lessThanTen(item)}}</text>
+						</view>
+					</picker-view-column>
+					<picker-view-column>
+						<view class="uni-datetime-picker-item" v-for="(item,index) in days" :key="index">
+							<text class="uni-datetime-picker-item">{{lessThanTen(item)}}</text>
+						</view>
+					</picker-view-column>
+				</picker-view>
+				<!-- 兼容 nvue 不支持伪类 -->
+				<text class="uni-datetime-picker-sign sign-left">-</text>
+				<text class="uni-datetime-picker-sign sign-right">-</text>
+			</view>
+			<view v-if="timeShow" class="uni-datetime-picker__container-box">
+				<picker-view class="uni-datetime-picker-view" :class="[hideSecond ? 'time-hide-second' : '']"
+					:indicator-style="indicatorStyle" :value="hms" @change="bindTimeChange">
+					<picker-view-column>
+						<view class="uni-datetime-picker-item" v-for="(item,index) in hours" :key="index">
+							<text class="uni-datetime-picker-item">{{lessThanTen(item)}}</text>
+						</view>
+					</picker-view-column>
+					<picker-view-column>
+						<view class="uni-datetime-picker-item" v-for="(item,index) in minutes" :key="index">
+							<text class="uni-datetime-picker-item">{{lessThanTen(item)}}</text>
+						</view>
+					</picker-view-column>
+					<picker-view-column v-if="!hideSecond">
+						<view class="uni-datetime-picker-item" v-for="(item,index) in seconds" :key="index">
+							<text class="uni-datetime-picker-item">{{lessThanTen(item)}}</text>
+						</view>
+					</picker-view-column>
+				</picker-view>
+				<!-- 兼容 nvue 不支持伪类 -->
+				<text class="uni-datetime-picker-sign" :class="[hideSecond ? 'sign-center' : 'sign-left']">:</text>
+				<text v-if="!hideSecond" class="uni-datetime-picker-sign sign-right">:</text>
+			</view>
+			<view class="uni-datetime-picker-btn">
+				<view @click="clearTime">
+					<text class="uni-datetime-picker-btn-text">{{clearText}}</text>
+				</view>
+				<view class="uni-datetime-picker-btn-group">
+					<view class="uni-datetime-picker-cancel" @click="tiggerTimePicker">
+						<text class="uni-datetime-picker-btn-text">{{cancelText}}</text>
+					</view>
+					<view @click="setTime">
+						<text class="uni-datetime-picker-btn-text">{{okText}}</text>
+					</view>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import {
+		initVueI18n
+	} from '@dcloudio/uni-i18n'
+	import i18nMessages from './i18n/index.js'
+	const {
+		t
+	} = initVueI18n(i18nMessages)
+	import {
+		fixIosDateFormat
+	} from './util'
+
+	/**
+	 * DatetimePicker 时间选择器
+	 * @description 可以同时选择日期和时间的选择器
+	 * @tutorial https://ext.dcloud.net.cn/plugin?id=xxx
+	 * @property {String} type = [datetime | date | time] 显示模式

@@ -1,0 +1,121 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+      - name: secret scan
+        run: |
+          ! git grep -q -E 'BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|sk-[A-Za-z0-9]{20,}' -- .
+          ! git ls-files | grep -E '(^|/)(\.env|\.env\.(local|production|development|test)|id_rsa|id_ed25519|.*\.(pem|key|p12|pfx))$|(^|/)node_modules/|(^|/)target/'
+      - run: node scripts/manifest.mjs verify evidence/manifest.json
+        working-directory: projects/project01-blog
+      - run: node scripts/manifest.mjs verify evidence/manifest.json
+        working-directory: projects/project02-collab
+      - run: node scripts/manifest.mjs verify evidence/manifest.json
+        working-directory: projects/project02-spring
+      - run: node scripts/manifest.mjs verify evidence/manifest.json
+        working-directory: projects/project02-frameworks
+      - run: node scripts/manifest.mjs verify evidence/manifest.json
+        working-directory: projects/project03-trade
+      - run: node scripts/manifest.mjs verify evidence/manifest.json
+        working-directory: projects/project04-saas
+      - run: node scripts/manifest.mjs verify evidence/manifest.json
+        working-directory: projects/project05-takeover
+      - run: node scripts/manifest.mjs verify evidence/manifest.json
+        working-directory: projects/project06-ai-min
+
+  project01:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/project01-blog
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: projects/project01-blog/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run e2e
+
+  project02:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: study
+          POSTGRES_PASSWORD: study-pass
+          POSTGRES_DB: study_lab
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U study -d study_lab"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env: &pg
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: study
+      PGPASSWORD: study-pass
+      PGDATABASE: study_lab
+    defaults:
+      run:
+        working-directory: projects/project02-collab
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: projects/project02-collab/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: node scripts/migrate.mjs
+      - run: node --test tests/*.test.js
+
+  project03:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: study
+          POSTGRES_PASSWORD: study-pass
+          POSTGRES_DB: study_lab
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U study -d study_lab"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      rabbitmq:
+        image: rabbitmq:4
+        ports: ['5672:5672']
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: study
+      PGPASSWORD: study-pass
+      PGDATABASE: study_lab
+      AMQP_URL: amqp://guest:guest@127.0.0.1:5672
+    defaults:
+      run:
+        working-directory: projects/project03-trade
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm

@@ -1,0 +1,171 @@
+ALTER TABLE ONLY p04.followups
+    ADD CONSTRAINT followups_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: invitations invitations_pkey; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.invitations
+    ADD CONSTRAINT invitations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: invitations invitations_token_hash_key; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.invitations
+    ADD CONSTRAINT invitations_token_hash_key UNIQUE (token_hash);
+
+
+--
+-- Name: job_dead_letter job_dead_letter_pkey; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.job_dead_letter
+    ADD CONSTRAINT job_dead_letter_pkey PRIMARY KEY (job_id);
+
+
+--
+-- Name: job_notifications job_notifications_pkey; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.job_notifications
+    ADD CONSTRAINT job_notifications_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: job_results job_results_pkey; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.job_results
+    ADD CONSTRAINT job_results_pkey PRIMARY KEY (job_id);
+
+
+--
+-- Name: jobs jobs_pkey; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.jobs
+    ADD CONSTRAINT jobs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: jobs jobs_tenant_id_dedupe_key_key; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.jobs
+    ADD CONSTRAINT jobs_tenant_id_dedupe_key_key UNIQUE (tenant_id, dedupe_key);
+
+
+--
+-- Name: memberships memberships_pkey; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.memberships
+    ADD CONSTRAINT memberships_pkey PRIMARY KEY (tenant_id, user_id);
+
+
+--
+-- Name: reminders reminders_pkey; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.reminders
+    ADD CONSTRAINT reminders_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.schema_migrations
+    ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (filename);
+
+
+--
+-- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.sessions
+    ADD CONSTRAINT sessions_pkey PRIMARY KEY (token_hash);
+
+
+--
+-- Name: tenants tenants_pkey; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.tenants
+    ADD CONSTRAINT tenants_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users users_email_key; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.users
+    ADD CONSTRAINT users_email_key UNIQUE (email);
+
+
+--
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: worker_inbox worker_inbox_pkey; Type: CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.worker_inbox
+    ADD CONSTRAINT worker_inbox_pkey PRIMARY KEY (consumer, job_id);
+
+
+--
+-- Name: audit_tenant_id_idx; Type: INDEX; Schema: p04; Owner: -
+--
+
+CREATE INDEX audit_tenant_id_idx ON p04.audit_events USING btree (tenant_id, id DESC);
+
+
+--
+-- Name: clients_tenant_idx; Type: INDEX; Schema: p04; Owner: -
+--
+
+CREATE INDEX clients_tenant_idx ON p04.clients USING btree (tenant_id, id) WHERE (deleted_at IS NULL);
+
+
+--
+-- Name: invitations_pending_email; Type: INDEX; Schema: p04; Owner: -
+--
+
+CREATE UNIQUE INDEX invitations_pending_email ON p04.invitations USING btree (tenant_id, lower(email)) WHERE (status = 'pending'::text);
+
+
+--
+-- Name: jobs_due_idx; Type: INDEX; Schema: p04; Owner: -
+--
+
+CREATE INDEX jobs_due_idx ON p04.jobs USING btree (run_at, id) WHERE (status = 'pending'::text);
+
+
+--
+-- Name: jobs_fair_idx; Type: INDEX; Schema: p04; Owner: -
+--
+
+CREATE INDEX jobs_fair_idx ON p04.jobs USING btree (status, priority DESC, run_at, tenant_id, id);
+
+
+--
+-- Name: jobs_stale_idx; Type: INDEX; Schema: p04; Owner: -
+--
+
+CREATE INDEX jobs_stale_idx ON p04.jobs USING btree (locked_at) WHERE (status = 'running'::text);
+
+
+--
+-- Name: audit_events audit_events_actor_id_fkey; Type: FK CONSTRAINT; Schema: p04; Owner: -
+--
+
+ALTER TABLE ONLY p04.audit_events

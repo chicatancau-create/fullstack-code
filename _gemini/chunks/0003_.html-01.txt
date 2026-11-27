@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>浮空树脂小岛 · Floating Resin Island</title>
+<link rel="icon" href="data:,">
+<style>
+  :root{ --ink:#e9eef5; --dim:#8fa0b4; --card:rgba(12,17,24,.62); --line:rgba(160,190,220,.16); }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#05070a;
+    font:400 13px/1.5 "Inter","Helvetica Neue",system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--ink);-webkit-font-smoothing:antialiased}
+  canvas{display:block;width:100%;height:100%;outline:none}
+  #app{position:fixed;inset:0}
+
+  .brand{position:fixed;left:22px;top:18px;pointer-events:none;user-select:none}
+  .brand h1{margin:0;font-size:15px;font-weight:600;letter-spacing:.14em}
+  .brand p{margin:3px 0 0;font-size:11px;letter-spacing:.06em;color:var(--dim)}
+
+  .panel{position:fixed;left:22px;bottom:22px;width:292px;padding:14px 15px 13px;
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    backdrop-filter:blur(14px) saturate(1.2);box-shadow:0 18px 44px rgba(0,0,0,.45)}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+  .row:last-child{margin-bottom:0}
+  .lab{font-size:11px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase}
+  .val{font-size:11px;color:var(--ink);font-variant-numeric:tabular-nums;opacity:.85}
+
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:none;cursor:ew-resize}
+  input[type=range]::-webkit-slider-runnable-track{height:3px;border-radius:2px;
+    background:linear-gradient(90deg,#ffd9a0,#f2884f 38%,#6d5fa8 66%,#2b3f6b)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;margin-top:-5px;
+    border-radius:50%;background:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.16),0 2px 6px rgba(0,0,0,.5)}
+  .ticks{display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-top:-4px}
+  .ticks b{font-weight:400;cursor:pointer;padding:2px 4px;border-radius:4px}
+  .ticks b:hover{color:var(--ink);background:rgba(255,255,255,.07)}
+
+  select{background:rgba(255,255,255,.06);color:var(--ink);border:1px solid var(--line);
+    border-radius:7px;padding:3px 6px;font-size:11px;font-family:inherit}
+  .sw{position:relative;width:34px;height:18px;border-radius:9px;background:rgba(255,255,255,.12);
+    cursor:pointer;transition:background .18s}
+  .sw i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#cdd8e6;transition:.18s}
+  .sw.on{background:#3d7fae}.sw.on i{left:18px;background:#fff}
+  .keys{position:fixed;right:22px;bottom:22px;text-align:right;font-size:10.5px;color:var(--dim);
+    line-height:1.75;pointer-events:none;user-select:none}
+  .keys kbd{display:inline-block;min-width:15px;padding:0 4px;border:1px solid var(--line);border-radius:4px;
+    background:rgba(255,255,255,.05);font:400 10px/16px inherit;text-align:center;color:var(--ink)}
+  #boot{position:fixed;inset:0;display:grid;place-items:center;background:#05070a;z-index:9;transition:opacity .7s}
+  #boot.gone{opacity:0;pointer-events:none}
+  #boot .in{text-align:center;max-width:640px;padding:20px}
+  #boot .spin{width:22px;height:22px;margin:0 auto 12px;border:2px solid rgba(255,255,255,.15);
+    border-top-color:#7fc8e8;border-radius:50%;animation:r 1s linear infinite}
+  @keyframes r{to{transform:rotate(360deg)}}
+  #boot h2{margin:0;font-size:13px;font-weight:500;letter-spacing:.1em;color:#9db2c8}
+  #boot pre{display:none;margin:12px 0 0;padding:11px;text-align:left;white-space:pre-wrap;word-break:break-all;
+    font:11px/1.5 ui-monospace,Consolas,monospace;color:#ffb4a6;background:rgba(255,90,60,.07);
+    border:1px solid rgba(255,120,90,.25);border-radius:8px;max-height:40vh;overflow:auto}
+</style>
+
+<script type="importmap">
+{
+  "imports": {

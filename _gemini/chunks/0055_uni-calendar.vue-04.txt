@@ -1,0 +1,44 @@
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		height: 45px;
+		border-bottom-color: #F5F5F5;
+		border-bottom-style: solid;
+		border-bottom-width: 1px;
+	}
+
+	.uni-calendar__weeks-day-text {
+		font-size: 14px;
+	}
+
+	.uni-calendar__box {
+		position: relative;
+	}
+
+	.uni-calendar__box-bg {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		justify-content: center;
+		align-items: center;
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
+
+	.uni-calendar__box-bg-text {
+		font-size: 200px;
+		font-weight: bold;
+		color: $uni-text-color-grey;
+		opacity: 0.1;
+		text-align: center;
+		/* #ifndef APP-NVUE */
+		line-height: 1;
+		/* #endif */
+	}
+</style>

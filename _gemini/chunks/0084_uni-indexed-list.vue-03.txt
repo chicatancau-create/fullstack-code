@@ -1,0 +1,33 @@
+		border-radius: 16px;
+		width: 16px;
+		height: 16px;
+		line-height: 16px;
+		background-color: #007aff;
+		color: #fff;
+	}
+
+	.uni-indexed-list__alert-wrapper {
+		position: absolute;
+		left: 0;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.uni-indexed-list__alert {
+		width: 80px;
+		height: 80px;
+		border-radius: 80px;
+		text-align: center;
+		line-height: 80px;
+		font-size: 35px;
+		color: #fff;
+		background-color: rgba(0, 0, 0, 0.5);
+	}
+</style>

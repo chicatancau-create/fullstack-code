@@ -1,0 +1,18 @@
+2026-11-08T03:45:30.668+08:00  INFO 56364 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-11-08T03:45:30.752+08:00  INFO 56364 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
+2026-11-08T03:45:30.758+08:00  WARN 56364 --- [           main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 87e21235-035f-41ea-9a87-8c0a1679e973
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-11-08T03:45:30.758+08:00  INFO 56364 --- [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-11-08T03:45:30.798+08:00  INFO 56364 --- [           main] dev.study.collab.DiagnosticsTest         : Started DiagnosticsTest in 0.359 seconds (process running for 5.84)
+2026-11-08T03:45:30.820+08:00  INFO 56364 --- [           main] com.zaxxer.hikari.HikariDataSource       : diag-exhaustion-pool - Starting...
+2026-11-08T03:45:30.827+08:00  INFO 56364 --- [           main] com.zaxxer.hikari.HikariDataSource       : diag-exhaustion-pool - Start completed.
+2026-11-08T03:45:31.837+08:00  INFO 56364 --- [           main] com.zaxxer.hikari.HikariDataSource       : diag-exhaustion-pool - Shutdown initiated...
+2026-11-08T03:45:31.838+08:00  INFO 56364 --- [           main] com.zaxxer.hikari.HikariDataSource       : diag-exhaustion-pool - Shutdown completed.
+]]></system-out>
+  </testcase>
+  <testcase name="innodbDetectsDeadlockAndRollsBackOneTransaction" classname="dev.study.collab.DiagnosticsTest" time="0.027"/>
+</testsuite>

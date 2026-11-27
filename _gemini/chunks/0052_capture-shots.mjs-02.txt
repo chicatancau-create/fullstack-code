@@ -1,0 +1,48 @@
+    for (const t of ['mousePressed', 'mouseReleased']) await cdp.send('Input.dispatchMouseEvent', { type: t, x: r.x, y: r.y, button: 'left', clickCount: 1 }, PG);
+    await sleep(450); return true;
+  };
+
+  await setVp(1280, 900);
+  // 干净种子态：抹掉一切本地数据后重载，让应用自己重新播种
+  await goto('/#/login');
+  await evl(`localStorage.clear()`);
+  await cdp.send('Page.reload', {}, PG); await sleep(2200);
+  await shot('01-login.png');
+
+  await evl(`localStorage.setItem('habit-token','xiaok');localStorage.setItem('habit-user','xiaok')`);
+  await goto('/#/');
+  console.log('board habits =', await evl(`document.querySelectorAll('.habit-row').length`));
+  await shot('02-board.png');
+
+  await goto('/#/stats');
+  console.log('stats cards  =', await evl(`document.body.innerText.match(/习惯总数\\s*(\\d+)/)?.[1]`));
+  await shot('07-stats.png');
+
+  await goto('/#/about');
+  await evl(`window.scrollTo(0,0)`); await sleep(400);
+  await shot('09-about.png');
+
+  // 删除二次确认态：只点第一次，不真正删除，数据不变
+  await goto('/#/');
+  await click(`b => b.innerText.trim()==='删除'`);
+  await sleep(250);
+  console.log('confirm row buttons =', await evl(`[...document.querySelectorAll('.row-actions')].filter(a=>a.querySelectorAll('button').length===1).length`));
+  await shot('06-delete-confirm.png');
+  await sleep(2600);   // 让确认态自动回退，避免把 UI 状态留在截图之外
+
+  await setVp(390, 844);
+  await goto('/#/');
+  await evl(`window.scrollTo(0,0)`); await sleep(500);
+  console.log('mobile habits =', await evl(`document.querySelectorAll('.habit-row').length`));
+  await shot('11-mobile-board.png');
+  await goto('/#/stats');
+  await evl(`window.scrollTo(0,0)`); await sleep(500);
+  await shot('12-mobile-stats.png');
+
+  console.log('final check, habits =', await evl(`(() => { const d=JSON.parse(localStorage.getItem('xiji-habit-tracker-v1')); return d.habits.length; })()`));
+  cdp.close();
+} finally {
+  if (child) { try { execFileSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore' }); } catch (e) {} }
+  try { fs.rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 }); } catch (e) {}
+}
+process.exit(0);

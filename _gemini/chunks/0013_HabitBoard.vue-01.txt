@@ -1,0 +1,113 @@
+<template>
+  <section class="habit-board">
+    <div class="card week-card">
+      <div class="week-head">
+        <h2 class="section-title">{{ weekTitle }}</h2>
+        <div class="week-nav">
+          <button type="button" class="btn-plain" @click="weekOffset -= 1">上一周</button>
+          <button
+            type="button"
+            class="btn-plain"
+            :disabled="isFutureWeekDisabled"
+            :title="isFutureWeekDisabled ? '不能查看未来的周' : '查看下一周'"
+            @click="weekOffset += 1"
+          >下一周</button>
+          <button v-if="!isCurrentWeek" type="button" class="btn-plain" @click="weekOffset = 0">回到本周</button>
+          <span v-if="isFutureWeekDisabled" class="future-hint">未来周不可查看</span>
+        </div>
+      </div>
+      <p class="week-range">{{ weekRangeText }}</p>
+    </div>
+
+    <div v-if="state.storageError" class="warn-bar" role="alert">{{ state.storageError }}</div>
+
+    <div class="card toolbar">
+      <button v-if="!formOpen" type="button" class="btn-primary" @click="openCreate">＋ 新增习惯</button>
+      <button v-else type="button" class="btn-plain" @click="closeForm">收起表单</button>
+      <p v-if="notice" class="notice" role="status">{{ notice }}</p>
+    </div>
+
+    <div v-if="formOpen" class="card form-card">
+      <HabitForm :initial="editingHabit" @submit="onFormSubmit" @cancel="closeForm" />
+      <p v-if="formError" class="form-error" role="alert">{{ formError }}</p>
+    </div>
+
+    <HabitList
+      v-if="state.habits.length"
+      :habits="state.habits"
+      :week-keys="weekKeys"
+      :checkins="state.checkins"
+      @toggle="onToggle"
+      @edit="openEdit"
+      @remove="onRemove"
+    />
+
+    <div v-else class="card empty-state">
+      <p class="empty-title">还没有打卡习惯</p>
+      <p class="empty-desc">先新增一个学习习惯（例如「专注阅读」），再每天回到这里点格子打卡，就能跟踪每周目标完成情况和连续天数。</p>
+      <button type="button" class="btn-primary" @click="openCreate">新增第一个习惯</button>
+      <button type="button" class="btn-plain" @click="loadDemo">载入示例数据</button>
+    </div>
+  </section>
+</template>
+
+<script setup>
+import { computed, ref, watch } from 'vue'
+import { useHabits } from '@/composables/useHabits'
+import { addDays, formatShortDate, getWeekDates, startOfWeek, toDateKey } from '@/utils/date'
+import HabitForm from '@/components/habit/HabitForm.vue'
+import HabitList from '@/components/habit/HabitList.vue'
+
+const { state, addHabit, updateHabit, deleteHabit, toggleCheckin, resetData } = useHabits()
+
+const now = new Date()
+const todayKey = toDateKey(now)
+const currentMonday = startOfWeek(now)
+
+const weekOffset = ref(0)
+const formOpen = ref(false)
+const editingHabit = ref(null)
+const formError = ref('')
+const notice = ref('')
+let noticeTimer = null
+
+const weekStart = computed(() => addDays(currentMonday, weekOffset.value * 7))
+const weekKeys = computed(() => getWeekDates(weekStart.value).map(toDateKey))
+
+// ISO 周序号：取本周四所在年份定位「第 N 周」
+function isoWeekNumber(date) {
+  const sample = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12)
+  sample.setDate(sample.getDate() - ((sample.getDay() + 6) % 7) + 3)
+  const firstThursday = new Date(sample.getFullYear(), 0, 4, 12)
+  firstThursday.setDate(firstThursday.getDate() - ((firstThursday.getDay() + 6) % 7) + 3)
+  return 1 + Math.round((sample - firstThursday) / 604800000)
+}
+
+const weekTitle = computed(
+  () => `第 ${isoWeekNumber(weekStart.value)} 周（${weekStart.value.getFullYear()} 年）`,
+)
+const weekRangeText = computed(
+  () => `${formatShortDate(weekKeys.value[0])} – ${formatShortDate(weekKeys.value[6])}`,
+)
+const isCurrentWeek = computed(() => weekOffset.value === 0)
+const isFutureWeekDisabled = computed(() => weekOffset.value >= 0)
+
+// 切换周属于视图上下文变化：收起表单、清掉行内错误与提示，避免把上一周的编辑状态带过来
+watch(weekOffset, () => {
+  closeForm()
+  showNotice('')
+})
+
+function closeForm() {
+  formOpen.value = false
+  editingHabit.value = null
+  formError.value = ''
+}
+
+function openCreate() {
+  editingHabit.value = null
+  formError.value = ''
+  formOpen.value = true
+}
+
+function openEdit(habit) {

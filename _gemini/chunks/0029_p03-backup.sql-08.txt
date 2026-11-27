@@ -1,0 +1,31 @@
+123	load-16	order.create	123	5cf08395-4bcb-4288-b60d-65eecbff198e	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.557087+08
+126	load-19	order.create	126	d977cd3b-54f3-43d2-a6ca-55b307a17f20	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.563594+08
+129	load-14	order.create	129	a8e9d21f-bc38-4c22-bb45-0787ce944727	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.547286+08
+130	load-5	order.create	130	6b3ea47f-3295-4b6b-878f-c3aa007ef0ff	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.584647+08
+131	load-4	order.create	131	2721152f-c20d-4e7c-9a98-1cbb1709113c	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.553958+08
+132	load-18	order.create	132	f31ae5c3-e858-4917-8d13-b42776275120	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.567514+08
+134	load-9	order.create	134	8dd7b272-d621-459d-8a68-49eaebf925e3	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.593009+08
+135	load-16	order.create	135	6a310d1b-df70-4eea-9ad0-d13d851d05bb	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.599275+08
+136	load-3	order.create	136	51bcb86d-ba61-4438-a1d4-9eb7dadf5445	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.601559+08
+137	load-17	order.create	137	acfdc92d-8892-4fe4-a630-675870523038	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.574057+08
+139	load-19	order.create	139	0204bee0-620a-4773-bd7b-75a6d3fc143a	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.608467+08
+140	load-20	order.create	140	446951e8-dfaa-4333-894b-5e283035b498	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.612916+08
+147	load-18	order.create	147	967c2c87-789f-4bee-b8a9-95f72df43391	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.624328+08
+142	load-7	order.create	142	2d533d62-8407-4776-a656-e45fbdc5f019	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.593749+08
+143	load-4	order.create	143	176e40df-2a10-452f-81f0-41704c8f75fc	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.621637+08
+144	load-1	order.create	144	02cd20cc-56e9-48fd-8e57-d4eaeadc283a	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.596502+08
+148	load-14	order.create	148	82e0054d-8e7e-4e9a-9146-1252ba9638e5	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.615111+08
+149	load-13	order.create	149	0b117bb1-f6ee-4fb2-a177-3117d3cab438	\N	{"qty": 1, "sku": "load-sku", "amount": 10}	2026-11-09 11:24:19.610305+08
+151	mq-user	order.create	1	abab2091-61b0-4c5f-9cf7-1ee38f92adc0	\N	{"qty": 1, "sku": "mq-sku", "amount": 100}	2026-11-09 11:24:20.328934+08
+152	provider	payment.callback	1	912c045f-1347-4cd5-82c4-1ebe9e69d701	{"status": "pending_payment"}	{"status": "paid"}	2026-11-09 11:24:20.341542+08
+153	mq-runtime	order.create	2	2a6f3571-9b96-48b5-9e67-0e65cdfc1422	\N	{"qty": 1, "sku": "mq-runtime-sku", "amount": 100}	2026-11-09 11:24:23.009556+08
+154	mq-runtime	order.pay	2	e1eab608-a097-4d88-a5e4-59e04169916b	{"status": "pending_payment"}	{"status": "paid", "payment_id": 1}	2026-11-09 11:24:23.027452+08
+155	worker-split	order.create	3	a2af6448-5ae2-4130-81ca-85eda68df726	\N	{"qty": 1, "sku": "worker-sku", "amount": 100}	2026-11-09 11:24:24.690522+08
+156	worker-split	order.pay	3	a7bed360-b4b9-48c5-b546-5f1170c94877	{"status": "pending_payment"}	{"status": "paid", "payment_id": 2}	2026-11-09 11:24:24.704166+08
+157	fault-user	order.create	4	16ec1d0b-8626-45cc-87c1-3e58cb54be2e	\N	{"qty": 1, "sku": "fault-sku", "amount": 100}	2026-11-09 11:24:26.062061+08
+158	fault-user	order.create	5	561c008b-51ce-4a13-ba35-3d5a5a0df40b	\N	{"qty": 1, "sku": "fault-sku", "amount": 100}	2026-11-09 11:24:26.679566+08
+159	fault-user	order.pay	5	e84c521e-57b1-4236-9cd9-3a61079d9425	{"status": "pending_payment"}	{"status": "paid", "payment_id": 3}	2026-11-09 11:24:26.696391+08
+\.
+
+
+--

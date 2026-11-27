@@ -1,0 +1,89 @@
+    V(u, y, 0, 2.0, 0.28, 0.64, 0xd8d4c8);
+    for (const s of [-1, 1]) {
+      V(u, y + 0.42, s * 0.95, 0.14, 0.62, 0.14, 0xc0392b);
+      V(u, y + 0.76, s * 0.95, 0.17, 0.12, 0.62, 0x96271c);
+    }
+  }
+  for (const e of [-3.3, 3.3]) V(e, 0.16, 0, 1.1, 0.32, 2.3, 0xa8a291);
+  for (const s of [-1, 1]) for (const e of [-3.1, 3.1]) {
+    const y = 0.3 + 1.35 * Math.pow(Math.cos(e / 3.15 * Math.PI / 2), 1.1);
+    V(e, y + 0.5, s * 0.95, 0.24, 0.85, 0.24, 0x96271c);
+    V(e, y + 0.98, s * 0.95, 0.18, 0.16, 0.18, 0xd9a441);
+  }
+})();
+
+/* ============ 荷花与莲叶 ============ */
+const lotusSpots = [[7, 7.4], [10.6, 6.6], [11.4, 10.8], [7.6, 11.2], [9.4, 9]];
+lotusSpots.forEach(([x, z], i) => {
+  vox(x, -0.42, z, rr(1.0, 1.4), 0.09, rr(1.0, 1.4), 0x2f9e44, rr(0, 3));
+  if (i % 2 === 0) {
+    vox(x + 0.2, -0.2, z - 0.1, 0.42, 0.3, 0.42, i === 0 ? 0xff8fb8 : 0xfff0f5, rr(0, 3));
+    vox(x + 0.2, 0.02, z - 0.1, 0.26, 0.22, 0.26, 0xffc4da, rr(0, 3));
+    vox(x + 0.2, 0.16, z - 0.1, 0.12, 0.1, 0.12, 0xf2c14e);
+  }
+});
+
+/* ============ 卫星浮岛 ============ */
+function satellite(cx, cy, cz, rad, kind) {
+  const u = 1.4;
+  for (let gx = -4; gx <= 4; gx++) for (let gz = -4; gz <= 4; gz++) {
+    const x = gx * u, z = gz * u;
+    if (Math.hypot(x, z) > rad + hash2(gx + cx, gz + cz) * 0.9 - 0.45) continue;
+    vox(cx + x, cy - 0.5, cz + z, u, 1, u, pick(GRASS));
+    vox(cx + x, cy - 1.5, cz + z, u, 1, u, pick(DIRT));
+  }
+  for (let L = 1; L <= 3; L++) {
+    const r2 = rad - L * 1.15;
+    if (r2 < 0.4) break;
+    for (let gx = -4; gx <= 4; gx++) for (let gz = -4; gz <= 4; gz++) {
+      const x = gx * u, z = gz * u;
+      if (Math.hypot(x, z) > r2 + hash2(gx - L, gz + L) * 0.7 - 0.35) continue;
+      vox(cx + x, cy - 1.5 - L, cz + z, u, 1, u, pick(ROCK));
+    }
+  }
+  const top = cy;
+  if (kind === 'tree') {
+    const bark = 0x6d4a2f;
+    for (let k = 0; k < 5; k++) vox(cx + rr(-0.1, 0.1), top + 0.3 + k * 0.55, cz, 0.5 - k * 0.06, 0.55, 0.5 - k * 0.06, bark, rr(0, 3));
+    for (let i = 0; i < 40; i++) {
+      const a = rr(0, Math.PI * 2), b = rr(-1, 1), r = 1.7 * Math.cbrt(rnd());
+      vox(cx + Math.cos(a) * r, top + 3.1 + b * r * 0.7, cz + Math.sin(a) * r, rr(0.4, 0.7), rr(0.35, 0.6), rr(0.4, 0.7), pick(BLOSSOM), rr(0, 3));
+    }
+    treeTops.push({ x: cx, y: top + 3.1, z: cz, r: 1.7, g: top });
+  } else if (kind === 'bamboo') {
+    bamboo(cx, cz, 6, top);
+    for (let i = 0; i < 6; i++) vox(cx + rr(-1, 1), top + rr(0.1, 0.3), cz + rr(-1, 1), 0.3, 0.3, 0.3, 0x8a8f98, rr(0, 3));
+  } else if (kind === 'pagoda') {
+    for (let k = 0; k < 4; k++) {
+      const w = 1.7 - k * 0.36, y = top + 0.3 + k * 1.05;
+      vox(cx, y, cz, w, 0.7, w, 0x9aa0a8);
+      vox(cx, y + 0.45, cz, w + 0.7, 0.2, w + 0.7, 0x6b7280);
+    }
+    vox(cx, top + 4.7, cz, 0.3, 0.5, 0.3, 0xd9a441);
+    evox(cx, top + 5.05, cz, 0.2, 0.2, 0.2);
+    glowPoints.push({ x: cx, y: top + 5.05, z: cz });
+  } else if (kind === 'lantern') {
+    rockCluster(cx - 0.8, cz + 0.5, 0.8, top);
+    vox(cx + 0.7, top + 0.5, cz - 0.4, 0.34, 1.0, 0.34, 0x8f8878);
+    vox(cx + 0.7, top + 1.15, cz - 0.4, 0.8, 0.14, 0.8, 0x6f695c);
+    evox(cx + 0.7, top + 1.5, cz - 0.4, 0.42, 0.44, 0.42);
+    vox(cx + 0.7, top + 1.86, cz - 0.4, 0.95, 0.18, 0.95, 0x6f695c);
+    glowPoints.push({ x: cx + 0.7, y: top + 1.5, z: cz - 0.4 });
+  } else {
+    for (let i = 0; i < 12; i++) {
+      const x = cx + rr(-rad * 0.6, rad * 0.6), z = cz + rr(-rad * 0.6, rad * 0.6);
+      vox(x, top + 0.25, z, 0.1, 0.5, 0.1, 0x2f9e44);
+      vox(x, top + 0.58, z, 0.28, 0.26, 0.28, pick(FLOWER), rr(0, 3));
+    }
+    rockCluster(cx + rad * 0.4, cz - rad * 0.3, 0.6, top);
+  }
+}
+satellite(38, 3.5, -8, 4.4, 'tree');
+satellite(-37, -2.5, 13, 3.8, 'bamboo');
+satellite(-30, 6.5, -27, 4.6, 'pagoda');
+satellite(28, -5, 30, 3.6, 'lantern');
+satellite(5, 1.5, -40, 4.2, 'flower');
+satellite(-15, -6, 38, 3.4, 'flower');
+
+/* ============ 烘焙静态体素 ============ */
+const stdMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.86, metalness: 0.02 });

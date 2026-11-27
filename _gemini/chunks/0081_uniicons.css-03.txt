@@ -1,0 +1,14 @@
+  content: "\e62c";
+}
+
+.uniui-shop:before {
+  content: "\e62f";
+}
+
+.uniui-headphones:before {
+  content: "\e630";
+}
+
+.uniui-cart:before {
+  content: "\e631";
+}

@@ -1,0 +1,44 @@
+        [eventId, orderId, result, fingerprint],
+      );
+      if (inserted.rowCount === 0) {
+        const existing = await client.query('SELECT fingerprint FROM p03.payment_events WHERE event_id = $1', [eventId]);
+        await client.query('COMMIT');
+        if (existing.rows[0].fingerprint && existing.rows[0].fingerprint !== fingerprint) {
+          return reply.code(409).send({ error: 'event_fingerprint_conflict' });
+        }
+        return { duplicate: true, applied: false, status: order.rows[0].status };
+      }
+      const row = order.rows[0];
+      if (result === 'success' && row.status === 'pending_payment') {
+        await client.query("UPDATE p03.orders SET status = 'paid', paid_at = now(), version = version + 1 WHERE id = $1", [orderId]);
+        await client.query(
+          `INSERT INTO p03.outbox (event_id, type, payload) VALUES ($1,'order.paid',$2::jsonb) ON CONFLICT (event_id) DO NOTHING`,
+          [eventId, JSON.stringify({ event_id: eventId, order_id: orderId, user_id: row.user_id, amount: row.amount })],
+        );
+        await client.query("UPDATE p03.payment_events SET applied = true, note = 'paid' WHERE event_id = $1", [eventId]);
+        await audit(client, { actor: 'provider', action: 'payment.callback', orderId, requestId: request.id, before: { status: row.status }, after: { status: 'paid' } });
+        await client.query('COMMIT');
+        return { duplicate: false, applied: true, status: 'paid', fingerprint: sha256(rawBody) };
+      }
+      const note = row.status === 'cancelled' ? 'order_cancelled' : row.status === 'paid' ? 'already_paid' : 'ignored';
+      await client.query('UPDATE p03.payment_events SET applied = false, note = $2 WHERE event_id = $1', [eventId, note]);
+      await client.query('COMMIT');
+      if (row.status === 'cancelled') return reply.code(202).send({ duplicate: false, applied: false, status: 'cancelled', note });
+      return { duplicate: false, applied: false, status: row.status, note };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  });
+
+  app.get('/orders/:id/audit', { preHandler: requireApiKey }, async (request, reply) => {
+    const owned = await pool.query('SELECT id FROM p03.orders WHERE id = $1 AND user_id = $2', [Number(request.params.id), request.userId]);
+    if (owned.rowCount === 0) return reply.code(404).send({ error: 'not_found' });
+    const { rows } = await pool.query('SELECT actor, action, request_id, before, after, created_at FROM p03.audit_log WHERE order_id = $1 ORDER BY id', [Number(request.params.id)]);
+    return { audit: rows };
+  });
+
+  return app;
+}

@@ -1,0 +1,158 @@
+      parseInt('0x' + _table.substr(20, 5)).toString(),
+      parseInt('0x' + _table.substr(25, 5)).toString()
+    ]
+    var _calday = [
+      _info[0].substr(0, 1),
+      _info[0].substr(1, 2),
+      _info[0].substr(3, 1),
+      _info[0].substr(4, 2),
+
+      _info[1].substr(0, 1),
+      _info[1].substr(1, 2),
+      _info[1].substr(3, 1),
+      _info[1].substr(4, 2),
+
+      _info[2].substr(0, 1),
+      _info[2].substr(1, 2),
+      _info[2].substr(3, 1),
+      _info[2].substr(4, 2),
+
+      _info[3].substr(0, 1),
+      _info[3].substr(1, 2),
+      _info[3].substr(3, 1),
+      _info[3].substr(4, 2),
+
+      _info[4].substr(0, 1),
+      _info[4].substr(1, 2),
+      _info[4].substr(3, 1),
+      _info[4].substr(4, 2),
+
+      _info[5].substr(0, 1),
+      _info[5].substr(1, 2),
+      _info[5].substr(3, 1),
+      _info[5].substr(4, 2)
+    ]
+    return parseInt(_calday[n - 1])
+  },
+
+  /**
+      * 传入农历数字月份返回汉语通俗表示法
+      * @param lunar month
+      * @return Cn string
+      * @eg:var cnMonth = calendar.toChinaMonth(12) ;//cnMonth='腊月'
+      */
+  toChinaMonth: function (m) { // 月 => \u6708
+    if (m > 12 || m < 1) { return -1 } // 若参数错误 返回-1
+    var s = this.nStr3[m - 1]
+    s += '\u6708'// 加上月字
+    return s
+  },
+
+  /**
+      * 传入农历日期数字返回汉字表示法
+      * @param lunar day
+      * @return Cn string
+      * @eg:var cnDay = calendar.toChinaDay(21) ;//cnMonth='廿一'
+      */
+  toChinaDay: function (d) { // 日 => \u65e5
+    var s
+    switch (d) {
+      case 10:
+        s = '\u521d\u5341'; break
+      case 20:
+        s = '\u4e8c\u5341'; break
+        break
+      case 30:
+        s = '\u4e09\u5341'; break
+        break
+      default :
+        s = this.nStr2[Math.floor(d / 10)]
+        s += this.nStr1[d % 10]
+    }
+    return (s)
+  },
+
+  /**
+      * 年份转生肖[!仅能大致转换] => 精确划分生肖分界线是“立春”
+      * @param y year
+      * @return Cn string
+      * @eg:var animal = calendar.getAnimal(1987) ;//animal='兔'
+      */
+  getAnimal: function (y) {
+    return this.Animals[(y - 4) % 12]
+  },
+
+  /**
+      * 传入阳历年月日获得详细的公历、农历object信息 <=>JSON
+      * @param y  solar year
+      * @param m  solar month
+      * @param d  solar day
+      * @return JSON object
+      * @eg:console.log(calendar.solar2lunar(1987,11,01));
+      */
+  solar2lunar: function (y, m, d) { // 参数区间1900.1.31~2100.12.31
+    // 年份限定、上限
+    if (y < 1900 || y > 2100) {
+      return -1// undefined转换为数字变为NaN
+    }
+    // 公历传参最下限
+    if (y == 1900 && m == 1 && d < 31) {
+      return -1
+    }
+    // 未传参  获得当天
+    if (!y) {
+      var objDate = new Date()
+    } else {
+      var objDate = new Date(y, parseInt(m) - 1, d)
+    }
+    var i; var leap = 0; var temp = 0
+    // 修正ymd参数
+    var y = objDate.getFullYear()
+    var m = objDate.getMonth() + 1
+    var d = objDate.getDate()
+    var offset = (Date.UTC(objDate.getFullYear(), objDate.getMonth(), objDate.getDate()) - Date.UTC(1900, 0, 31)) / 86400000
+    for (i = 1900; i < 2101 && offset > 0; i++) {
+      temp = this.lYearDays(i)
+      offset -= temp
+    }
+    if (offset < 0) {
+      offset += temp; i--
+    }
+
+    // 是否今天
+    var isTodayObj = new Date()
+    var isToday = false
+    if (isTodayObj.getFullYear() == y && isTodayObj.getMonth() + 1 == m && isTodayObj.getDate() == d) {
+      isToday = true
+    }
+    // 星期几
+    var nWeek = objDate.getDay()
+    var cWeek = this.nStr1[nWeek]
+    // 数字表示周几顺应天朝周一开始的惯例
+    if (nWeek == 0) {
+      nWeek = 7
+    }
+    // 农历年
+    var year = i
+    var leap = this.leapMonth(i) // 闰哪个月
+    var isLeap = false
+
+    // 效验闰月
+    for (i = 1; i < 13 && offset > 0; i++) {
+      // 闰月
+      if (leap > 0 && i == (leap + 1) && isLeap == false) {
+        --i
+        isLeap = true; temp = this.leapDays(year) // 计算农历闰月天数
+      } else {
+        temp = this.monthDays(year, i)// 计算农历普通月天数
+      }
+      // 解除闰月
+      if (isLeap == true && i == (leap + 1)) { isLeap = false }
+      offset -= temp
+    }
+    // 闰月导致数组下标重叠取反
+    if (offset == 0 && leap > 0 && i == leap + 1) {
+      if (isLeap) {
+        isLeap = false
+      } else {
+        isLeap = true; --i
